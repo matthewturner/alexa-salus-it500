@@ -1,6 +1,6 @@
 # alexa-salus-it500
 
-An Alexa App (skill) to control a Salus IT500 internet thermostat. Please note that this is really ugly because Salus don't provide any kind of API. This skill logs onto their web app using your username and passwords and sets the temperature as you would in their mobile (web) app. For that reason, you need to embed your login details into the index.js and host this skill yourself ! Do not offer this skill in the Alexa store for other people because it's not secure to collect other people's usernames and passwords. 
+An Alexa App (skill) to control a Salus IT500 internet thermostat. Please note that this is really ugly because Salus don't provide any kind of API. This skill logs onto their web app using your username and password and sets the temperature as you would in their mobile (web) app. For that reason, you need to embed your login details into the index.js and host this skill yourself ! Do not offer this skill in the Alexa store for other people because it's not secure to collect other people's usernames and passwords. 
 
 Until Salus provide their own Alexa skill or a federated authentication method then this is the only option, unfortunately. 
 
@@ -11,9 +11,9 @@ This app is a Node.js module, written using the excellent [alexa-app](https://ww
 
 This skill has 3 intents :-
 
-alexa, ask boiler the temperature
-alexa, ask boiler to set higher
-alexa, ask boiler to set lower
+* Alexa, ask boiler the temperature
+* Alexa, ask boiler to set higher
+* Alexa, ask boiler to set lower
 
 
 ## Setting Up
