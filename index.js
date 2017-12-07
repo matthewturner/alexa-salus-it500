@@ -1,4 +1,3 @@
-
 var request = require('request');
 var cheerio = require('cheerio');
 var alexa = require('alexa-app');
@@ -9,9 +8,9 @@ var JSON = require('JSON');
 // Allow this module to be reloaded by hotswap when changed
 module.change_code = 0;
 
-// Salus stuff -- Add your Salus app login details here - don't check the code in anywhere afterwards !!
-const username = <PUT YOUR LOGIN EMAIL ADDRESS HERE>
-const password = <PUT YOUR PASSWORD HERE>
+// Salus stuff -- Add your Salus app login details to the environment variables section
+var username = process.env.USERNAME;
+var password = process.env.PASSWORD;
 
 // The crucial pieces of information
 var devId;
@@ -104,7 +103,7 @@ function withDeviceValues(callback)
 function setTemperature(temp, callback)
 {
 	var t = parseFloat(temp).toFixed(1); 
-console.log("Setting temp: " + t);	
+    console.log("Setting temp: " + t);	
     request.post(
     'https://salus-it500.com/includes/set.php',
     { form: { 'token': token, 'tempUnit': 0, 'devId': devId, 'current_tempZ1_set': 1, 'current_tempZ1': t }},
@@ -138,9 +137,10 @@ app.launch(function(req,res) {
         login( function() { 
            whenOnline( function() { res.say("Boiler is online"); res.send(); },
                        function() { res.say("Sorry, the boiler is offline at the moment."); res.send(); }) });
-console.log("before return");
+        console.log("before return");
         return false;
 });
+
 app.intent('TempIntent', {
 		"utterances":["what the temperature is", "the temperature", "how hot it is"]
 	},function(req,res) {
@@ -233,4 +233,37 @@ app.intent('TurnDownIntent', {
 	}
 );
 
+app.intent('SetTempIntent', {
+		"slots": { "temp": "AMAZON.NUMBER" },
+		"utterances":["to set to {temp} degrees", "to set the temperature to {temp} degrees", "to set the temp to {temp} degrees"]
+	}, function(req, res) {
+		login( function() { 
+			whenOnline( function() {
+                 withDeviceValues( function(v) {
+					if (v.CH1currentSetPoint == 32.0) 
+					{	
+						res.say("Sorry, I couldn't contact the boiler.");
+						res.send(); 
+					}
+					else 
+					{
+						var t = req.slot("temp");
+						setTemperature(t, function() 
+						{
+						    withDeviceValues( function(v) 
+							{ 
+					           res.say('The target temperature is now ' + speakTemperature(v.CH1currentSetPoint) + ' degrees.');
+					           if (v.CH1heatOnOffStatus == 1) res.say('The heating is now on.');
+                               console.log(logTimeString() + ", " + v.CH1currentRoomTemp + ", " + v.CH1currentSetPoint + ", " + v.CH1heatOnOffStatus);
+                               res.send();
+							});
+						});
+					} 
+                 }); }, function() { res.say("Sorry, the boiler is offline at the moment."); res.send(); }) });				 
+                 return false;
+	}
+);
+
 module.exports = app;
+
+exports.handler = app.lambda();

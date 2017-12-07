@@ -7,30 +7,29 @@ Until Salus provide their own Alexa skill or a federated authentication method t
 
 ## Summary
 
-This app is a Node.js module, written using the excellent [alexa-app](https://www.npmjs.com/package/alexa-app) module framework by Matt Kruse [gitub](https://github.com/matt-kruse/alexa-app-server/blob/master/README.md)
+This app is a Node.js module, written using the excellent [alexa-app](https://www.npmjs.com/package/alexa-app) module framework by Matt Kruse [github](https://github.com/matt-kruse/alexa-app-server/blob/master/README.md)
 
 This skill has 3 intents :-
 
 * Alexa, ask boiler the temperature
 * Alexa, ask boiler to set higher
 * Alexa, ask boiler to set lower
+* Alexa, ask boiler to set to x degrees
 
 
 ## Setting Up
 
-Setup an [alexa-app-server](https://github.com/matt-kruse/alexa-app-server)
+1. Setup an [alexa-app-server](https://github.com/matt-kruse/alexa-app-server)
 
-Check out this project, 
+1. Check out this project
 
-Put your login email and password in index.js
+1. Add this module to alexa-app-server
 
-Add this module to alexa-app-server
+1. Launch server with your personal credentials as environment variables (eg USERNAME=xyz PASSWORD=abc)
 
-Test on http://localhost:8080/alexa/boiler
+1. Test on http://localhost:8080/alexa/boiler
 
-Create a new skill in https://developer.amazon.com
+1. Create a new skill in https://developer.amazon.com
 
-Point to your SSL'd external URL or host in AWS Lambda
-
-
+1. Point to your SSL'd external URL or host in AWS Lambda
 
