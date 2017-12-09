@@ -6,13 +6,13 @@
   "author": "Andrew Whaley (andrew@whaley.org.uk)",
   "license": "GPL",
   "alexa": {
-    "applicationId":"amzn1.echo-sdk-ams.app.999999-d0ed-9999-ad00-999999d00ebe"
+    "applicationId": "amzn1.echo-sdk-ams.app.999999-d0ed-9999-ad00-999999d00ebe"
   },
   "dependencies": {
     "alexa-app": "^2.1.0",
-	  "request": "^2.79.0",
-	  "cheerio": "^0.22.0",
-	  "fs": "^0.0.2",
-	  "JSON": "^1.0.0"
+    "request": "^2.79.0",
+    "cheerio": "^0.22.0",
+    "fs": "^0.0.2",
+    "JSON": "^1.0.0"
   }
 }

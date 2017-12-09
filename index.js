@@ -17,18 +17,18 @@ var devId;
 var token;
 
 // Enable cookies
-var request = request.defaults({jar: true});
+var request = request.defaults({
+	jar: true
+});
 
-function timeString()
-{
-    var dat = new Date();
-	var days = (dat.getYear() * 365) + (dat.getMonth() * 31) + dat.getDate(); 
-    return (days * 86400) + ((dat.getUTCHours() * 60) + dat.getUTCMinutes()) * 60 + dat.getUTCSeconds();
+function timeString() {
+	var dat = new Date();
+	var days = (dat.getYear() * 365) + (dat.getMonth() * 31) + dat.getDate();
+	return (days * 86400) + ((dat.getUTCHours() * 60) + dat.getUTCMinutes()) * 60 + dat.getUTCSeconds();
 }
 
-function logTimeString()
-{
-    var dat = new Date();
+function logTimeString() {
+	var dat = new Date();
 	var y = dat.getFullYear() + "";
 	var m = dat.getMonth() + 1;
 	if (m < 10) m = "0" + m;
@@ -36,7 +36,7 @@ function logTimeString()
 	var d = dat.getDate();
 	if (d < 10) d = "0" + d;
 	else d = d + "";
-	
+
 	var h = dat.getHours();
 	if (h < 10) h = "0" + h;
 	else h = h + "";
@@ -46,74 +46,76 @@ function logTimeString()
 	var ss = dat.getSeconds();
 	if (ss < 10) ss = "0" + ss;
 	else ss = ss + "";
-	
-	
-    return (y + "-" + m + "-" + d + " " + h + ":" + mm + ":" + ss);
+
+
+	return (y + "-" + m + "-" + d + " " + h + ":" + mm + ":" + ss);
 }
 
-function login(callback)
-{
-   request.post(
-    'https://salus-it500.com/public/login.php',
-    { form: { 'IDemail': username, 'password': password, 'login': 'Login' }},
-    function (error, response, body) {
-        if (!error) {
-            // Follow redirect to devices page
-            request.get('https://salus-it500.com/public/devices.php',
-                        function (error, response, body) {
-                           if (!error && response.statusCode == 200) 
-                           {
-                              // Extract the devId and token
-                              var $ = cheerio.load(body);
-                              devId = $('input[name="devId"]').val();
-                              token = $('#token').val();
-                              console.log("Logged on (" + devId + "," + token + ")");
-                              callback();
-                           }
-                        });
-        }
-        else console.log(error);
-    });
+function login(callback) {
+	request.post(
+		'https://salus-it500.com/public/login.php', {
+			form: {
+				'IDemail': username,
+				'password': password,
+				'login': 'Login'
+			}
+		},
+		function (error, response, body) {
+			if (!error) {
+				// Follow redirect to devices page
+				request.get('https://salus-it500.com/public/devices.php',
+					function (error, response, body) {
+						if (!error && response.statusCode == 200) {
+							// Extract the devId and token
+							var $ = cheerio.load(body);
+							devId = $('input[name="devId"]').val();
+							token = $('#token').val();
+							console.log("Logged on (" + devId + "," + token + ")");
+							callback();
+						}
+					});
+			} else console.log(error);
+		});
 }
 
-function whenOnline(callback, offlineCallback)
-{
-    request.get('https://salus-it500.com/public/ajax_device_online_status.php?devId=' + devId + '&token=' + token + '&_=' + timeString(),
-                        function (error, response, body) {
-                           if (!error && response.statusCode == 200) 
-                           {
-                               if (body == '"online"') callback();
-                               else offlineCallback();
-                           }
-                           else offlineCallback();
-                        }); 
+function whenOnline(callback, offlineCallback) {
+	request.get('https://salus-it500.com/public/ajax_device_online_status.php?devId=' + devId + '&token=' + token + '&_=' + timeString(),
+		function (error, response, body) {
+			if (!error && response.statusCode == 200) {
+				if (body == '"online"') callback();
+				else offlineCallback();
+			} else offlineCallback();
+		});
 }
 
-function withDeviceValues(callback)
-{
-    request.get('https://salus-it500.com/public/ajax_device_values.php?devId=' + devId + '&token=' + token + '&_=' + timeString(),
-                        function (error, response, body) {
-                           if (!error && response.statusCode == 200) 
-                           {
-                               callback(JSON.parse(body));
-                           }
-                        }); 
+function withDeviceValues(callback) {
+	request.get('https://salus-it500.com/public/ajax_device_values.php?devId=' + devId + '&token=' + token + '&_=' + timeString(),
+		function (error, response, body) {
+			if (!error && response.statusCode == 200) {
+				callback(JSON.parse(body));
+			}
+		});
 }
 
-function setTemperature(temp, callback)
-{
-	var t = parseFloat(temp).toFixed(1); 
-    console.log("Setting temp: " + t);	
-    request.post(
-    'https://salus-it500.com/includes/set.php',
-    { form: { 'token': token, 'tempUnit': 0, 'devId': devId, 'current_tempZ1_set': 1, 'current_tempZ1': t }},
-    function (error, response, body) {
-        if (!error) callback();
-    });
+function setTemperature(temp, callback) {
+	var t = parseFloat(temp).toFixed(1);
+	console.log("Setting temp: " + t);
+	request.post(
+		'https://salus-it500.com/includes/set.php', {
+			form: {
+				'token': token,
+				'tempUnit': 0,
+				'devId': devId,
+				'current_tempZ1_set': 1,
+				'current_tempZ1': t
+			}
+		},
+		function (error, response, body) {
+			if (!error) callback();
+		});
 }
 
-function speakTemperature(temp)
-{
+function speakTemperature(temp) {
 	var t = parseFloat(temp);
 	if (parseFloat(t.toFixed(0)) != t) return t.toFixed(1);
 	else return t.toFixed(0);
@@ -122,147 +124,229 @@ function speakTemperature(temp)
 // Define an alexa-app
 var app = new alexa.app('boiler');
 
-app.pre = function(request, response, type) {
-  //if (request.applicationId != "amzn1.echo-sdk-ams.app.000000-d0ed-0000-ad00-000000d00ebe") {
-    // fail ungracefully 
-  //  response.fail("Invalid applicationId");
-  //}
-  
-  // Login
-  
+app.pre = function (request, response, type) {
+	//if (request.applicationId != "amzn1.echo-sdk-ams.app.000000-d0ed-0000-ad00-000000d00ebe") {
+	// fail ungracefully 
+	//  response.fail("Invalid applicationId");
+	//}
+
+	// Login
 };
 
-app.launch(function(req,res) {
-        console.log('launching...');
-        login( function() { 
-           whenOnline( function() { res.say("Boiler is online"); res.send(); },
-                       function() { res.say("Sorry, the boiler is offline at the moment."); res.send(); }) });
-        console.log("before return");
-        return false;
+app.launch(function (req, res) {
+	console.log('launching...');
+	login(function () {
+		whenOnline(function () {
+				res.say("Boiler is online");
+				res.send();
+			},
+			function () {
+				res.say("Sorry, the boiler is offline at the moment.");
+				res.send();
+			});
+	});
+	console.log("before return");
+	return false;
 });
 
 app.intent('TempIntent', {
-		"utterances":["what the temperature is", "the temperature", "how hot it is"]
-	},function(req,res) {
-		login( function() { 
-			whenOnline( function() {
-                 withDeviceValues( function(v) {
-					 if (v.CH1currentSetPoint == 32.0) 
-					 {	
-					 	res.say("Sorry, I couldn't contact the boiler."); 
-					 }
-					 else 
-					 { 
-		                res.say('The current temperature is ' + speakTemperature(v.CH1currentRoomTemp) + ' degrees centigrade.');
-					    res.say('The target is ' + speakTemperature(v.CH1currentSetPoint) + ' degrees.');
-					    if (v.CH1heatOnOffStatus == 1) res.say('The heating is on.');
-					}
-                    console.log(logTimeString() + ", " + v.CH1currentRoomTemp + ", " + v.CH1currentSetPoint + ", " + v.CH1heatOnOffStatus);
-                    res.send(); 
-                 }); }, function() { res.say("Sorry, the boiler is offline at the moment."); res.send(); }) });
-				 
-                 return false;
-	}
-);
+	"utterances": ["what the temperature is", "the temperature", "how hot it is"]
+}, function (req, res) {
+	login(function () {
+		whenOnline(function () {
+			withDeviceValues(function (v) {
+				if (v.CH1currentSetPoint == 32.0) {
+					res.say("Sorry, I couldn't contact the boiler.");
+				} else {
+					res.say('The current temperature is ' + speakTemperature(v.CH1currentRoomTemp) + ' degrees centigrade.');
+					res.say('The target is ' + speakTemperature(v.CH1currentSetPoint) + ' degrees.');
+					if (v.CH1heatOnOffStatus == 1) res.say('The heating is on.');
+				}
+				console.log(logTimeString() + ", " + v.CH1currentRoomTemp + ", " + v.CH1currentSetPoint + ", " + v.CH1heatOnOffStatus);
+				res.send();
+			});
+		}, function () {
+			res.say("Sorry, the boiler is offline at the moment.");
+			res.send();
+		});
+	});
+
+	return false;
+});
 
 app.intent('TurnUpIntent', {
-		"utterances":["to increase", "to turn up", "set warmer", "set higher"]
-	},function(req,res) {
-		login( function() { 
-			whenOnline( function() {
-                 withDeviceValues( function(v) {
-					
-					// Heating is already on, don't make any changes 
-					if (v.CH1heatOnOffStatus == 1) 
-					{	
-						res.say('The heating is already on.');
-						res.send(); 
-					}
-					else if (v.CH1currentSetPoint == 32.0) 
-					{	
-						res.say("Sorry, I couldn't contact the boiler.");
-						res.send(); 
-					}
-					else 
-					{
-						var t = parseFloat(v.CH1currentSetPoint) + 0.5; 
-						setTemperature(t, function() 
-						{
-						    withDeviceValues( function(v) 
-							{ 
-					           res.say('The target temperature is now ' + speakTemperature(v.CH1currentSetPoint) + ' degrees.');
-					           if (v.CH1heatOnOffStatus == 1) res.say('The heating is now on.');
-                               console.log(logTimeString() + ", " + v.CH1currentRoomTemp + ", " + v.CH1currentSetPoint + ", " + v.CH1heatOnOffStatus);
-                               res.send();
-							});
+	"utterances": ["to increase", "to turn up", "set warmer", "set higher"]
+}, function (req, res) {
+	login(function () {
+		whenOnline(function () {
+			withDeviceValues(function (v) {
+
+				// Heating is already on, don't make any changes 
+				if (v.CH1heatOnOffStatus == 1) {
+					res.say('The heating is already on.');
+					res.send();
+				} else if (v.CH1currentSetPoint == 32.0) {
+					res.say("Sorry, I couldn't contact the boiler.");
+					res.send();
+				} else {
+					var t = parseFloat(v.CH1currentSetPoint) + 0.5;
+					setTemperature(t, function () {
+						withDeviceValues(function (v) {
+							res.say('The target temperature is now ' + speakTemperature(v.CH1currentSetPoint) + ' degrees.');
+							if (v.CH1heatOnOffStatus == 1) res.say('The heating is now on.');
+							console.log(logTimeString() + ", " + v.CH1currentRoomTemp + ", " + v.CH1currentSetPoint + ", " + v.CH1heatOnOffStatus);
+							res.send();
 						});
-					} 
-                 }); }, function() { res.say("Sorry, the boiler is offline at the moment."); res.send(); }) });				 
-                 return false;
-	}
-);
+					});
+				}
+			});
+		}, function () {
+			res.say("Sorry, the boiler is offline at the moment.");
+			res.send();
+		});
+	});
+	return false;
+});
 
 app.intent('TurnDownIntent', {
-		"utterances":["to decrease", "to turn down", "set cooler", "set lower"]
-	},function(req,res) {
-		login( function() { 
-			whenOnline( function() {
-                 withDeviceValues( function(v) {
-					
-					if (v.CH1currentSetPoint == 32.0) 
-					{	
-						res.say("Sorry, I couldn't contact the boiler.");
-						res.send(); 
-					}
-					else 
-					{
-						var t = parseFloat(v.CH1currentSetPoint) - 1.0; 
-						setTemperature(t, function() 
-						{
-						    withDeviceValues( function(v) 
-							{ 
-					           res.say('The target temperature is now ' + speakTemperature(v.CH1currentSetPoint) + ' degrees.');
-					           if (v.CH1heatOnOffStatus == 1) res.say('The heating is still on though.');
-                               console.log(logTimeString() + ", " + v.CH1currentRoomTemp + ", " + v.CH1currentSetPoint + ", " + v.CH1heatOnOffStatus);
-                               res.send();
-							});
+	"utterances": ["to decrease", "to turn down", "set cooler", "set lower"]
+}, function (req, res) {
+	login(function () {
+		whenOnline(function () {
+			withDeviceValues(function (v) {
+
+				if (v.CH1currentSetPoint == 32.0) {
+					res.say("Sorry, I couldn't contact the boiler.");
+					res.send();
+				} else {
+					var t = parseFloat(v.CH1currentSetPoint) - 1.0;
+					setTemperature(t, function () {
+						withDeviceValues(function (v) {
+							res.say('The target temperature is now ' + speakTemperature(v.CH1currentSetPoint) + ' degrees.');
+							if (v.CH1heatOnOffStatus == 1) res.say('The heating is still on though.');
+							console.log(logTimeString() + ", " + v.CH1currentRoomTemp + ", " + v.CH1currentSetPoint + ", " + v.CH1heatOnOffStatus);
+							res.send();
 						});
-					} 
-                 }); }, function() { res.say("Sorry, the boiler is offline at the moment."); res.send(); }) });				 
-                 return false;
+					});
+				}
+			});
+		}, function () {
+			res.say("Sorry, the boiler is offline at the moment.");
+			res.send();
+		});
+	});
+	return false;
+});
+
+app.intent('SetTempIntent', {
+	"slots": {
+		"temp": "AMAZON.NUMBER"
+	},
+	"utterances": ["to set to {temp} degrees", "to set the temperature to {temp} degrees", "to set the temp to {temp} degrees"]
+}, function (req, res) {
+	login(function () {
+		whenOnline(function () {
+			withDeviceValues(function (v) {
+				if (v.CH1currentSetPoint == 32.0) {
+					res.say("Sorry, I couldn't contact the boiler.");
+					res.send();
+				} else {
+					var t = req.slot("temp");
+					setTemperature(t, function () {
+						withDeviceValues(function (v) {
+							res.say('The target temperature is now ' + speakTemperature(v.CH1currentSetPoint) + ' degrees.');
+							if (v.CH1heatOnOffStatus == 1) res.say('The heating is now on.');
+							console.log(logTimeString() + ", " + v.CH1currentRoomTemp + ", " + v.CH1currentSetPoint + ", " + v.CH1heatOnOffStatus);
+							res.send();
+						});
+					});
+				}
+			});
+		}, function () {
+			res.say("Sorry, the boiler is offline at the moment.");
+			res.send();
+		});
+	});
+	return false;
+});
+
+app.intent('TurnIntent', {
+	"slots": {
+		"onoff": "ONOFF"
+	},
+	"utterances": ["to turn {onoff}", "to turn heating {onoff}", "to turn the heating {onoff}"]
+}, function (req, res) {
+	login(function () {
+		whenOnline(function () {
+			withDeviceValues(function (v) {
+				if (v.CH1currentSetPoint == 32.0) {
+					res.say("Sorry, I couldn't contact the boiler.");
+					res.send();
+				} else {
+					var onoff = req.slot("onoff");
+					var t = process.env.DEFAULT_ON_TEMP || '20';
+					if (onoff === 'off') {
+						t = process.env.DEFAULT_OFF_TEMP || '14';
+					}
+					setTemperature(t, function () {
+						withDeviceValues(function (v) {
+							res.say('The target temperature is now ' + speakTemperature(v.CH1currentSetPoint) + ' degrees.');
+							if (v.CH1heatOnOffStatus == 1) res.say('The heating is now on.');
+							console.log(logTimeString() + ", " + v.CH1currentRoomTemp + ", " + v.CH1currentSetPoint + ", " + v.CH1heatOnOffStatus);
+							res.send();
+						});
+					});
+				}
+			});
+		}, function () {
+			res.say("Sorry, the boiler is offline at the moment.");
+			res.send();
+		});
+	});
+	return false;
+});
+
+app.intent("AMAZON.HelpIntent", {
+		"slots": {},
+		"utterances": []
+	},
+	function (request, response) {
+		var helpOutput = "You can say 'set the temperature to 18 degrees' or ask 'the temperature'. You can also say stop or exit to quit.";
+		var reprompt = "What would you like to do?";
+		// AMAZON.HelpIntent must leave session open -> .shouldEndSession(false)
+		response.say(helpOutput).reprompt(reprompt).shouldEndSession(false);
 	}
 );
 
-app.intent('SetTempIntent', {
-		"slots": { "temp": "AMAZON.NUMBER" },
-		"utterances":["to set to {temp} degrees", "to set the temperature to {temp} degrees", "to set the temp to {temp} degrees"]
-	}, function(req, res) {
-		login( function() { 
-			whenOnline( function() {
-                 withDeviceValues( function(v) {
-					if (v.CH1currentSetPoint == 32.0) 
-					{	
-						res.say("Sorry, I couldn't contact the boiler.");
-						res.send(); 
-					}
-					else 
-					{
-						var t = req.slot("temp");
-						setTemperature(t, function() 
-						{
-						    withDeviceValues( function(v) 
-							{ 
-					           res.say('The target temperature is now ' + speakTemperature(v.CH1currentSetPoint) + ' degrees.');
-					           if (v.CH1heatOnOffStatus == 1) res.say('The heating is now on.');
-                               console.log(logTimeString() + ", " + v.CH1currentRoomTemp + ", " + v.CH1currentSetPoint + ", " + v.CH1heatOnOffStatus);
-                               res.send();
-							});
+app.intent("AMAZON.StopIntent", {
+	"slots": {},
+	"utterances": []
+}, function (req, res) {
+	login(function () {
+		whenOnline(function () {
+			withDeviceValues(function (v) {
+				if (v.CH1currentSetPoint == 32.0) {
+					res.say("Sorry, I couldn't contact the boiler.");
+					res.send();
+				} else {
+					var t = process.env.DEFAULT_OFF_TEMP || '14';
+					setTemperature(t, function () {
+						withDeviceValues(function (v) {
+							res.say('The target temperature is now ' + speakTemperature(v.CH1currentSetPoint) + ' degrees.');
+							if (v.CH1heatOnOffStatus == 1) res.say('The heating is now on.');
+							console.log(logTimeString() + ", " + v.CH1currentRoomTemp + ", " + v.CH1currentSetPoint + ", " + v.CH1heatOnOffStatus);
+							res.send();
 						});
-					} 
-                 }); }, function() { res.say("Sorry, the boiler is offline at the moment."); res.send(); }) });				 
-                 return false;
-	}
-);
+					});
+				}
+			});
+		}, function () {
+			res.say("Sorry, the boiler is offline at the moment.");
+			res.send();
+		});
+	});
+	return false;
+});
 
 module.exports = app;
 
