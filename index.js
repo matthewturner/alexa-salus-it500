@@ -1,9 +1,13 @@
 var request = require('request');
-var cheerio = require('cheerio');
-var alexa = require('alexa-app');
-var fs = require('fs');
+const cheerio = require('cheerio');
+const alexa = require('alexa-app');
+const fs = require('fs');
+const Duration = require('durationjs');
 
-var JSON = require('JSON');
+const JSON = require('JSON');
+const AWS = require('aws-sdk');
+
+const host = 'https://salus-it500.com';
 
 // Allow this module to be reloaded by hotswap when changed
 module.change_code = 0;
@@ -53,7 +57,7 @@ function logTimeString() {
 
 function login(callback) {
 	request.post(
-		'https://salus-it500.com/public/login.php', {
+		`${host}/public/login.php`, {
 			form: {
 				'IDemail': username,
 				'password': password,
@@ -63,7 +67,7 @@ function login(callback) {
 		function (error, response, body) {
 			if (!error) {
 				// Follow redirect to devices page
-				request.get('https://salus-it500.com/public/devices.php',
+				request.get(`${host}/public/devices.php`,
 					function (error, response, body) {
 						if (!error && response.statusCode == 200) {
 							// Extract the devId and token
@@ -79,7 +83,7 @@ function login(callback) {
 }
 
 function whenOnline(callback, offlineCallback) {
-	request.get('https://salus-it500.com/public/ajax_device_online_status.php?devId=' + devId + '&token=' + token + '&_=' + timeString(),
+	request.get(`${host}/public/ajax_device_online_status.php?devId=${devId}&token=${token}&_=${timeString()}`,
 		function (error, response, body) {
 			if (!error && response.statusCode == 200) {
 				if (body == '"online"') callback();
@@ -89,7 +93,7 @@ function whenOnline(callback, offlineCallback) {
 }
 
 function withDeviceValues(callback) {
-	request.get('https://salus-it500.com/public/ajax_device_values.php?devId=' + devId + '&token=' + token + '&_=' + timeString(),
+	request.get(`${host}/public/ajax_device_values.php?devId=${devId}&token=${token}&_=${timeString()}`,
 		function (error, response, body) {
 			if (!error && response.statusCode == 200) {
 				callback(JSON.parse(body));
@@ -101,7 +105,7 @@ function setTemperature(temp, callback) {
 	var t = parseFloat(temp).toFixed(1);
 	console.log("Setting temp: " + t);
 	request.post(
-		'https://salus-it500.com/includes/set.php', {
+		`${host}/includes/set.php`, {
 			form: {
 				'token': token,
 				'tempUnit': 0,
@@ -291,8 +295,24 @@ app.intent('TurnIntent', {
 					setTemperature(t, function () {
 						withDeviceValues(function (v) {
 							res.say('The target temperature is now ' + speakTemperature(v.CH1currentSetPoint) + ' degrees.');
-							if (v.CH1heatOnOffStatus == 1) res.say('The heating is now on.');
+							res.card("Salus", `The target temperature is now ${speakTemperature(v.CH1currentSetPoint)}\xB0`);
 							console.log(logTimeString() + ", " + v.CH1currentRoomTemp + ", " + v.CH1currentSetPoint + ", " + v.CH1heatOnOffStatus);
+							
+							var durationValue = req.slot("duration");
+							console.log('Duration: ' + durationValue);
+							if (typeof durationValue == 'undefined') {
+								if (v.CH1heatOnOffStatus == 1) { res.say('The heating is now on.'); }
+							} else {
+								var duration = new Duration(durationValue);
+								var durationText = duration.ago().replace(' ago', '');
+								res.say(`The heating is now on and will turn off in  ${durationText}`);
+								var stepfunctions = new AWS.StepFunctions();
+								var params = {
+									stateMachineArn: 'arn:aws:states:eu-west-1:327485730614:stateMachine:Thermostat',
+									input: `{"duration": ${duration.inSeconds()}}`
+								};
+							}
+
 							res.send();
 						});
 					});

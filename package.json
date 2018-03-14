@@ -5,6 +5,7 @@
   "main": "index.js",
   "author": "Andrew Whaley (andrew@whaley.org.uk)",
   "license": "GPL",
+  "repository": "https://github.com/azw409/alexa-salus-it500",
   "alexa": {
     "applicationId": "amzn1.echo-sdk-ams.app.999999-d0ed-9999-ad00-999999d00ebe"
   },
@@ -13,6 +14,7 @@
     "request": "^2.79.0",
     "cheerio": "^0.22.0",
     "fs": "^0.0.2",
-    "JSON": "^1.0.0"
+    "JSON": "^1.0.0",
+    "durationjs": "^1.1.1"
   }
 }

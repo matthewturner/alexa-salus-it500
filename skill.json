@@ -1,131 +1,195 @@
 {
   "languageModel": {
-    "types": [
-      {
-        "name": "ONOFF",
-        "values": [
+      "invocationName": "thermostat",
+      "intents": [
           {
-            "id": null,
-            "name": {
-              "value": "on",
-              "synonyms": []
-            }
+              "name": "AMAZON.CancelIntent",
+              "slots": [],
+              "samples": []
           },
           {
-            "id": null,
-            "name": {
-              "value": "off",
-              "synonyms": []
-            }
-          }
-        ]
-      }
-    ],
-    "intents": [
-      {
-        "name": "AMAZON.CancelIntent",
-        "samples": []
-      },
-      {
-        "name": "AMAZON.HelpIntent",
-        "samples": []
-      },
-      {
-        "name": "AMAZON.StopIntent",
-        "samples": []
-      },
-      {
-        "name": "SetTempIntent",
-        "samples": [
-          "to set to {temp} degrees",
-          "to set the temperature to {temp} degrees",
-          "to set the temp to {temp} degrees"
-        ],
-        "slots": [
+              "name": "AMAZON.HelpIntent",
+              "slots": [],
+              "samples": []
+          },
           {
-            "name": "temp",
-            "type": "AMAZON.NUMBER",
-            "samples": [
-              "{temp}",
-              "{temp} degrees"
-            ]
-          }
-        ]
-      },
-      {
-        "name": "TempIntent",
-        "samples": [
-          "what the temperature is",
-          "the temperature",
-          "how hot it is"
-        ],
-        "slots": []
-      },
-      {
-        "name": "TurnDownIntent",
-        "samples": [
-          "to decrease",
-          "to turn down",
-          "set cooler",
-          "set lower"
-        ],
-        "slots": []
-      },
-      {
-        "name": "TurnIntent",
-        "samples": [
-          "to turn {onoff}",
-          "to turn heating {onoff}"
-        ],
-        "slots": [
+              "name": "AMAZON.StopIntent",
+              "slots": [],
+              "samples": []
+          },
           {
-            "name": "onoff",
-            "type": "ONOFF"
+              "name": "SetTempIntent",
+              "slots": [
+                  {
+                      "name": "temp",
+                      "type": "AMAZON.NUMBER",
+                      "samples": [
+                          "{temp}",
+                          "{temp} degrees"
+                      ]
+                  }
+              ],
+              "samples": [
+                  "to set to {temp} degrees",
+                  "to set the temperature to {temp} degrees",
+                  "to set the temp to {temp} degrees"
+              ]
+          },
+          {
+              "name": "TempIntent",
+              "slots": [],
+              "samples": [
+                  "what the temperature is",
+                  "the temperature",
+                  "how hot it is"
+              ]
+          },
+          {
+              "name": "TurnDownIntent",
+              "slots": [],
+              "samples": [
+                  "to decrease",
+                  "to turn down",
+                  "set cooler",
+                  "set lower"
+              ]
+          },
+          {
+              "name": "TurnIntent",
+              "slots": [
+                  {
+                      "name": "onoff",
+                      "type": "ONOFF"
+                  },
+                  {
+                      "name": "duration",
+                      "type": "AMAZON.DURATION"
+                  }
+              ],
+              "samples": [
+                  "to turn heating {onoff} for {duration}",
+                  "to turn {onoff} for {duration}",
+                  "to turn {onoff}",
+                  "to turn heating {onoff}"
+              ]
+          },
+          {
+              "name": "TurnUpIntent",
+              "slots": [],
+              "samples": [
+                  "to increase",
+                  "to turn up",
+                  "set warmer",
+                  "set higher"
+              ]
+          },
+          {
+              "name": "AMAZON.MoreIntent",
+              "slots": [],
+              "samples": []
+          },
+          {
+              "name": "AMAZON.NavigateHomeIntent",
+              "slots": [],
+              "samples": []
+          },
+          {
+              "name": "AMAZON.NavigateSettingsIntent",
+              "slots": [],
+              "samples": []
+          },
+          {
+              "name": "AMAZON.NextIntent",
+              "slots": [],
+              "samples": []
+          },
+          {
+              "name": "AMAZON.PageUpIntent",
+              "slots": [],
+              "samples": []
+          },
+          {
+              "name": "AMAZON.PageDownIntent",
+              "slots": [],
+              "samples": []
+          },
+          {
+              "name": "AMAZON.PreviousIntent",
+              "slots": [],
+              "samples": []
+          },
+          {
+              "name": "AMAZON.ScrollRightIntent",
+              "slots": [],
+              "samples": []
+          },
+          {
+              "name": "AMAZON.ScrollDownIntent",
+              "slots": [],
+              "samples": []
+          },
+          {
+              "name": "AMAZON.ScrollLeftIntent",
+              "slots": [],
+              "samples": []
+          },
+          {
+              "name": "AMAZON.ScrollUpIntent",
+              "slots": [],
+              "samples": []
           }
-        ]
-      },
-      {
-        "name": "TurnUpIntent",
-        "samples": [
-          "to increase",
-          "to turn up",
-          "set warmer",
-          "set higher"
-        ],
-        "slots": []
-      }
-    ],
-    "invocationName": "thermostat"
+      ],
+      "types": [
+          {
+              "name": "ONOFF",
+              "values": [
+                  {
+                      "id": "",
+                      "name": {
+                          "value": "on",
+                          "synonyms": []
+                      }
+                  },
+                  {
+                      "id": "",
+                      "name": {
+                          "value": "off",
+                          "synonyms": []
+                      }
+                  }
+              ]
+          }
+      ]
+  },
+  "dialog": {
+      "intents": [
+          {
+              "name": "SetTempIntent",
+              "confirmationRequired": false,
+              "prompts": {},
+              "slots": [
+                  {
+                      "name": "temp",
+                      "type": "AMAZON.NUMBER",
+                      "confirmationRequired": false,
+                      "elicitationRequired": true,
+                      "prompts": {
+                          "elicitation": "Elicit.Intent-SetTempIntent.IntentSlot-temp"
+                      }
+                  }
+              ]
+          }
+      ]
   },
   "prompts": [
-    {
-      "id": "Elicit.Intent-SetTempIntent.IntentSlot-temp",
-      "variations": [
-        {
-          "type": "PlainText",
-          "value": "What temperature do you want to set?"
-        }
-      ]
-    }
-  ],
-  "dialog": {
-    "intents": [
       {
-        "name": "SetTempIntent",
-        "confirmationRequired": false,
-        "prompts": {},
-        "slots": [
-          {
-            "name": "temp",
-            "type": "AMAZON.NUMBER",
-            "elicitationRequired": true,
-            "confirmationRequired": false,
-            "prompts": {
-              "elicitation": "Elicit.Intent-SetTempIntent.IntentSlot-temp"
-            }
-          }
-        ]
+          "id": "Elicit.Intent-SetTempIntent.IntentSlot-temp",
+          "variations": [
+              {
+                  "type": "PlainText",
+                  "value": "What temperature do you want to set?"
+              }
+          ]
       }
-    ]
-  }
+  ]
 }
