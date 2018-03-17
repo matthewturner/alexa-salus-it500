@@ -9,7 +9,7 @@
       },
       "Callback": {
         "Type": "Task",
-        "Resource": "arn:aws:lambda:eu-west-1:327485730614:function:Salus",
+        "Resource": "arn:aws:lambda:eu-west-1:xyz:function:xyz",
         "End": true
       }
     }
