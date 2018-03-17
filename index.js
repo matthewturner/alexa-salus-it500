@@ -143,6 +143,10 @@ function andHoldIfRequiredFor(durationValue, callback) {
 	}
 }
 
+function logStatus(v) {
+	console.log(`${logTimeString()}, ${v.CH1currentRoomTemp}, ${v.CH1currentSetPoint}, ${v.CH1heatOnOffStatus}`);
+}
+
 // Define an alexa-app
 var app = new alexa.app('boiler');
 
@@ -184,7 +188,7 @@ app.intent('TempIntent', {
 					res.say(`The target is ${speakTemperature(v.CH1currentSetPoint)} degrees.`);
 					if (v.CH1heatOnOffStatus == 1) res.say('The heating is on.');
 				}
-				console.log(`${logTimeString()}, ${v.CH1currentRoomTemp}, ${v.CH1currentSetPoint}, ${v.CH1heatOnOffStatus}`);
+				logStatus(v);
 				res.send();
 			});
 		}, function () {
@@ -216,7 +220,7 @@ app.intent('TurnUpIntent', {
 						withDeviceValues(function (v) {
 							res.say(`The target temperature is now ${speakTemperature(v.CH1currentSetPoint)} degrees.`);
 							if (v.CH1heatOnOffStatus == 1) res.say('The heating is now on.');
-							console.log(`${logTimeString()}, ${v.CH1currentRoomTemp}, ${v.CH1currentSetPoint}, ${v.CH1heatOnOffStatus}`);
+							logStatus(v);
 							res.send();
 						});
 					});
@@ -246,7 +250,7 @@ app.intent('TurnDownIntent', {
 						withDeviceValues(function (v) {
 							res.say(`The target temperature is now ${speakTemperature(v.CH1currentSetPoint)} degrees.`);
 							if (v.CH1heatOnOffStatus == 1) res.say('The heating is still on though.');
-							console.log(`${logTimeString()}, ${v.CH1currentRoomTemp}, ${v.CH1currentSetPoint}, ${v.CH1heatOnOffStatus}`);
+							logStatus(v);
 							res.send();
 						});
 					});
@@ -278,7 +282,7 @@ app.intent('SetTempIntent', {
 						withDeviceValues(function (v) {
 							res.say(`The target temperature is now ${speakTemperature(v.CH1currentSetPoint)} degrees.`);
 							if (v.CH1heatOnOffStatus == 1) res.say('The heating is now on.');
-							console.log(`${logTimeString()}, ${v.CH1currentRoomTemp}, ${v.CH1currentSetPoint}, ${v.CH1heatOnOffStatus}`);
+							logStatus(v);
 							res.send();
 						});
 					});
@@ -314,7 +318,7 @@ app.intent('TurnIntent', {
 						withDeviceValues(function (v) {
 							res.say(`The target temperature is now ${speakTemperature(v.CH1currentSetPoint)} degrees.`);
 							res.card("Salus", `The target temperature is now ${speakTemperature(v.CH1currentSetPoint)}\xB0`);
-							console.log(`${logTimeString()}, ${v.CH1currentRoomTemp}, ${v.CH1currentSetPoint}, ${v.CH1heatOnOffStatus}`);
+							logStatus(v);
 							
 							andHoldIfRequiredFor(req.slot("duration"), function(holding, duration) {
 								if(holding) {
@@ -365,7 +369,7 @@ app.intent("AMAZON.StopIntent", {
 						withDeviceValues(function (v) {
 							res.say(`The target temperature is now ${speakTemperature(v.CH1currentSetPoint)} degrees.`);
 							if (v.CH1heatOnOffStatus == 1) res.say('The heating is now on.');
-							console.log(`${logTimeString()}, ${v.CH1currentRoomTemp}, ${v.CH1currentSetPoint}, ${v.CH1heatOnOffStatus}`);
+							logStatus(v);
 							res.send();
 						});
 					});
