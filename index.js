@@ -302,18 +302,26 @@ app.intent('TurnIntent', {
 							console.log('Duration: ' + durationValue);
 							if (typeof durationValue == 'undefined') {
 								if (v.CH1heatOnOffStatus == 1) { res.say('The heating is now on.'); }
+								res.send();
 							} else {
 								var duration = new Duration(durationValue);
 								var durationText = duration.ago().replace(' ago', '');
-								res.say(`The heating is now on and will turn off in  ${durationText}`);
 								var stepfunctions = new AWS.StepFunctions();
 								var params = {
 									stateMachineArn: 'arn:aws:states:eu-west-1:327485730614:stateMachine:Thermostat',
 									input: `{"duration": ${duration.inSeconds()}}`
 								};
+								res.send();
+								// stepfunctions.startExecution(params, function(err, data) { 
+								// 	if (err) {
+								// 		console.log(err, err.stack);
+								// 		res.say('The heating is now on and will not turn off.');
+								// 	} else {
+								// 		res.say(`The heating is now on and will turn off in  ${durationText}`);
+								// 	}
+								// 	res.send();
+								// };
 							}
-
-							res.send();
 						});
 					});
 				}
