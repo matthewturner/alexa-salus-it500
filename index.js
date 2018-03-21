@@ -88,7 +88,7 @@ function whenOnline(callback, offlineCallback) {
 	request.get(`${host}/public/ajax_device_online_status.php?devId=${devId}&token=${token}&_=${timeString()}`,
 		function (error, response, body) {
 			if (!error && response.statusCode == 200) {
-				if (body == '"online"') callback();
+				if ((body == '"online"') || (body == '"online lowBat"')) callback();
 				else offlineCallback();
 			} else offlineCallback();
 		});
