@@ -31,7 +31,7 @@ function timeString() {
 	return (days * 86400) + ((dat.getUTCHours() * 60) + dat.getUTCMinutes()) * 60 + dat.getUTCSeconds();
 }
 
-function logTimeString() {
+function logTimeString(timeDelimiter, zulu) {
 	var dat = new Date();
 	var y = dat.getFullYear() + "";
 	var m = dat.getMonth() + 1;
@@ -51,8 +51,10 @@ function logTimeString() {
 	if (ss < 10) ss = "0" + ss;
 	else ss = ss + "";
 
+	var z = '';
+	if (zulu) z = 'Z';
 
-	return (y + "-" + m + "-" + d + " " + h + ":" + mm + ":" + ss);
+	return (`${y}-${m}-${d}${timeDelimiter}${h}:${mm}:${ss}${z}`);
 }
 
 function login(callback) {
@@ -134,8 +136,9 @@ function andHoldIfRequiredFor(durationValue, callback) {
 		var stepfunctions = new AWS.StepFunctions();
 		var params = {
 			stateMachineArn: process.env.STEP_FUNCTION_ARN,
-			input: `{"duration": ${duration.inSeconds()}}`
+			input: JSON.stringify(turnOffCallbackPayload(duration.inSeconds()))
 		};
+		console.log('Registering callback...');
 		stepfunctions.startExecution(params, function(err, data) { 
 			if (err) { console.log(err, err.stack); }
 			callback(true, duration);
@@ -144,7 +147,56 @@ function andHoldIfRequiredFor(durationValue, callback) {
 }
 
 function logStatus(v) {
-	console.log(`${logTimeString()}, ${v.CH1currentRoomTemp}, ${v.CH1currentSetPoint}, ${v.CH1heatOnOffStatus}`);
+	console.log(`${logTimeString(' ', false)}, ${v.CH1currentRoomTemp}, ${v.CH1currentSetPoint}, ${v.CH1heatOnOffStatus}`);
+}
+
+function turnOffCallbackPayload(duration) {
+	return {
+	"duration": duration,
+  "version": "1.0",
+  "session": {
+    "new": true,
+    "user": {
+      "userId": process.env.ALEXA_USER_ID
+    }
+  },
+
+  "request": {
+    "type": "IntentRequest",
+    "requestId": process.env.ALEXA_REQUEST_ID,
+    "timestamp": logTimeString('T', true),
+    "locale": "en-GB",
+    "intent": {
+      "name": "TurnIntent",
+      "confirmationStatus": "NONE",
+      "slots": {
+        "onoff": {
+          "name": "onoff",
+          "value": "off",
+          "resolutions": {
+            "resolutionsPerAuthority": [
+              {
+                "authority": process.env.ALEXA_AUTHORITY,
+                "status": {
+                  "code": "ER_SUCCESS_MATCH"
+                },
+                "values": [
+                  {
+                    "value": {
+                      "name": "off",
+                      "id": process.env.ALEXA_OFF_VALUE_ID
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          "confirmationStatus": "NONE"
+        }
+      }
+    }
+  }
+};
 }
 
 // Define an alexa-app
@@ -160,7 +212,7 @@ app.pre = function (request, response, type) {
 };
 
 app.launch(function (req, res) {
-	console.log('launching...');
+	console.log('Launching...');
 	login(function () {
 		whenOnline(function () {
 				res.say("Boiler is online");
@@ -323,7 +375,11 @@ app.intent('TurnIntent', {
 							andHoldIfRequiredFor(req.slot("duration"), function(holding, duration) {
 								if(holding) {
 									var durationText = duration.ago().replace(' ago', '');
-									if (v.CH1heatOnOffStatus == 1) { res.say(`The heating is now on and will turn off in  ${durationText}`); }
+									if (v.CH1heatOnOffStatus == 1) { 
+										res.say(`The heating is now on and will turn off in ${durationText}`);
+									} else {
+										res.say(`The heating will turn off in ${durationText}`);
+									}
 								} else {
 									if (v.CH1heatOnOffStatus == 1) { res.say('The heating is now on.'); }
 								}
