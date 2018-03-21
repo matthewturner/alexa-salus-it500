@@ -14,7 +14,19 @@ This skill has 5 intents :-
 * Alexa, ask boiler to set higher
 * Alexa, ask boiler to set lower
 * Alexa, ask boiler to set to x degrees
-* Alexa, ask boiler to turn [on/off]
+* Alexa, ask boiler to turn [on/off] [for x hours]
+
+## Auto-switch off/Hold time
+
+Some boilers have a hold time which keeps the boiler on for the specified time and automatically switches it off when the hold time has elapsed.
+
+The last intent can take an optional duration which can be any valid time statement (eg 20 minutes or 3 hours).
+
+**NB** This feature is experimental
+
+* It is optional and requires a hosted lambda and step function
+* Cancellation of the hold-time is not yet supported; the boiler will switch off
+* Updating the hold-time is not yet supported; if you request a second hold-time they will both executed when their respective times elapse
 
 ## Setting Up
 
@@ -33,3 +45,5 @@ This skill has 5 intents :-
 1. Declare your username/password and the default temperatures for on/off using environment variables
 
 1. Point to your SSL'd external URL or host in AWS Lambda
+
+1. Optionally create the step function for hold times/auto-switch off
