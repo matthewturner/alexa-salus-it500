@@ -10,11 +10,12 @@
     "applicationId": "amzn1.echo-sdk-ams.app.999999-d0ed-9999-ad00-999999d00ebe"
   },
   "dependencies": {
-    "alexa-app": "^2.1.0",
-    "request": "^2.79.0",
-    "cheerio": "^0.22.0",
-    "fs": "^0.0.2",
     "JSON": "^1.0.0",
-    "durationjs": "^1.1.1"
+    "alexa-app": "^2.1.0",
+    "cheerio": "^0.22.0",
+    "cryptiles": "^4.1.2",
+    "durationjs": "^1.1.1",
+    "fs": "^0.0.2",
+    "request": "^2.79.0"
   }
 }
