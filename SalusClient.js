@@ -49,30 +49,29 @@ class SalusClient {
     }
 
     async online() {
-        var body = await request.get(`${host}/public/ajax_device_online_status.php?devId=${this._devId}&token=${this._token}&_=${timeString()}`);
+        var body = await request.get(`${host}/public/ajax_device_online_status.php?devId=${this._devId}&token=${this._token}&_=${this.timeString()}`);
         return (body == '"online"' || body == '"online lowBat"');
     }
 
     async device() {
-        var body = await request.get(`${host}/public/ajax_device_values.php?devId=${devId}&token=${token}&_=${timeString()}`);
+        var body = await request.get(`${host}/public/ajax_device_values.php?devId=${this._devId}&token=${this._token}&_=${this.timeString()}`);
         var deviceInfo = JSON.parse(body);
         return {
             contactable: (deviceInfo.CH1currentSetPoint == 32.0),
-            currentTemperature: parseFloat(v.CH1currentRoomTemp),
-	        targetTemperature: parseFloat(v.CH1currentSetPoint),
-	        status: (v.CH1heatOnOffStatus == 1 ? 'on' : 'off')
+            currentTemperature: parseFloat(deviceInfo.CH1currentRoomTemp),
+	        targetTemperature: parseFloat(deviceInfo.CH1currentSetPoint),
+	        status: (deviceInfo.CH1heatOnOffStatus == 1 ? 'on' : 'off')
         };
     }
 
-    
     async setTemperature(temp) {
         var t = parseFloat(temp).toFixed(1);
         console.log("Setting temp: " + t);
         var form = {
             form: {
-                'token': token,
+                'token': this._token,
                 'tempUnit': 0,
-                'devId': devId,
+                'devId': this._devId,
                 'current_tempZ1_set': 1,
                 'current_tempZ1': t
             }
