@@ -58,19 +58,20 @@ function logTimeString(timeDelimiter, zulu) {
 }
 
 function login(callback) {
-	request.post(
-		`${host}/public/login.php`, {
-			form: {
-				'IDemail': username,
-				'password': password,
-				'login': 'Login'
-			}
-		},
-		function (error, response, body) {
+	var form = {
+		form: {
+			'IDemail': username,
+			'password': password,
+			'login': 'Login'
+		}
+	};
+
+	request.post(`${host}/public/login.php`, form,
+		(error, response, body) => {
 			if (!error) {
 				// Follow redirect to devices page
 				request.get(`${host}/public/devices.php`,
-					function (error, response, body) {
+					(error, response, body) => {
 						if (!error && response.statusCode == 200) {
 							// Extract the devId and token
 							var $ = cheerio.load(body);
@@ -86,7 +87,7 @@ function login(callback) {
 
 function whenOnline(callback, offlineCallback) {
 	request.get(`${host}/public/ajax_device_online_status.php?devId=${devId}&token=${token}&_=${timeString()}`,
-		function (error, response, body) {
+		(error, response, body) => {
 			if (!error && response.statusCode == 200) {
 				if ((body == '"online"') || (body == '"online lowBat"')) callback();
 				else offlineCallback();
@@ -96,7 +97,7 @@ function whenOnline(callback, offlineCallback) {
 
 function withDeviceValues(callback) {
 	request.get(`${host}/public/ajax_device_values.php?devId=${devId}&token=${token}&_=${timeString()}`,
-		function (error, response, body) {
+		(error, response, body) => {
 			if (!error && response.statusCode == 200) {
 				callback(JSON.parse(body));
 			}
@@ -106,17 +107,18 @@ function withDeviceValues(callback) {
 function setTemperature(temp, callback) {
 	var t = parseFloat(temp).toFixed(1);
 	console.log("Setting temp: " + t);
-	request.post(
-		`${host}/includes/set.php`, {
-			form: {
-				'token': token,
-				'tempUnit': 0,
-				'devId': devId,
-				'current_tempZ1_set': 1,
-				'current_tempZ1': t
-			}
-		},
-		function (error, response, body) {
+	var form = {
+		form: {
+			'token': token,
+			'tempUnit': 0,
+			'devId': devId,
+			'current_tempZ1_set': 1,
+			'current_tempZ1': t
+		}
+	};
+
+	request.post(`${host}/includes/set.php`, form,
+		(error, response, body) => {
 			if (!error) callback();
 		});
 }
@@ -139,7 +141,7 @@ function andHoldIfRequiredFor(durationValue, callback) {
 			input: JSON.stringify(turnOffCallbackPayload(duration.inSeconds()))
 		};
 		console.log('Registering callback...');
-		stepfunctions.startExecution(params, function(err, data) { 
+		stepfunctions.startExecution(params, (err, data) => {
 			if (err) { console.log(err, err.stack); }
 			callback(true, duration);
 		});
@@ -152,73 +154,66 @@ function logStatus(v) {
 
 function turnOffCallbackPayload(duration) {
 	return {
-	"duration": duration,
-  "version": "1.0",
-  "session": {
-    "new": true,
-    "user": {
-      "userId": process.env.ALEXA_USER_ID
-    }
-  },
+		"duration": duration,
+		"version": "1.0",
+		"session": {
+			"new": true,
+			"user": {
+				"userId": process.env.ALEXA_USER_ID
+			}
+		},
 
-  "request": {
-    "type": "IntentRequest",
-    "requestId": process.env.ALEXA_REQUEST_ID,
-    "timestamp": logTimeString('T', true),
-    "locale": "en-GB",
-    "intent": {
-      "name": "TurnIntent",
-      "confirmationStatus": "NONE",
-      "slots": {
-        "onoff": {
-          "name": "onoff",
-          "value": "off",
-          "resolutions": {
-            "resolutionsPerAuthority": [
-              {
-                "authority": process.env.ALEXA_AUTHORITY,
-                "status": {
-                  "code": "ER_SUCCESS_MATCH"
-                },
-                "values": [
-                  {
-                    "value": {
-                      "name": "off",
-                      "id": process.env.ALEXA_OFF_VALUE_ID
-                    }
-                  }
-                ]
-              }
-            ]
-          },
-          "confirmationStatus": "NONE"
-        }
-      }
-    }
-  }
-};
+		"request": {
+			"type": "IntentRequest",
+			"requestId": process.env.ALEXA_REQUEST_ID,
+			"timestamp": logTimeString('T', true),
+			"locale": "en-GB",
+			"intent": {
+				"name": "TurnIntent",
+				"confirmationStatus": "NONE",
+				"slots": {
+					"onoff": {
+						"name": "onoff",
+						"value": "off",
+						"resolutions": {
+							"resolutionsPerAuthority": [
+								{
+									"authority": process.env.ALEXA_AUTHORITY,
+									"status": {
+										"code": "ER_SUCCESS_MATCH"
+									},
+									"values": [
+										{
+											"value": {
+												"name": "off",
+												"id": process.env.ALEXA_OFF_VALUE_ID
+											}
+										}
+									]
+								}
+							]
+						},
+						"confirmationStatus": "NONE"
+					}
+				}
+			}
+		}
+	};
 }
 
 // Define an alexa-app
 var app = new alexa.app('boiler');
 
-app.pre = function (request, response, type) {
-	//if (request.applicationId != "amzn1.echo-sdk-ams.app.000000-d0ed-0000-ad00-000000d00ebe") {
-	// fail ungracefully 
-	//  response.fail("Invalid applicationId");
-	//}
+app.pre = (request, response, type) => { };
 
-	// Login
-};
-
-app.launch(function (req, res) {
+app.launch((req, res) => {
 	console.log('Launching...');
-	login(function () {
-		whenOnline(function () {
-				res.say("Boiler is online");
-				res.send();
-			},
-			function () {
+	login(() => {
+		whenOnline(() => {
+			res.say("Boiler is online");
+			res.send();
+		},
+			() => {
 				res.say("Sorry, the boiler is offline at the moment.");
 				res.send();
 			});
@@ -229,10 +224,10 @@ app.launch(function (req, res) {
 
 app.intent('TempIntent', {
 	"utterances": ["what the temperature is", "the temperature", "how hot it is"]
-}, function (req, res) {
-	login(function () {
-		whenOnline(function () {
-			withDeviceValues(function (v) {
+}, (req, res) => {
+	login(() => {
+		whenOnline(() => {
+			withDeviceValues((v) => {
 				if (v.CH1currentSetPoint == 32.0) {
 					res.say("Sorry, I couldn't contact the boiler.");
 				} else {
@@ -243,7 +238,7 @@ app.intent('TempIntent', {
 				logStatus(v);
 				res.send();
 			});
-		}, function () {
+		}, () => {
 			res.say("Sorry, the boiler is offline at the moment.");
 			res.send();
 		});
@@ -254,10 +249,10 @@ app.intent('TempIntent', {
 
 app.intent('TurnUpIntent', {
 	"utterances": ["to increase", "to turn up", "set warmer", "set higher"]
-}, function (req, res) {
-	login(function () {
-		whenOnline(function () {
-			withDeviceValues(function (v) {
+}, (req, res) => {
+	login(() => {
+		whenOnline(() => {
+			withDeviceValues((v) => {
 
 				// Heating is already on, don't make any changes 
 				if (v.CH1heatOnOffStatus == 1) {
@@ -268,8 +263,8 @@ app.intent('TurnUpIntent', {
 					res.send();
 				} else {
 					var t = parseFloat(v.CH1currentSetPoint) + 0.5;
-					setTemperature(t, function () {
-						withDeviceValues(function (v) {
+					setTemperature(t, () => {
+						withDeviceValues((v) => {
 							res.say(`The target temperature is now ${speakTemperature(v.CH1currentSetPoint)} degrees.`);
 							if (v.CH1heatOnOffStatus == 1) res.say('The heating is now on.');
 							logStatus(v);
@@ -278,7 +273,7 @@ app.intent('TurnUpIntent', {
 					});
 				}
 			});
-		}, function () {
+		}, () => {
 			res.say("Sorry, the boiler is offline at the moment.");
 			res.send();
 		});
@@ -288,18 +283,18 @@ app.intent('TurnUpIntent', {
 
 app.intent('TurnDownIntent', {
 	"utterances": ["to decrease", "to turn down", "set cooler", "set lower"]
-}, function (req, res) {
-	login(function () {
-		whenOnline(function () {
-			withDeviceValues(function (v) {
+}, (req, res) => {
+	login(() => {
+		whenOnline(() => {
+			withDeviceValues((v) => {
 
 				if (v.CH1currentSetPoint == 32.0) {
 					res.say("Sorry, I couldn't contact the boiler.");
 					res.send();
 				} else {
 					var t = parseFloat(v.CH1currentSetPoint) - 1.0;
-					setTemperature(t, function () {
-						withDeviceValues(function (v) {
+					setTemperature(t, () => {
+						withDeviceValues((v) => {
 							res.say(`The target temperature is now ${speakTemperature(v.CH1currentSetPoint)} degrees.`);
 							if (v.CH1heatOnOffStatus == 1) res.say('The heating is still on though.');
 							logStatus(v);
@@ -308,7 +303,7 @@ app.intent('TurnDownIntent', {
 					});
 				}
 			});
-		}, function () {
+		}, () => {
 			res.say("Sorry, the boiler is offline at the moment.");
 			res.send();
 		});
@@ -321,17 +316,17 @@ app.intent('SetTempIntent', {
 		"temp": "AMAZON.NUMBER"
 	},
 	"utterances": ["to set to {temp} degrees", "to set the temperature to {temp} degrees", "to set the temp to {temp} degrees"]
-}, function (req, res) {
-	login(function () {
-		whenOnline(function () {
-			withDeviceValues(function (v) {
+}, (req, res) => {
+	login(() => {
+		whenOnline(() => {
+			withDeviceValues((v) => {
 				if (v.CH1currentSetPoint == 32.0) {
 					res.say("Sorry, I couldn't contact the boiler.");
 					res.send();
 				} else {
 					var t = req.slot("temp");
-					setTemperature(t, function () {
-						withDeviceValues(function (v) {
+					setTemperature(t, () => {
+						withDeviceValues((v) => {
 							res.say(`The target temperature is now ${speakTemperature(v.CH1currentSetPoint)} degrees.`);
 							if (v.CH1heatOnOffStatus == 1) res.say('The heating is now on.');
 							logStatus(v);
@@ -340,7 +335,7 @@ app.intent('SetTempIntent', {
 					});
 				}
 			});
-		}, function () {
+		}, () => {
 			res.say("Sorry, the boiler is offline at the moment.");
 			res.send();
 		});
@@ -353,10 +348,10 @@ app.intent('TurnIntent', {
 		"onoff": "ONOFF"
 	},
 	"utterances": ["to turn {onoff}", "to turn heating {onoff}", "to turn the heating {onoff}"]
-}, function (req, res) {
-	login(function () {
-		whenOnline(function () {
-			withDeviceValues(function (v) {
+}, (req, res) => {
+	login(() => {
+		whenOnline(() => {
+			withDeviceValues((v) => {
 				if (v.CH1currentSetPoint == 32.0) {
 					res.say("Sorry, I couldn't contact the boiler.");
 					res.send();
@@ -366,16 +361,16 @@ app.intent('TurnIntent', {
 					if (onoff === 'off') {
 						t = process.env.DEFAULT_OFF_TEMP || '14';
 					}
-					setTemperature(t, function () {
-						withDeviceValues(function (v) {
+					setTemperature(t, () => {
+						withDeviceValues((v) => {
 							res.say(`The target temperature is now ${speakTemperature(v.CH1currentSetPoint)} degrees.`);
 							res.card("Salus", `The target temperature is now ${speakTemperature(v.CH1currentSetPoint)}\xB0`);
 							logStatus(v);
-							
-							andHoldIfRequiredFor(req.slot("duration"), function(holding, duration) {
-								if(holding) {
+
+							andHoldIfRequiredFor(req.slot("duration"), (holding, duration) => {
+								if (holding) {
 									var durationText = duration.ago().replace(' ago', '');
-									if (v.CH1heatOnOffStatus == 1) { 
+									if (v.CH1heatOnOffStatus == 1) {
 										res.say(`The heating is now on and will turn off in ${durationText}`);
 									} else {
 										res.say(`The heating will turn off in ${durationText}`);
@@ -389,7 +384,7 @@ app.intent('TurnIntent', {
 					});
 				}
 			});
-		}, function () {
+		}, () => {
 			res.say("Sorry, the boiler is offline at the moment.");
 			res.send();
 		});
@@ -398,10 +393,10 @@ app.intent('TurnIntent', {
 });
 
 app.intent("AMAZON.HelpIntent", {
-		"slots": {},
-		"utterances": []
-	},
-	function (request, response) {
+	"slots": {},
+	"utterances": []
+},
+	(request, response) => {
 		var helpOutput = "You can say 'set the temperature to 18 degrees' or ask 'the temperature'. You can also say stop or exit to quit.";
 		var reprompt = "What would you like to do?";
 		// AMAZON.HelpIntent must leave session open -> .shouldEndSession(false)
@@ -412,17 +407,17 @@ app.intent("AMAZON.HelpIntent", {
 app.intent("AMAZON.StopIntent", {
 	"slots": {},
 	"utterances": []
-}, function (req, res) {
-	login(function () {
-		whenOnline(function () {
-			withDeviceValues(function (v) {
+}, (req, res) => {
+	login(() => {
+		whenOnline(() => {
+			withDeviceValues((v) => {
 				if (v.CH1currentSetPoint == 32.0) {
 					res.say("Sorry, I couldn't contact the boiler.");
 					res.send();
 				} else {
 					var t = process.env.DEFAULT_OFF_TEMP || '14';
-					setTemperature(t, function () {
-						withDeviceValues(function (v) {
+					setTemperature(t, () => {
+						withDeviceValues((v) => {
 							res.say(`The target temperature is now ${speakTemperature(v.CH1currentSetPoint)} degrees.`);
 							if (v.CH1heatOnOffStatus == 1) res.say('The heating is now on.');
 							logStatus(v);
@@ -431,7 +426,7 @@ app.intent("AMAZON.StopIntent", {
 					});
 				}
 			});
-		}, function () {
+		}, () => {
 			res.say("Sorry, the boiler is offline at the moment.");
 			res.send();
 		});
