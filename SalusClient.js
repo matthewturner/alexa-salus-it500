@@ -49,15 +49,17 @@ class SalusClient {
     }
 
     async online() {
+        console.log('Checking device status...');
         var body = await request.get(`${host}/public/ajax_device_online_status.php?devId=${this._devId}&token=${this._token}&_=${this.timeString()}`);
-        return (body == '"online"' || body == '"online lowBat"');
+        console.log(`Status: ${body}`);
+        return ((body == '"online"') || (body == '"online lowBat"'));
     }
 
     async device() {
         var body = await request.get(`${host}/public/ajax_device_values.php?devId=${this._devId}&token=${this._token}&_=${this.timeString()}`);
         var deviceInfo = JSON.parse(body);
         return {
-            contactable: (deviceInfo.CH1currentSetPoint == 32.0),
+            contactable: !(deviceInfo.CH1currentSetPoint == 32.0),
             currentTemperature: parseFloat(deviceInfo.CH1currentRoomTemp),
 	        targetTemperature: parseFloat(deviceInfo.CH1currentSetPoint),
 	        status: (deviceInfo.CH1heatOnOffStatus == 1 ? 'on' : 'off')
