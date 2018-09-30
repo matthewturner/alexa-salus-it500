@@ -3,28 +3,20 @@ const alexa = require('alexa-app');
 const Duration = require('durationjs');
 const JSON = require('JSON');
 const AWS = require('aws-sdk');
+const SalusClient = require('./SalusClient');
+const StepFunction = require('./StepFunction');
 
 const host = 'https://salus-it500.com';
 
 // Allow this module to be reloaded by hotswap when changed
 module.change_code = 0;
 
-// The crucial pieces of information
-var devId;
-var token;
-
 // Enable cookies
 var request = request.defaults({
 	jar: true
 });
 
-function timeString() {
-	var dat = new Date();
-	var days = (dat.getYear() * 365) + (dat.getMonth() * 31) + dat.getDate();
-	return (days * 86400) + ((dat.getUTCHours() * 60) + dat.getUTCMinutes()) * 60 + dat.getUTCSeconds();
-}
-
-function logTimeString(timeDelimiter, zulu) {
+const logTimeString = (timeDelimiter, zulu) => {
 	var dat = new Date();
 	var y = dat.getFullYear() + "";
 	var m = dat.getMonth() + 1;
@@ -50,59 +42,40 @@ function logTimeString(timeDelimiter, zulu) {
 	return (`${y}-${m}-${d}${timeDelimiter}${h}:${mm}:${ss}${z}`);
 }
 
-async function login() {
-	client = new SalusClient();
+const login = async () => {
+	var client = new SalusClient();
 	await client.login(process.env.USERNAME, process.env.PASSWORD);
-	var credentials = client.credentials();
+	var credentials = client.credentials;
 	devId = credentials.devId;
 	token = credentials.token;
+	return client;
 }
 
-function whenOnline(callback, offlineCallback) {
-	request.get(`${host}/public/ajax_device_online_status.php?devId=${devId}&token=${token}&_=${timeString()}`,
-		(error, response, body) => {
-			if (!error && response.statusCode == 200) {
-				if ((body == '"online"') || (body == '"online lowBat"')) callback();
-				else offlineCallback();
-			} else offlineCallback();
-		});
+const verifyOnline = async (client) => {
+	if (await !client.online()) {
+		res.say("Sorry, the boiler is offline at the moment.");
+		res.send();
+		return false;
+	}
+	return true;
 }
 
-function withDeviceValues(callback) {
-	request.get(`${host}/public/ajax_device_values.php?devId=${devId}&token=${token}&_=${timeString()}`,
-		(error, response, body) => {
-			if (!error && response.statusCode == 200) {
-				callback(JSON.parse(body));
-			}
-		});
+const verifyContactable = (device) => {
+	if (!device.contactable) {
+		res.say("Sorry, I couldn't contact the boiler.");
+		res.send();
+		return false;
+	}
+	return true;
 }
 
-function setTemperature(temp, callback) {
-	var t = parseFloat(temp).toFixed(1);
-	console.log("Setting temp: " + t);
-	var form = {
-		form: {
-			'token': token,
-			'tempUnit': 0,
-			'devId': devId,
-			'current_tempZ1_set': 1,
-			'current_tempZ1': t
-		}
-	};
-
-	request.post(`${host}/includes/set.php`, form,
-		(error, response, body) => {
-			if (!error) callback();
-		});
-}
-
-function speakTemperature(temp) {
+const speakTemperature = (temp) => {
 	var t = parseFloat(temp);
 	if (parseFloat(t.toFixed(0)) != t) return t.toFixed(1);
 	else return t.toFixed(0);
 }
 
-function andHoldIfRequiredFor(durationValue, callback) {
+const andHoldIfRequiredFor = (durationValue, callback) => {
 	console.log('Duration: ' + durationValue);
 	if (typeof durationValue == 'undefined') {
 		callback(false, null);
@@ -111,7 +84,7 @@ function andHoldIfRequiredFor(durationValue, callback) {
 		var stepfunctions = new AWS.StepFunctions();
 		var params = {
 			stateMachineArn: process.env.STEP_FUNCTION_ARN,
-			input: JSON.stringify(turnOffCallbackPayload(duration.inSeconds()))
+			input: JSON.stringify(StepFunction.turnOffCallbackPayload(duration.inSeconds()))
 		};
 		console.log('Registering callback...');
 		stepfunctions.startExecution(params, (err, data) => {
@@ -121,60 +94,10 @@ function andHoldIfRequiredFor(durationValue, callback) {
 	}
 }
 
-function logStatus(v) {
-	console.log(`${logTimeString(' ', false)}, ${v.CH1currentRoomTemp}, ${v.CH1currentSetPoint}, ${v.CH1heatOnOffStatus}`);
+const logStatus = (device) => {
+	console.log(`${logTimeString(' ', false)}, ${device.currentTemperature}, ${device.targetTemperature}, ${device.status}`);
 }
 
-function turnOffCallbackPayload(duration) {
-	return {
-		"duration": duration,
-		"version": "1.0",
-		"session": {
-			"new": true,
-			"user": {
-				"userId": process.env.ALEXA_USER_ID
-			}
-		},
-
-		"request": {
-			"type": "IntentRequest",
-			"requestId": process.env.ALEXA_REQUEST_ID,
-			"timestamp": logTimeString('T', true),
-			"locale": "en-GB",
-			"intent": {
-				"name": "TurnIntent",
-				"confirmationStatus": "NONE",
-				"slots": {
-					"onoff": {
-						"name": "onoff",
-						"value": "off",
-						"resolutions": {
-							"resolutionsPerAuthority": [
-								{
-									"authority": process.env.ALEXA_AUTHORITY,
-									"status": {
-										"code": "ER_SUCCESS_MATCH"
-									},
-									"values": [
-										{
-											"value": {
-												"name": "off",
-												"id": process.env.ALEXA_OFF_VALUE_ID
-											}
-										}
-									]
-								}
-							]
-						},
-						"confirmationStatus": "NONE"
-					}
-				}
-			}
-		}
-	};
-}
-
-// Define an alexa-app
 var app = new alexa.app('boiler');
 
 app.pre = (request, response, type) => { };
@@ -182,14 +105,12 @@ app.pre = (request, response, type) => { };
 app.launch(async (req, res) => {
 	console.log('Launching...');
 	await login();
-	whenOnline(() => {
+	if (await client.online()) {
 		res.say("Boiler is online");
-		res.send();
-	},
-		() => {
-			res.say("Sorry, the boiler is offline at the moment.");
-			res.send();
-		});
+	} else {
+		res.say("Sorry, the boiler is offline at the moment.");
+	}
+	res.send();
 	console.log("before return");
 	return false;
 });
@@ -197,23 +118,20 @@ app.launch(async (req, res) => {
 app.intent('TempIntent', {
 	"utterances": ["what the temperature is", "the temperature", "how hot it is"]
 }, async (req, res) => {
-	await login();
-	whenOnline(() => {
-		withDeviceValues((v) => {
-			if (v.CH1currentSetPoint == 32.0) {
-				res.say("Sorry, I couldn't contact the boiler.");
-			} else {
-				res.say(`The current temperature is ${speakTemperature(v.CH1currentRoomTemp)} degrees.`);
-				res.say(`The target is ${speakTemperature(v.CH1currentSetPoint)} degrees.`);
-				if (v.CH1heatOnOffStatus == 1) res.say('The heating is on.');
-			}
-			logStatus(v);
-			res.send();
-		});
-	}, () => {
-		res.say("Sorry, the boiler is offline at the moment.");
-		res.send();
-	});
+	var client = await login();
+	if (await !verifyOnline(client)) {
+		return false;
+	}
+	var device = await client.device();
+	if (!verifyContactable(device)) {
+		return false;
+	}
+
+	res.say(`The current temperature is ${speakTemperature(device.currentTemperature)} degrees.`);
+	res.say(`The target is ${speakTemperature(device.targetTemperature)} degrees.`);
+	if (device.status == 'on') res.say('The heating is on.');
+	logStatus(device);
+	res.send();
 
 	return false;
 });
@@ -221,62 +139,50 @@ app.intent('TempIntent', {
 app.intent('TurnUpIntent', {
 	"utterances": ["to increase", "to turn up", "set warmer", "set higher"]
 }, async (req, res) => {
-	await login();
-	whenOnline(() => {
-		withDeviceValues((v) => {
+	var client = await login();
+	if (await !verifyOnline(client)) {
+		return false;
+	}
+	var device = await client.device();
+	if (!verifyContactable(device)) {
+		return false;
+	}
 
-			// Heating is already on, don't make any changes 
-			if (v.CH1heatOnOffStatus == 1) {
-				res.say('The heating is already on.');
-				res.send();
-			} else if (v.CH1currentSetPoint == 32.0) {
-				res.say("Sorry, I couldn't contact the boiler.");
-				res.send();
-			} else {
-				var t = parseFloat(v.CH1currentSetPoint) + 0.5;
-				setTemperature(t, () => {
-					withDeviceValues((v) => {
-						res.say(`The target temperature is now ${speakTemperature(v.CH1currentSetPoint)} degrees.`);
-						if (v.CH1heatOnOffStatus == 1) res.say('The heating is now on.');
-						logStatus(v);
-						res.send();
-					});
-				});
-			}
-		});
-	}, () => {
-		res.say("Sorry, the boiler is offline at the moment.");
+	if (device.status == 'on') {
+		res.say('The heating is already on.');
 		res.send();
-	});
+		return false;
+	} 
+	
+	var t = device.targetTemperature + 0.5;
+	await client.setTemperature(t);
+	var updatedDevice = await client.device();
+	res.say(`The target temperature is now ${speakTemperature(updatedDevice.targetTemperature)} degrees.`);
+	if (updatedDevice.status == 'on') res.say('The heating is now on.');
+	logStatus(device);
+	res.send();
 	return false;
 });
 
 app.intent('TurnDownIntent', {
 	"utterances": ["to decrease", "to turn down", "set cooler", "set lower"]
 }, async (req, res) => {
-	await login();
-	whenOnline(() => {
-		withDeviceValues((v) => {
+	var client = await login();
+	if (await !verifyOnline(client)) {
+		return false;
+	}
+	var device = await client.device();
+	if (!verifyContactable(device)) {
+		return false;
+	}
 
-			if (v.CH1currentSetPoint == 32.0) {
-				res.say("Sorry, I couldn't contact the boiler.");
-				res.send();
-			} else {
-				var t = parseFloat(v.CH1currentSetPoint) - 1.0;
-				setTemperature(t, () => {
-					withDeviceValues((v) => {
-						res.say(`The target temperature is now ${speakTemperature(v.CH1currentSetPoint)} degrees.`);
-						if (v.CH1heatOnOffStatus == 1) res.say('The heating is still on though.');
-						logStatus(v);
-						res.send();
-					});
-				});
-			}
-		});
-	}, () => {
-		res.say("Sorry, the boiler is offline at the moment.");
-		res.send();
-	});
+	var t = device.targetTemperature - 1.0;
+	await client.setTemperature(t);
+	var updatedDevice = await client.device();
+	res.say(`The target temperature is now ${speakTemperature(updatedDevice.targetTemperature)} degrees.`);
+	if (updatedDevice.status == 'on') res.say('The heating is still on though.');
+	logStatus(updatedDevice);
+	res.send();
 	return false;
 });
 
@@ -286,28 +192,22 @@ app.intent('SetTempIntent', {
 	},
 	"utterances": ["to set to {temp} degrees", "to set the temperature to {temp} degrees", "to set the temp to {temp} degrees"]
 }, async (req, res) => {
-	await login();
-	whenOnline(() => {
-		withDeviceValues((v) => {
-			if (v.CH1currentSetPoint == 32.0) {
-				res.say("Sorry, I couldn't contact the boiler.");
-				res.send();
-			} else {
-				var t = req.slot("temp");
-				setTemperature(t, () => {
-					withDeviceValues((v) => {
-						res.say(`The target temperature is now ${speakTemperature(v.CH1currentSetPoint)} degrees.`);
-						if (v.CH1heatOnOffStatus == 1) res.say('The heating is now on.');
-						logStatus(v);
-						res.send();
-					});
-				});
-			}
-		});
-	}, () => {
-		res.say("Sorry, the boiler is offline at the moment.");
-		res.send();
-	});
+	var client = await login();
+	if (await !verifyOnline(client)) {
+		return false;
+	}
+	var device = await client.device();
+	if (!verifyContactable(device)) {
+		return false;
+	}
+
+	var t = device.targetTemperature - 1.0;
+	await client.setTemperature(t);
+	var updatedDevice = await client.device();
+	res.say(`The target temperature is now ${speakTemperature(updatedDevice.targetTemperature)} degrees.`);
+	if (updatedDevice.status == 'on') res.say('The heating is now on.');
+	logStatus(updatedDevice);
+	res.send();
 	return false;
 });
 
@@ -317,43 +217,37 @@ app.intent('TurnIntent', {
 	},
 	"utterances": ["to turn {onoff}", "to turn heating {onoff}", "to turn the heating {onoff}"]
 }, async (req, res) => {
-	await login();
-	whenOnline(() => {
-		withDeviceValues((v) => {
-			if (v.CH1currentSetPoint == 32.0) {
-				res.say("Sorry, I couldn't contact the boiler.");
-				res.send();
-			} else {
-				var onoff = req.slot("onoff");
-				var t = process.env.DEFAULT_ON_TEMP || '20';
-				if (onoff === 'off') {
-					t = process.env.DEFAULT_OFF_TEMP || '14';
-				}
-				setTemperature(t, () => {
-					withDeviceValues((v) => {
-						res.say(`The target temperature is now ${speakTemperature(v.CH1currentSetPoint)} degrees.`);
-						res.card("Salus", `The target temperature is now ${speakTemperature(v.CH1currentSetPoint)}\xB0`);
-						logStatus(v);
+	var onoff = req.slot("onoff");
+	var t = process.env.DEFAULT_ON_TEMP || '20';
+	if (onoff === 'off') {
+		t = process.env.DEFAULT_OFF_TEMP || '14';
+	}
+	var client = await login();
+	if (await !verifyOnline(client)) {
+		return false;
+	}
+	var device = await client.device();
+	if (!verifyContactable(device)) {
+		return false;
+	}
 
-						andHoldIfRequiredFor(req.slot("duration"), (holding, duration) => {
-							if (holding) {
-								var durationText = duration.ago().replace(' ago', '');
-								if (v.CH1heatOnOffStatus == 1) {
-									res.say(`The heating is now on and will turn off in ${durationText}`);
-								} else {
-									res.say(`The heating will turn off in ${durationText}`);
-								}
-							} else {
-								if (v.CH1heatOnOffStatus == 1) { res.say('The heating is now on.'); }
-							}
-							res.send();
-						});
-					});
-				});
+	var t = device.targetTemperature - 1.0;
+	await client.setTemperature(t);
+	var updatedDevice = await client.device();
+	res.say(`The target temperature is now ${speakTemperature(updatedDevice.targetTemperature)} degrees.`);
+	logStatus(updatedDevice);
+
+	andHoldIfRequiredFor(req.slot("duration"), (holding, duration) => {
+		if (holding) {
+			var durationText = duration.ago().replace(' ago', '');
+			if (updatedDevice.status == 'on') {
+				res.say(`The heating is now on and will turn off in ${durationText}`);
+			} else {
+				res.say(`The heating will turn off in ${durationText}`);
 			}
-		});
-	}, () => {
-		res.say("Sorry, the boiler is offline at the moment.");
+		} else {
+			if (updatedDevice.status == 'on') { res.say('The heating is now on.'); }
+		}
 		res.send();
 	});
 	return false;
@@ -375,28 +269,22 @@ app.intent("AMAZON.StopIntent", {
 	"slots": {},
 	"utterances": []
 }, async (req, res) => {
-	await login();
-	whenOnline(() => {
-		withDeviceValues((v) => {
-			if (v.CH1currentSetPoint == 32.0) {
-				res.say("Sorry, I couldn't contact the boiler.");
-				res.send();
-			} else {
-				var t = process.env.DEFAULT_OFF_TEMP || '14';
-				setTemperature(t, () => {
-					withDeviceValues((v) => {
-						res.say(`The target temperature is now ${speakTemperature(v.CH1currentSetPoint)} degrees.`);
-						if (v.CH1heatOnOffStatus == 1) res.say('The heating is now on.');
-						logStatus(v);
-						res.send();
-					});
-				});
-			}
-		});
-	}, () => {
-		res.say("Sorry, the boiler is offline at the moment.");
-		res.send();
-	});
+	var client = await login();
+	if (await !verifyOnline(client)) {
+		return false;
+	}
+	var device = await client.device();
+	if (!verifyContactable(device)) {
+		return false;
+	}
+
+	var t = process.env.DEFAULT_OFF_TEMP || '14';
+	await client.setTemperature(t);
+	var updatedDevice = await client.device();
+	res.say(`The target temperature is now ${speakTemperature(updatedDevice.targetTemperature)} degrees.`);
+	if (updatedDevice.status == 'on') res.say('The heating is now on.');
+	logStatus(updatedDevice);
+	res.send();
 	return false;
 });
 
