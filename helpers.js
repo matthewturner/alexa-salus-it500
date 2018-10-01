@@ -1,8 +1,3 @@
-const Duration = require('durationjs');
-const JSON = require('JSON');
-const AWS = require('aws-sdk');
-const SalusClient = require('./SalusClient');
-
 const logTimeString = (timeDelimiter, zulu) => {
 	var dat = new Date();
 	var y = dat.getFullYear() + "";
@@ -88,60 +83,9 @@ const logStatus = (device) => {
 	console.log(`${logTimeString(' ', false)}, ${device.currentTemperature}, ${device.targetTemperature}, ${device.status}`);
 };
 
-const login = async () => {
-	var client = new SalusClient();
-	await client.login(process.env.USERNAME, process.env.PASSWORD);
-	return client;
-};
-
-const verifyOnline = async (client, response) => {
-	var online = await client.online();
-	if (!online) {
-		response.say("Sorry, the boiler is offline at the moment.");
-		response.send();
-		return false;
-	}
-	return true;
-};
-
-const verifyContactable = (device, response) => {
-	if (!device.contactable) {
-		response.say("Sorry, I couldn't contact the boiler.");
-		response.send();
-		return false;
-	}
-	return true;
-};
-
-const andHoldIfRequiredFor = (durationValue) => {
-	return new Promise((resolve, reject) => {
-		console.log(`Duration: ${durationValue}`);
-		if (typeof durationValue == 'undefined') {
-			resolve({holding: false, duration: null});
-		} else {
-			var duration = new Duration(durationValue);
-			var stepfunctions = new AWS.StepFunctions();
-			var params = {
-				stateMachineArn: process.env.STEP_FUNCTION_ARN,
-				input: JSON.stringify(turnOffCallbackPayload(duration.inSeconds()))
-			};
-			console.log('Registering callback...');
-			stepfunctions.startExecution(params, (err, data) => {
-				if (err) { console.log(err, err.stack); reject(err); }
-				console.log('Registered callback');
-				resolve({holding: true, duration: duration});
-			});
-		}
-	});
-};
-
 module.exports = { 
 	logTimeString, 
 	turnOffCallbackPayload, 
 	speakTemperature,
-	logStatus,
-	login,
-	verifyOnline,
-	verifyContactable,
-	andHoldIfRequiredFor
+	logStatus
 };
