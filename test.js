@@ -1,21 +1,31 @@
-const SalusClient = require('./SalusClient');
+const ControlService = require('./ControlService');
+
+const say = (messages) => {
+    if (messages instanceof Array) {
+		for (const message of messages) {
+			console.log(message);
+		}
+	} else {
+		console.log(messages);
+	}
+};
 
 const main = async () => {
-    var client = new SalusClient();
-
-    await client.login(process.env.USERNAME, process.env.PASSWORD);
-
-    console.log(client.credentials);
-
-    console.log(await client.device());
-
-    console.log(await client.online());
-
-    console.log('Setting temp...');
-
-    await client.setTemperature(process.env.TARGET_TEMPERATURE);
-
-    console.log('Done!');
+    var onOff = 'on';
+	var duration = process.env.DURATION;
+	var service = new ControlService();
+	try {
+		var messages = await service.turn(onOff, duration);
+		say(messages);
+	} catch (e) {
+		say(e);
+    }
+    // try {
+    //     var duration = await service.statusOf('arn:aws:states:eu-west-1:327485730614:execution:Thermostat:547b7632-aca2-4f66-80e2-ead395487b78');
+    //     console.log(duration);
+	// } catch (e) {
+	// 	say(e);
+    // }
 };
 
 main();

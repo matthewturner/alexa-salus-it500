@@ -125,9 +125,9 @@ class ControlService {
         helpers.logStatus(updatedDevice);
 
         var intent = await this.andHoldIfRequiredFor(duration);
-        console.log(`Intent: ${intent}`);
         if (intent.holding) {
             var durationText = intent.duration.ago().replace(' ago', '');
+            console.log(`Holding for ${durationText} {${intent.executionId}}`);
             if (updatedDevice.status == 'on') {
                 messages.push(`The heating is now on and will turn off in ${durationText}`);
             } else {
@@ -157,11 +157,31 @@ class ControlService {
                 stepfunctions.startExecution(params, (err, data) => {
                     if (err) { console.log(err, err.stack); reject(err); }
                     console.log('Registered callback');
-                    resolve({ holding: true, duration: duration });
+                    resolve({ 
+                        holding: true,
+                        duration: duration,
+                        executionId: data.executionArn
+                    });
                 });
             }
         });
-    };
+    }
+
+    statusOf(executionId) {
+        return new Promise((resolve, reject) => {
+            var stepfunctions = new AWS.StepFunctions();
+            var params = {
+                executionArn: executionId 
+            };
+            stepfunctions.describeExecution(params, (err, data) => {
+                if (err) { console.log(err, err.stack); reject(err); }
+                resolve({
+                    status: data.status,
+                    duration: JSON.parse(data.input).duration
+                });
+            });
+        });
+    }
 }
 
 module.exports = ControlService;
