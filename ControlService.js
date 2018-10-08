@@ -1,8 +1,13 @@
 const SalusClient = require('./SalusClient');
 const HoldStrategy = require('./AwsHoldStrategy');
+const ThermostatRepository = require('./ThermostatRepository');
 const helpers = require('./helpers');
 
 class ControlService {
+    constructor(context) {
+        this._context = context;
+    }
+
     async login() {
         var client = new SalusClient();
         await client.login(process.env.USERNAME, process.env.PASSWORD);
@@ -38,10 +43,18 @@ class ControlService {
         var device = await client.device();
         this.verifyContactable(device);
 
+        var thermostatRepository = new ThermostatRepository();
+        var thermostat = await thermostatRepository.find(this._context.userId);
+
         var messages = [];
         messages.push(`The current temperature is ${helpers.speakTemperature(device.currentTemperature)} degrees.`);
         messages.push(`The target is ${helpers.speakTemperature(device.targetTemperature)} degrees.`);
-        if (device.status == 'on') messages.push('The heating is on');
+        if (device.status == 'on') {
+            messages.push('The heating is on');
+            if (thermostat) {
+                messages.push(`and will turn off in ${thermostat.duration.ago().replace(' ago', '')}`);
+            }
+        }
 
         helpers.logStatus(device);
         return messages;

@@ -80,7 +80,7 @@ const speakTemperature = (temp) => {
 };
 
 const logStatus = (device) => {
-	console.log(`${logTimeString(' ', false)}, ${device.currentTemperature}, ${device.targetTemperature}, ${device.status}`);
+	console.log(`${logTimeString(' ', false)} ${device.currentTemperature} => ${device.targetTemperature} (${device.status})`);
 };
 
 module.exports = { 

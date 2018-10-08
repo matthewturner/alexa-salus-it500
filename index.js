@@ -21,7 +21,7 @@ const say = (response, messages) => {
 
 app.launch(async (request, response) => {
 	console.log('Launching...');
-	var service = new ControlService();
+	var service = new ControlService({ userId: request.userId });
 	try {
 		var messages = await service.launch();
 		say(response, messages);
@@ -34,7 +34,7 @@ app.launch(async (request, response) => {
 app.intent('TempIntent', {
 	"utterances": ["what the temperature is", "the temperature", "how hot it is"]
 }, async (request, response) => {
-	var service = new ControlService();
+	var service = new ControlService({ userId: request.userId });
 	try {
 		var messages = await service.status();
 		say(response, messages);
@@ -47,7 +47,7 @@ app.intent('TempIntent', {
 app.intent('TurnUpIntent', {
 	"utterances": ["to increase", "to turn up", "set warmer", "set higher"]
 }, async (request, response) => {
-	var service = new ControlService();
+	var service = new ControlService({ userId: request.userId });
 	try {
 		var messages = await service.turnUp();
 		say(response, messages);
@@ -60,7 +60,7 @@ app.intent('TurnUpIntent', {
 app.intent('TurnDownIntent', {
 	"utterances": ["to decrease", "to turn down", "set cooler", "set lower"]
 }, async (request, response) => {
-	var service = new ControlService();
+	var service = new ControlService({ userId: request.userId });
 	try {
 		var messages = await service.turnDown();
 		say(response, messages);
@@ -76,7 +76,7 @@ app.intent('SetTempIntent', {
 	},
 	"utterances": ["to set to {temp} degrees", "to set the temperature to {temp} degrees", "to set the temp to {temp} degrees"]
 }, async (request, response) => {
-	var service = new ControlService();
+	var service = new ControlService({ userId: request.userId });
 	try {
 		var messages = await service.setTemperature(request.slot('temp'));
 		say(response, messages);
@@ -94,7 +94,7 @@ app.intent('TurnIntent', {
 }, async (request, response) => {
 	var onOff = request.slot("onoff");
 	var duration = request.slot('duration');
-	var service = new ControlService();
+	var service = new ControlService({ userId: request.userId });
 	try {
 		var messages = await service.turn(onOff, duration);
 		say(response, messages);
@@ -120,7 +120,7 @@ app.intent("AMAZON.StopIntent", {
 	"slots": {},
 	"utterances": []
 }, async (request, response) => {
-	var service = new ControlService();
+	var service = new ControlService({ userId: request.userId });
 	try {
 		var messages = await service.turn('off');
 		say(response, messages);
