@@ -1,7 +1,5 @@
-const Duration = require('durationjs');
-const JSON = require('JSON');
-const AWS = require('aws-sdk');
 const SalusClient = require('./SalusClient');
+const HoldStrategy = require('./AwsHoldStrategy');
 const helpers = require('./helpers');
 
 class ControlService {
@@ -43,7 +41,8 @@ class ControlService {
         var messages = [];
         messages.push(`The current temperature is ${helpers.speakTemperature(device.currentTemperature)} degrees.`);
         messages.push(`The target is ${helpers.speakTemperature(device.targetTemperature)} degrees.`);
-        if (device.status == 'on') messages.push('The heating is on.');
+        if (device.status == 'on') messages.push('The heating is on');
+
         helpers.logStatus(device);
         return messages;
     };
@@ -124,7 +123,8 @@ class ControlService {
         messages.push(`The target temperature is now ${helpers.speakTemperature(updatedDevice.targetTemperature)} degrees.`);
         helpers.logStatus(updatedDevice);
 
-        var intent = await this.andHoldIfRequiredFor(duration);
+        var holdStrategy = new HoldStrategy();
+        var intent = await holdStrategy.holdIfRequiredFor(duration);
         if (intent.holding) {
             var durationText = intent.duration.ago().replace(' ago', '');
             console.log(`Holding for ${durationText} {${intent.executionId}}`);
@@ -139,48 +139,11 @@ class ControlService {
         return messages;
     }
 
-    andHoldIfRequiredFor(durationValue) {
-        return new Promise((resolve, reject) => {
-            console.log(`Duration: ${durationValue}`);
-            if (typeof durationValue == 'undefined') {
-                console.log('No callback required...');
-                resolve({ holding: false, duration: null });
-            } else {
-                console.log('Configuring callback...');
-                var duration = new Duration(durationValue);
-                var stepfunctions = new AWS.StepFunctions();
-                var params = {
-                    stateMachineArn: process.env.STEP_FUNCTION_ARN,
-                    input: JSON.stringify(helpers.turnOffCallbackPayload(duration.inSeconds()))
-                };
-                console.log('Registering callback...');
-                stepfunctions.startExecution(params, (err, data) => {
-                    if (err) { console.log(err, err.stack); reject(err); }
-                    console.log('Registered callback');
-                    resolve({ 
-                        holding: true,
-                        duration: duration,
-                        executionId: data.executionArn
-                    });
-                });
-            }
-        });
-    }
-
-    statusOf(executionId) {
-        return new Promise((resolve, reject) => {
-            var stepfunctions = new AWS.StepFunctions();
-            var params = {
-                executionArn: executionId 
-            };
-            stepfunctions.describeExecution(params, (err, data) => {
-                if (err) { console.log(err, err.stack); reject(err); }
-                resolve({
-                    status: data.status,
-                    duration: JSON.parse(data.input).duration
-                });
-            });
-        });
+    async holdStatus() {
+        var executionId = 'x';
+        var holdStrategy = new HoldStrategy();
+        var status = await holdStrategy.statusOf(executionId);
+        return status;
     }
 }
 
