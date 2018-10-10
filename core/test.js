@@ -3,7 +3,7 @@ const AwsHoldStrategy = require('../aws/HoldStrategy');
 const DefaultHoldStrategy = require('../core/HoldStrategy');
 
 const say = (messages) => {
-    if (messages instanceof Array) {
+	if (messages instanceof Array) {
 		for (const message of messages) {
 			console.log(message);
 		}
@@ -13,7 +13,7 @@ const say = (messages) => {
 };
 
 const main = async () => {
-    var onOff = 'on';
+	var onOff = 'on';
 	var duration = process.env.DURATION;
 	var context = { userId: 'someUserx' };
 	var holdStrategy;
@@ -28,13 +28,13 @@ const main = async () => {
 		say(messages);
 	} catch (e) {
 		say(e);
-    }
-    try {
-        var messages = await service.status();
-        say(messages);
+	}
+	try {
+		var messages = await service.status();
+		say(messages);
 	} catch (e) {
 		say(e);
-    }
+	}
 };
 
 main();
