@@ -1,5 +1,7 @@
 const alexa = require('alexa-app');
-const ControlService = require('./ControlService');
+const AwsHoldStrategy = require('./HoldStrategy');
+const DefaultHoldStrategy = require('../core/HoldStrategy');
+const ControlService = require('../core/ControlService');
 
 // Allow this module to be reloaded by hotswap when changed
 module.change_code = 0;
@@ -7,6 +9,17 @@ module.change_code = 0;
 var app = new alexa.app('boiler');
 
 app.pre = (request, response, type) => { };
+
+const controlService = (userId) => {
+	var context = { userId };
+	var holdStrategy;
+	if (process.env.HOLD_STRATEGY === 'aws') {
+		holdStrategy = new AwsHoldStrategy(context);
+	} else {
+		holdStrategy = new DefaultHoldStrategy(context);
+	}
+	return new ControlService(context, holdStrategy);
+};
 
 const say = (response, messages) => {
 	if (messages instanceof Array) {
@@ -21,7 +34,7 @@ const say = (response, messages) => {
 
 app.launch(async (request, response) => {
 	console.log('Launching...');
-	var service = new ControlService();
+	var service = controlService(request.userId);
 	try {
 		var messages = await service.launch();
 		say(response, messages);
@@ -34,7 +47,7 @@ app.launch(async (request, response) => {
 app.intent('TempIntent', {
 	"utterances": ["what the temperature is", "the temperature", "how hot it is"]
 }, async (request, response) => {
-	var service = new ControlService();
+	var service = controlService(request.userId);
 	try {
 		var messages = await service.status();
 		say(response, messages);
@@ -47,7 +60,7 @@ app.intent('TempIntent', {
 app.intent('TurnUpIntent', {
 	"utterances": ["to increase", "to turn up", "set warmer", "set higher"]
 }, async (request, response) => {
-	var service = new ControlService();
+	var service = controlService(request.userId);
 	try {
 		var messages = await service.turnUp();
 		say(response, messages);
@@ -60,7 +73,7 @@ app.intent('TurnUpIntent', {
 app.intent('TurnDownIntent', {
 	"utterances": ["to decrease", "to turn down", "set cooler", "set lower"]
 }, async (request, response) => {
-	var service = new ControlService();
+	var service = controlService(request.userId);
 	try {
 		var messages = await service.turnDown();
 		say(response, messages);
@@ -76,7 +89,7 @@ app.intent('SetTempIntent', {
 	},
 	"utterances": ["to set to {temp} degrees", "to set the temperature to {temp} degrees", "to set the temp to {temp} degrees"]
 }, async (request, response) => {
-	var service = new ControlService();
+	var service = controlService(request.userId);
 	try {
 		var messages = await service.setTemperature(request.slot('temp'));
 		say(response, messages);
@@ -94,7 +107,7 @@ app.intent('TurnIntent', {
 }, async (request, response) => {
 	var onOff = request.slot("onoff");
 	var duration = request.slot('duration');
-	var service = new ControlService();
+	var service = controlService(request.userId);
 	try {
 		var messages = await service.turn(onOff, duration);
 		say(response, messages);
@@ -120,7 +133,7 @@ app.intent("AMAZON.StopIntent", {
 	"slots": {},
 	"utterances": []
 }, async (request, response) => {
-	var service = new ControlService();
+	var service = controlService(request.userId);
 	try {
 		var messages = await service.turn('off');
 		say(response, messages);

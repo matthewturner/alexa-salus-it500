@@ -1,12 +1,13 @@
-const Duration = require('durationjs');
-const JSON = require('JSON');
-const AWS = require('aws-sdk');
-const SalusClient = require('./SalusClient');
-const helpers = require('./helpers');
+const Salus = require('../thermostats/Salus');
 
 class ControlService {
+    constructor(context, holdStrategy) {
+        this._context = context;
+        this._holdStrategy = holdStrategy;
+    }
+
     async login() {
-        var client = new SalusClient();
+        var client = new Salus();
         await client.login(process.env.USERNAME, process.env.PASSWORD);
         return client;
     };
@@ -14,22 +15,22 @@ class ControlService {
     async verifyOnline(client) {
         var online = await client.online();
         if (!online) {
-            throw "Sorry, the boiler is offline at the moment.";
+            throw "Sorry, the thermostat is offline at the moment.";
         }
     };
 
     verifyContactable(device) {
         if (!device.contactable) {
-            throw "Sorry, I couldn't contact the boiler.";
+            throw "Sorry, I couldn't contact the thermostat.";
         }
     };
 
     async launch() {
         var client = await this.login();
         if (await client.online()) {
-            return "Boiler is online";
+            return "thermostat is online";
         } else {
-            return "Sorry, the boiler is offline at the moment.";
+            return "Sorry, the thermostat is offline at the moment.";
         }
     };
 
@@ -40,11 +41,21 @@ class ControlService {
         var device = await client.device();
         this.verifyContactable(device);
 
+        var status = await this._holdStrategy.status();
+
         var messages = [];
-        messages.push(`The current temperature is ${helpers.speakTemperature(device.currentTemperature)} degrees.`);
-        messages.push(`The target is ${helpers.speakTemperature(device.targetTemperature)} degrees.`);
-        if (device.status == 'on') messages.push('The heating is on.');
-        helpers.logStatus(device);
+        messages.push(`The current temperature is ${this.speakTemperature(device.currentTemperature)} degrees.`);
+        messages.push(`The target is ${this.speakTemperature(device.targetTemperature)} degrees.`);
+        if (device.status == 'on') {
+            console.log(status);
+            if (status.status === 'running') {
+                messages.push(`The heating is on and will turn off in ${status.duration.ago().replace(' ago', '')}`);
+            } else {
+                messages.push('The heating is on');
+            }
+        }
+
+        this.logStatus(device);
         return messages;
     };
 
@@ -64,9 +75,9 @@ class ControlService {
         var updatedDevice = await client.device();
 
         var messages = [];
-        messages.push(`The target temperature is now ${helpers.speakTemperature(updatedDevice.targetTemperature)} degrees.`);
+        messages.push(`The target temperature is now ${this.speakTemperature(updatedDevice.targetTemperature)} degrees.`);
         if (updatedDevice.status == 'on') messages.push('The heating is now on.');
-        helpers.logStatus(device);
+        this.logStatus(device);
         return messages;
     };
 
@@ -82,9 +93,9 @@ class ControlService {
         var updatedDevice = await client.device();
 
         var messages = [];
-        messages.push(`The target temperature is now ${helpers.speakTemperature(updatedDevice.targetTemperature)} degrees.`);
+        messages.push(`The target temperature is now ${this.speakTemperature(updatedDevice.targetTemperature)} degrees.`);
         if (updatedDevice.status == 'on') messages.push('The heating is still on though.');
-        helpers.logStatus(updatedDevice);
+        this.logStatus(updatedDevice);
         return messages;
     };
 
@@ -99,9 +110,9 @@ class ControlService {
         var updatedDevice = await client.device();
 
         var messages = [];
-        messages.push(`The target temperature is now ${helpers.speakTemperature(updatedDevice.targetTemperature)} degrees.`);
+        messages.push(`The target temperature is now ${this.speakTemperature(updatedDevice.targetTemperature)} degrees.`);
         if (updatedDevice.status == 'on') messages.push('The heating is now on.');
-        helpers.logStatus(updatedDevice);
+        this.logStatus(updatedDevice);
         return messages;
     };
 
@@ -121,10 +132,10 @@ class ControlService {
         var updatedDevice = await client.device();
 
         var messages = [];
-        messages.push(`The target temperature is now ${helpers.speakTemperature(updatedDevice.targetTemperature)} degrees.`);
-        helpers.logStatus(updatedDevice);
+        messages.push(`The target temperature is now ${this.speakTemperature(updatedDevice.targetTemperature)} degrees.`);
+        this.logStatus(updatedDevice);
 
-        var intent = await this.andHoldIfRequiredFor(duration);
+        var intent = await this._holdStrategy.holdIfRequiredFor(duration);
         if (intent.holding) {
             var durationText = intent.duration.ago().replace(' ago', '');
             console.log(`Holding for ${durationText} {${intent.executionId}}`);
@@ -139,48 +150,14 @@ class ControlService {
         return messages;
     }
 
-    andHoldIfRequiredFor(durationValue) {
-        return new Promise((resolve, reject) => {
-            console.log(`Duration: ${durationValue}`);
-            if (typeof durationValue == 'undefined') {
-                console.log('No callback required...');
-                resolve({ holding: false, duration: null });
-            } else {
-                console.log('Configuring callback...');
-                var duration = new Duration(durationValue);
-                var stepfunctions = new AWS.StepFunctions();
-                var params = {
-                    stateMachineArn: process.env.STEP_FUNCTION_ARN,
-                    input: JSON.stringify(helpers.turnOffCallbackPayload(duration.inSeconds()))
-                };
-                console.log('Registering callback...');
-                stepfunctions.startExecution(params, (err, data) => {
-                    if (err) { console.log(err, err.stack); reject(err); }
-                    console.log('Registered callback');
-                    resolve({ 
-                        holding: true,
-                        duration: duration,
-                        executionId: data.executionArn
-                    });
-                });
-            }
-        });
+    logStatus(device) {
+        console.log(`${new Date().toISOString()} ${device.currentTemperature} => ${device.targetTemperature} (${device.status})`);
     }
-
-    statusOf(executionId) {
-        return new Promise((resolve, reject) => {
-            var stepfunctions = new AWS.StepFunctions();
-            var params = {
-                executionArn: executionId 
-            };
-            stepfunctions.describeExecution(params, (err, data) => {
-                if (err) { console.log(err, err.stack); reject(err); }
-                resolve({
-                    status: data.status,
-                    duration: JSON.parse(data.input).duration
-                });
-            });
-        });
+    
+    speakTemperature(temp) {
+        var t = parseFloat(temp);
+        if (parseFloat(t.toFixed(0)) != t) return t.toFixed(1);
+        else return t.toFixed(0);
     }
 }
 

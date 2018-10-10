@@ -7,7 +7,7 @@ const request = require('request-promise').defaults({
 
 const host = 'https://salus-it500.com';
 
-class SalusClient {
+class Salus {
     get credentials() {
         return {
             devId: this._devId,
@@ -83,4 +83,4 @@ class SalusClient {
     }
 }
 
-module.exports = SalusClient;
+module.exports = Salus;

@@ -1,0 +1,16 @@
+{
+    "Comment": "Calls thermostat function after a hold time",
+    "StartAt": "WaitFor",
+    "States": {
+      "WaitFor": {
+        "Type": "Wait",
+        "SecondsPath": "$.duration",
+        "Next": "Callback"
+      },
+      "Callback": {
+        "Type": "Task",
+        "Resource": "arn:aws:lambda:eu-west-1:xyz:function:xyz",
+        "End": true
+      }
+    }
+  }
