@@ -22,4 +22,4 @@ export AWS_PROFILE=
 export AWS_REGION=
 export DURATION=PT1H
 
-node test.js
+node ./core/test.js

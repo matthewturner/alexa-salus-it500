@@ -14,6 +14,18 @@ class ThermostatRepository {
         return this._client;
     }
 
+    async add(thermostat) {
+        const params = {
+            TableName,
+            Item: {
+                userId: thermostat.userId,
+                executionId: thermostat.executionId
+            }
+        };
+
+        await this.client.put(params).promise();
+    }
+
     async find(userId) {
         const params = {
             TableName,
@@ -31,18 +43,20 @@ class ThermostatRepository {
         return null;
     }
 
-    async update(thermostat) {
+    async save(thermostat) {
         const params = {
             TableName,
             Key: {
                 userId: thermostat.userId
             },
-            // UpdateExpression: `set ${expressions.join(', ')}`,
-            // ExpressionAttributeValues: values,
-            ReturnValues: 'ALL_NEW'
+            UpdateExpression: "set executionId=:eid",
+            ExpressionAttributeValues: {
+                ":eid": thermostat.executionId
+            },
+            ReturnValues: "UPDATED_NEW"
         };
 
-        await client.update(params).promise();
+        await this.client.update(params).promise();
     }
 }
 

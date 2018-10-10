@@ -73,19 +73,7 @@ const turnOffCallbackPayload = (duration) => {
 	};
 };
 
-const speakTemperature = (temp) => {
-	var t = parseFloat(temp);
-	if (parseFloat(t.toFixed(0)) != t) return t.toFixed(1);
-	else return t.toFixed(0);
-};
-
-const logStatus = (device) => {
-	console.log(`${logTimeString(' ', false)} ${device.currentTemperature} => ${device.targetTemperature} (${device.status})`);
-};
-
 module.exports = { 
 	logTimeString, 
-	turnOffCallbackPayload, 
-	speakTemperature,
-	logStatus
+	turnOffCallbackPayload
 };

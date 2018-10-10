@@ -1,5 +1,5 @@
 const alexa = require('alexa-app');
-const ControlService = require('./ControlService');
+const ControlService = require('../core/ControlService');
 
 // Allow this module to be reloaded by hotswap when changed
 module.change_code = 0;
