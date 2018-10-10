@@ -1,6 +1,6 @@
 # alexa-salus-it500
 
-An Alexa App (skill) to control a Salus IT500 internet thermostat. Please note that this is really ugly because Salus don't provide any kind of API. This skill logs onto their web app using your username and password and sets the temperature as you would in their mobile (web) app. For that reason, you need to embed your login details into the index.js and host this skill yourself ! Do not offer this skill in the Alexa store for other people because it's not secure to collect other people's usernames and passwords.
+An Alexa App (skill) to control a Salus IT500 internet thermostat. Please note that this is really ugly because Salus don't provide any kind of API. This skill logs onto their web app using your username and password and sets the temperature as you would in their mobile (web) app. For that reason, you need to embed your login details into web app and host this skill yourself! Do not offer this skill in the Alexa store for other people because it's not secure to collect other people's usernames and passwords.
 
 Until Salus provide their own Alexa skill or a federated authentication method then this is the only option, unfortunately.
 
@@ -22,9 +22,7 @@ Some boilers have a hold time which keeps the boiler on for the specified time a
 
 The last intent can take an optional duration which can be any valid time statement (eg 20 minutes or 3 hours).
 
-**NB** This feature is experimental
-
-* It is optional and requires a hosted lambda and step function
+* It is optional and requires a hosted lambda, step function and dynamodb table
 * Cancellation of the hold-time is not yet supported; the boiler will switch off
 * Updating the hold-time is not yet supported; if you request a second hold-time they will both executed when their respective times elapse
 
@@ -46,4 +44,4 @@ The last intent can take an optional duration which can be any valid time statem
 
 1. Point to your SSL'd external URL or host in AWS Lambda
 
-1. Optionally create the step function for hold times/auto-switch off
+1. Optionally create the step function and dynamodb table for hold times/auto-switch off

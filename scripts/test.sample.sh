@@ -21,5 +21,6 @@ export ALEXA_REQUEST_ID=
 export AWS_PROFILE=
 export AWS_REGION=
 export DURATION=PT1H
+export HOLD_STRATEGY=aws
 
 node ./core/test.js

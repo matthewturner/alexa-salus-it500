@@ -1,10 +1,9 @@
 const Salus = require('../thermostats/Salus');
-const HoldStrategy = require('../aws/HoldStrategy');
 
 class ControlService {
-    constructor(context) {
+    constructor(context, holdStrategy) {
         this._context = context;
-        this._holdStrategy = new HoldStrategy(this._context);
+        this._holdStrategy = holdStrategy;
     }
 
     async login() {
