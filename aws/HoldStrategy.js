@@ -13,7 +13,7 @@ class HoldStrategy {
 
     async holdIfRequiredFor(durationValue) {
         console.log(`Duration: ${durationValue}`);
-        var thermostat = await this._thermostatRepository.find(this._context.userId);
+        let thermostat = await this._thermostatRepository.find(this._context.userId);
         if (!thermostat) {
             thermostat = {
                 userId: this._context.userId,
@@ -25,20 +25,20 @@ class HoldStrategy {
         if (!durationValue) {
             console.log('No callback required...');
             return { holding: false, duration: null };
-        } 
+        }
 
         console.log('Configuring callback...');
-        var duration = new Duration(durationValue);
+        let duration = new Duration(durationValue);
         await this.stopHoldIfRequired(thermostat.executionId);
-        var data = await this.startHold(duration);
+        let data = await this.startHold(duration);
 
         thermostat.executionId = data.executionArn;
         await this._thermostatRepository.save(thermostat);
 
         return {
-                holding: true,
-                duration: duration,
-                executionId: data.executionArn
+            holding: true,
+            duration: duration,
+            executionId: data.executionArn
         };
     }
 
@@ -48,15 +48,15 @@ class HoldStrategy {
             return;
         }
         console.log(`Stopping hold ${executionId}...`);
-        var params = {
-            cause: "Superceded by user request",
+        let params = {
+            cause: 'Superceded by user request',
             executionArn: executionId
         };
         await this._stepFunctions.stopExecution(params).promise();
     }
 
     async startHold(duration) {
-        var params = {
+        let params = {
             stateMachineArn: process.env.STEP_FUNCTION_ARN,
             input: JSON.stringify(helpers.turnOffCallbackPayload(duration.inSeconds()))
         };
@@ -65,7 +65,7 @@ class HoldStrategy {
     }
 
     async status() {
-        var thermostat = await this._thermostatRepository.find(this._context.userId);
+        let thermostat = await this._thermostatRepository.find(this._context.userId);
 
         if (!thermostat.executionId) {
             return {
@@ -74,11 +74,11 @@ class HoldStrategy {
             };
         }
 
-        var stepfunctions = new AWS.StepFunctions();
-        var params = {
+        let stepfunctions = new AWS.StepFunctions();
+        let params = {
             executionArn: thermostat.executionId
         };
-        var currentExecution = await stepfunctions.describeExecution(params).promise();
+        let currentExecution = await stepfunctions.describeExecution(params).promise();
         return {
             status: currentExecution.status.toLowerCase(),
             duration: new Duration(JSON.parse(currentExecution.input).duration)

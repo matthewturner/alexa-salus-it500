@@ -9,7 +9,7 @@ class ThermostatRepository {
     get client() {
         if (!this._client) {
             const options = { region: 'eu-west-1' };
-            this._client = new AWS.DynamoDB.DocumentClient(options)
+            this._client = new AWS.DynamoDB.DocumentClient(options);
         }
         return this._client;
     }
@@ -34,9 +34,9 @@ class ThermostatRepository {
             }
         };
 
-        var response = await this.client.get(params).promise();
+        let response = await this.client.get(params).promise();
         if (response.Item) {
-            var thermostat = response.Item;
+            let thermostat = response.Item;
             thermostat.duration = new Duration(thermostat.duration);
             return thermostat;
         }
@@ -49,11 +49,11 @@ class ThermostatRepository {
             Key: {
                 userId: thermostat.userId
             },
-            UpdateExpression: "set executionId=:eid",
+            UpdateExpression: 'set executionId=:eid',
             ExpressionAttributeValues: {
-                ":eid": thermostat.executionId
+                ':eid': thermostat.executionId
             },
-            ReturnValues: "UPDATED_NEW"
+            ReturnValues: 'UPDATED_NEW'
         };
 
         await this.client.update(params).promise();

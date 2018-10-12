@@ -7,43 +7,43 @@ class ControlService {
     }
 
     async login() {
-        var client = new Salus();
+        let client = new Salus();
         await client.login(process.env.USERNAME, process.env.PASSWORD);
         return client;
-    };
+    }
 
     async verifyOnline(client) {
-        var online = await client.online();
+        let online = await client.online();
         if (!online) {
-            throw "Sorry, the thermostat is offline at the moment.";
+            throw 'Sorry, the thermostat is offline at the moment.';
         }
-    };
+    }
 
     verifyContactable(device) {
         if (!device.contactable) {
-            throw "Sorry, I couldn't contact the thermostat.";
+            throw 'Sorry, I couldn\'t contact the thermostat.';
         }
-    };
+    }
 
     async launch() {
-        var client = await this.login();
+        let client = await this.login();
         if (await client.online()) {
-            return "thermostat is online";
+            return 'Thermostat is online';
         } else {
-            return "Sorry, the thermostat is offline at the moment.";
+            return 'Sorry, the thermostat is offline at the moment.';
         }
-    };
+    }
 
     async status() {
         console.log('Requesting status...');
-        var client = await this.login();
+        let client = await this.login();
         await this.verifyOnline(client);
-        var device = await client.device();
+        let device = await client.device();
         this.verifyContactable(device);
 
-        var status = await this._holdStrategy.status();
+        let status = await this._holdStrategy.status();
 
-        var messages = [];
+        let messages = [];
         messages.push(`The current temperature is ${this.speakTemperature(device.currentTemperature)} degrees.`);
         messages.push(`The target is ${this.speakTemperature(device.targetTemperature)} degrees.`);
         if (device.status == 'on') {
@@ -57,87 +57,87 @@ class ControlService {
 
         this.logStatus(device);
         return messages;
-    };
+    }
 
     async turnUp() {
         console.log('Turning up...');
-        var client = await this.login();
+        let client = await this.login();
         await this.verifyOnline(client);
-        var device = await client.device();
+        let device = await client.device();
         this.verifyContactable(device);
 
         if (device.status == 'on') {
             throw 'The heating is already on.';
         }
 
-        var t = device.targetTemperature + 0.5;
+        let t = device.targetTemperature + 0.5;
         await client.setTemperature(t);
-        var updatedDevice = await client.device();
+        let updatedDevice = await client.device();
 
-        var messages = [];
+        let messages = [];
         messages.push(`The target temperature is now ${this.speakTemperature(updatedDevice.targetTemperature)} degrees.`);
         if (updatedDevice.status == 'on') messages.push('The heating is now on.');
         this.logStatus(device);
         return messages;
-    };
+    }
 
     async turnDown() {
         console.log('Turning down...');
-        var client = await this.login();
+        let client = await this.login();
         await this.verifyOnline(client);
-        var device = await client.device();
+        let device = await client.device();
         this.verifyContactable(device);
 
-        var t = device.targetTemperature - 1.0;
+        let t = device.targetTemperature - 1.0;
         await client.setTemperature(t);
-        var updatedDevice = await client.device();
+        let updatedDevice = await client.device();
 
-        var messages = [];
+        let messages = [];
         messages.push(`The target temperature is now ${this.speakTemperature(updatedDevice.targetTemperature)} degrees.`);
         if (updatedDevice.status == 'on') messages.push('The heating is still on though.');
         this.logStatus(updatedDevice);
         return messages;
-    };
+    }
 
     async setTemperature(targetTemperature) {
         console.log(`Setting temperature to ${targetTemperature}...`);
-        var client = await this.login();
+        let client = await this.login();
         await this.verifyOnline(client);
-        var device = await client.device();
+        let device = await client.device();
         this.verifyContactable(device);
 
         await client.setTemperature(targetTemperature);
-        var updatedDevice = await client.device();
+        let updatedDevice = await client.device();
 
-        var messages = [];
+        let messages = [];
         messages.push(`The target temperature is now ${this.speakTemperature(updatedDevice.targetTemperature)} degrees.`);
         if (updatedDevice.status == 'on') messages.push('The heating is now on.');
         this.logStatus(updatedDevice);
         return messages;
-    };
+    }
 
     async turn(onOff, duration) {
         console.log(`Turning ${onOff}...`);
-        var client = await this.login();
+        let client = await this.login();
         await this.verifyOnline(client);
-        var device = await client.device();
+        let device = await client.device();
         this.verifyContactable(device);
 
-        var t = process.env.DEFAULT_ON_TEMP || '20';
+        let t = process.env.DEFAULT_ON_TEMP || '20';
         if (onOff === 'off') {
             t = process.env.DEFAULT_OFF_TEMP || '14';
         }
 
         await client.setTemperature(t);
-        var updatedDevice = await client.device();
+        let updatedDevice = await client.device();
 
-        var messages = [];
+        let messages = [];
         messages.push(`The target temperature is now ${this.speakTemperature(updatedDevice.targetTemperature)} degrees.`);
         this.logStatus(updatedDevice);
 
-        var intent = await this._holdStrategy.holdIfRequiredFor(duration);
+        let intent = await this._holdStrategy.holdIfRequiredFor(duration);
         if (intent.holding) {
-            var durationText = intent.duration.ago().replace(' ago', '');
+            let durationText = intent.duration.ago().replace(' ago', '');
             console.log(`Holding for ${durationText} {${intent.executionId}}`);
             if (updatedDevice.status == 'on') {
                 messages.push(`The heating is now on and will turn off in ${durationText}`);
@@ -155,7 +155,7 @@ class ControlService {
     }
     
     speakTemperature(temp) {
-        var t = parseFloat(temp);
+        let t = parseFloat(temp);
         if (parseFloat(t.toFixed(0)) != t) return t.toFixed(1);
         else return t.toFixed(0);
     }

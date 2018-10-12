@@ -3,12 +3,12 @@ class HoldStrategy {
     }
 
     async holdIfRequiredFor(durationValue) {
-        console.log('Hold request will be ignored');
+        console.log(`Hold request for ${durationValue} will be ignored`);
         return {
             holding: false,
             duration: null,
             executionId: null
-        }
+        };
     }
 
     async status() {
