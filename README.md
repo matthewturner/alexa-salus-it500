@@ -1,3 +1,5 @@
+[![Reviewed by Hound](https://img.shields.io/badge/Reviewed_by-Hound-8E64B0.svg)](https://houndci.com)
+
 # alexa-salus-it500
 
 An Alexa App (skill) to control a Salus IT500 internet thermostat. Please note that this is really ugly because Salus don't provide any kind of API. This skill logs onto their web app using your username and password and sets the temperature as you would in their mobile (web) app. For that reason, you need to embed your login details into web app and host this skill yourself! Do not offer this skill in the Alexa store for other people because it's not secure to collect other people's usernames and passwords.
