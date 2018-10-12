@@ -18,13 +18,13 @@ This skill has 5 intents :-
 
 ## Auto-switch off/Hold time
 
-Some boilers have a hold time which keeps the boiler on for the specified time and automatically switches it off when the hold time has elapsed.
+Some thermostats have a hold time which keeps the thermostat on for the specified time and automatically switches it off when the hold time has elapsed.
 
 The last intent can take an optional duration which can be any valid time statement (eg 20 minutes or 3 hours).
 
+* You will need to prevent Salus from overriding this by setting the off times to a late time (eg 10pm)
 * It is optional and requires a hosted lambda, step function and dynamodb table
 * Cancellation of the hold-time is not yet supported; the boiler will switch off
-* Updating the hold-time is not yet supported; if you request a second hold-time they will both executed when their respective times elapse
 
 ## Setting Up
 

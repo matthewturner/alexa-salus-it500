@@ -15,7 +15,7 @@ const say = (messages) => {
 const main = async () => {
 	var onOff = 'on';
 	var duration = process.env.DURATION;
-	var context = { userId: 'someUserx' };
+	var context = { userId: process.env.ALEXA_USER_ID };
 	var holdStrategy;
 	if (process.env.HOLD_STRATEGY === 'aws') {
 		holdStrategy = new AwsHoldStrategy(context);

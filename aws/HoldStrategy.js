@@ -8,6 +8,7 @@ class HoldStrategy {
     constructor(context) {
         this._context = context;
         this._thermostatRepository = new ThermostatRepository();
+        this._stepFunctions = new AWS.StepFunctions();
     }
 
     async holdIfRequiredFor(durationValue) {
@@ -21,31 +22,46 @@ class HoldStrategy {
             await this._thermostatRepository.add(thermostat);
         }
 
-        if (typeof durationValue == 'undefined') {
+        if (!durationValue) {
             console.log('No callback required...');
-            thermostat.executionId = null;
-            await this._thermostatRepository.save(thermostat);
             return { holding: false, duration: null };
-        } else {
-            console.log('Configuring callback...');
-            var duration = new Duration(durationValue);
-            var stepfunctions = new AWS.StepFunctions();
-            var params = {
-                stateMachineArn: process.env.STEP_FUNCTION_ARN,
-                input: JSON.stringify(helpers.turnOffCallbackPayload(duration.inSeconds()))
-            };
+        } 
 
-            var data = await stepfunctions.startExecution(params).promise();
+        console.log('Configuring callback...');
+        var duration = new Duration(durationValue);
+        await this.stopHoldIfRequired(thermostat.executionId);
+        var data = await this.startHold(duration);
 
-            thermostat.executionId = data.executionArn;
-            await this._thermostatRepository.save(thermostat);
+        thermostat.executionId = data.executionArn;
+        await this._thermostatRepository.save(thermostat);
 
-            return {
-                    holding: true,
-                    duration: duration,
-                    executionId: data.executionArn
-            };
+        return {
+                holding: true,
+                duration: duration,
+                executionId: data.executionArn
+        };
+    }
+
+    async stopHoldIfRequired(executionId) {
+        if (!executionId) {
+            console.log('No current execution id');
+            return;
         }
+        console.log(`Stopping hold ${executionId}...`);
+        var params = {
+            cause: "Superceded by user request",
+            executionArn: executionId
+        };
+        await this._stepFunctions.stopExecution(params).promise();
+    }
+
+    async startHold(duration) {
+        var params = {
+            stateMachineArn: process.env.STEP_FUNCTION_ARN,
+            input: JSON.stringify(helpers.turnOffCallbackPayload(duration.inSeconds()))
+        };
+
+        return await this._stepFunctions.startExecution(params).promise();
     }
 
     async status() {
