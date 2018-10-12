@@ -56,9 +56,10 @@ class HoldStrategy {
     }
 
     async startHold(duration) {
+        console.log(`Holding for ${duration.inSeconds()} seconds...`);
         let params = {
             stateMachineArn: process.env.STEP_FUNCTION_ARN,
-            input: JSON.stringify(helpers.turnOffCallbackPayload(duration.inSeconds()))
+            input: JSON.stringify(helpers.turnOffCallbackPayload(this._context.userId, duration.inSeconds()))
         };
 
         return await this._stepFunctions.startExecution(params).promise();

@@ -1,14 +1,17 @@
-const Salus = require('../thermostats/Salus');
-
 class ControlService {
-    constructor(context, holdStrategy) {
+    constructor(context, holdStrategy, thermostatFactory, thermostatRepository) {
         this._context = context;
         this._holdStrategy = holdStrategy;
+        this._thermostatRepository = thermostatRepository;
+        this._thermostatFactory = thermostatFactory;
     }
 
     async login() {
-        let client = new Salus();
-        await client.login(process.env.USERNAME, process.env.PASSWORD);
+        console.log('Finding thermostat...');
+        let thermostat = await this._thermostatRepository.find(this._context.userId);
+        let options = thermostat.options;
+        let client = this._thermostatFactory.create(thermostat.type, options);
+        await client.login();
         return client;
     }
 

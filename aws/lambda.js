@@ -1,7 +1,9 @@
 const alexa = require('alexa-app');
+const ThermostatRepository = require('./ThermostatRepository');
 const AwsHoldStrategy = require('./HoldStrategy');
 const DefaultHoldStrategy = require('../core/HoldStrategy');
 const ControlService = require('../core/ControlService');
+const Factory = require('../thermostats/Factory');
 
 // Allow this module to be reloaded by hotswap when changed
 module.change_code = 0;
@@ -16,7 +18,9 @@ const controlService = (userId) => {
     } else {
         holdStrategy = new DefaultHoldStrategy(context);
     }
-    return new ControlService(context, holdStrategy);
+    let factory = new Factory();
+    let repository = new ThermostatRepository();
+    return new ControlService(context, holdStrategy, factory, repository);
 };
 
 const say = (response, messages) => {

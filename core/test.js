@@ -1,6 +1,8 @@
 const ControlService = require('../core/ControlService');
 const AwsHoldStrategy = require('../aws/HoldStrategy');
 const DefaultHoldStrategy = require('../core/HoldStrategy');
+const ThermostatRepository = require('../aws/ThermostatRepository');
+const Factory = require('../thermostats/Factory');
 
 const say = (messages) => {
     if (messages instanceof Array) {
@@ -22,7 +24,9 @@ const main = async () => {
     } else {
         holdStrategy = new DefaultHoldStrategy(context);
     }
-    let service = new ControlService(context, holdStrategy);
+    let factory = new Factory();
+    let repository = new ThermostatRepository();
+    let service = new ControlService(context, holdStrategy, factory, repository);
     try {
         let messages = await service.turn(onOff, duration);
         say(messages);

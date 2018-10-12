@@ -24,14 +24,14 @@ const logTimeString = (timeDelimiter, zulu) => {
     return (`${y}-${m}-${d}${timeDelimiter}${h}:${mm}:${ss}${z}`);
 };
 
-const turnOffCallbackPayload = (duration) => {
+const turnOffCallbackPayload = (userId, duration) => {
     return {
         'duration': duration,
         'version': '1.0',
         'session': {
             'new': true,
             'user': {
-                'userId': process.env.ALEXA_USER_ID
+                'userId': userId
             }
         },
 

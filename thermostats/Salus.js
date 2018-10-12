@@ -8,6 +8,10 @@ const request = require('request-promise').defaults({
 const host = 'https://salus-it500.com';
 
 class Salus {
+    constructor(options) {
+        this._options = options;
+    }
+
     get credentials() {
         return {
             devId: this._devId,
@@ -21,11 +25,11 @@ class Salus {
         return (days * 86400) + ((dat.getUTCHours() * 60) + dat.getUTCMinutes()) * 60 + dat.getUTCSeconds();
     }
 
-    async login(username, password) {
+    async login() {
         let options = {
             form: {
-                'IDemail': username,
-                'password': password,
+                'IDemail': this._options.username,
+                'password': this._options.password,
                 'login': 'Login'
             },
             followRedirect: true,
@@ -68,7 +72,7 @@ class Salus {
 
     async setTemperature(temp) {
         let t = parseFloat(temp).toFixed(1);
-        console.log('Setting temp: ' + t);
+        console.log(`Setting temp: ${t}...`);
         let form = {
             form: {
                 'token': this._token,
