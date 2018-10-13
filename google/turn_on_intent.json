@@ -1,0 +1,81 @@
+{
+  "id": "d8c17707-2532-496c-8b39-47c6821de374",
+  "name": "turn on",
+  "auto": true,
+  "contexts": [],
+  "responses": [
+    {
+      "resetContexts": false,
+      "affectedContexts": [],
+      "parameters": [
+        {
+          "id": "50fab20d-82d0-40f9-b9de-f7b2b6428feb",
+          "required": false,
+          "dataType": "@sys.duration",
+          "name": "duration",
+          "value": "$duration",
+          "isList": false
+        },
+        {
+          "id": "fb0f17e7-e01b-4fc4-b35b-17b0e53c0807",
+          "required": false,
+          "dataType": "@onOff",
+          "name": "onOff",
+          "value": "$onOff",
+          "isList": false
+        }
+      ],
+      "messages": [
+        {
+          "type": 0,
+          "speech": []
+        }
+      ],
+      "defaultResponsePlatforms": {},
+      "speech": []
+    }
+  ],
+  "priority": 500000,
+  "cortanaCommand": {
+    "navigateOrService": "NAVIGATE",
+    "target": ""
+  },
+  "webhookUsed": true,
+  "webhookForSlotFilling": false,
+  "lastUpdate": 1539449401,
+  "fallbackIntent": false,
+  "events": [],
+  "userSays": [
+    {
+      "id": "e0cee247-970e-4159-93df-40f2b2085324",
+      "data": [
+        {
+          "text": "turn the heating "
+        },
+        {
+          "text": "on",
+          "alias": "onOff",
+          "meta": "@onOff",
+          "userDefined": true
+        },
+        {
+          "text": " for "
+        },
+        {
+          "text": "1 hour",
+          "alias": "duration",
+          "meta": "@sys.duration",
+          "userDefined": false
+        }
+      ],
+      "isTemplate": false,
+      "count": 0,
+      "updated": 1539441296,
+      "isAuto": false
+    }
+  ],
+  "followUpIntents": [],
+  "liveAgentHandoff": false,
+  "endInteraction": false,
+  "templates": []
+}
