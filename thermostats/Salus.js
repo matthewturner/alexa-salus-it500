@@ -25,6 +25,14 @@ class Salus {
         return (days * 86400) + ((dat.getUTCHours() * 60) + dat.getUTCMinutes()) * 60 + dat.getUTCSeconds();
     }
 
+    urlTo(page, authenticated = true) {
+        let url = `${host}/public/${page}.php`;
+        if (authenticated) {
+            url += `?devId=${this._devId}&token=${this._token}&_=${this.timeString()}`;
+        }
+        return url;
+    }
+
     async login() {
         let options = {
             form: {
@@ -39,9 +47,9 @@ class Salus {
         try {
             console.log('Logging in...');
             console.log(host);
-            await request.post(`${host}/public/login.php`, options);
+            await request.post(this.urlTo('login', false), options);
             console.log('Loading devices page...');
-            let body = await request.get(`${host}/public/devices.php`);
+            let body = await request.get(this.urlTo('devices', false));
             let $ = cheerio.load(body);
             this._devId = $('input[name="devId"]').val();
             this._token = $('#token').val();
@@ -54,13 +62,13 @@ class Salus {
 
     async online() {
         console.log('Checking device status...');
-        let body = await request.get(`${host}/public/ajax_device_online_status.php?devId=${this._devId}&token=${this._token}&_=${this.timeString()}`);
+        let body = await request.get(this.urlTo('ajax_device_online_status'));
         console.log(`Status: ${body}`);
         return ((body == '"online"') || (body == '"online lowBat"'));
     }
 
     async device() {
-        let body = await request.get(`${host}/public/ajax_device_values.php?devId=${this._devId}&token=${this._token}&_=${this.timeString()}`);
+        let body = await request.get(this.urlTo('ajax_device_values'));
         let deviceInfo = JSON.parse(body);
         return {
             contactable: !(deviceInfo.CH1currentSetPoint == 32.0),
