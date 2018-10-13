@@ -33,9 +33,11 @@ const say = (response, messages) => {
     if (messages instanceof Array) {
         for (const message of messages) {
             response.say(message);
+            console.log(message);
         }
     } else {
         response.say(messages);
+        console.log(messages);
     }
     response.send();
 };
@@ -115,7 +117,9 @@ app.intent('TurnIntent', {
 }, async (request, response) => {
     let onOff = request.slot('onoff');
     let duration = request.slot('duration');
-    let service = controlService(request.userId);
+    // this could be a callback from a step function
+    let userId = request.userId || request.data.session.user.userId;
+    let service = controlService(userId);
     try {
         let messages = await service.turn(onOff, duration);
         say(response, messages);
@@ -128,14 +132,12 @@ app.intent('TurnIntent', {
 app.intent('AMAZON.HelpIntent', {
     'slots': {},
     'utterances': []
-},
-    (request, response) => {
-        let helpOutput = 'You can say \'set the temperature to 18 degrees\' or ask \'the temperature\'. You can also say stop or exit to quit.';
-        let reprompt = 'What would you like to do?';
-        // AMAZON.HelpIntent must leave session open -> .shouldEndSession(false)
-        response.say(helpOutput).reprompt(reprompt).shouldEndSession(false);
-    }
-);
+}, (request, response) => {
+    let helpOutput = 'You can say \'set the temperature to 18 degrees\' or ask \'the temperature\'. You can also say stop or exit to quit.';
+    let reprompt = 'What would you like to do?';
+    // AMAZON.HelpIntent must leave session open -> .shouldEndSession(false)
+    response.say(helpOutput).reprompt(reprompt).shouldEndSession(false);
+});
 
 app.intent('AMAZON.StopIntent', {
     'slots': {},

@@ -52,7 +52,14 @@ class HoldStrategy {
             cause: 'Superceded by user request',
             executionArn: executionId
         };
-        await this._stepFunctions.stopExecution(params).promise();
+        try {
+            let currentExecution = await this._stepFunctions.describeExecution(params).promise();
+            if (currentExecution.status === 'RUNNING') {
+                await this._stepFunctions.stopExecution(params).promise();
+            }
+        } catch (error) {
+            console.log('Execution could not be stopped');
+        }
     }
 
     async startHold(duration) {
@@ -75,11 +82,10 @@ class HoldStrategy {
             };
         }
 
-        let stepfunctions = new AWS.StepFunctions();
         let params = {
             executionArn: thermostat.executionId
         };
-        let currentExecution = await stepfunctions.describeExecution(params).promise();
+        let currentExecution = await this._stepFunctions.describeExecution(params).promise();
         return {
             status: currentExecution.status.toLowerCase(),
             duration: new Duration(JSON.parse(currentExecution.input).duration)

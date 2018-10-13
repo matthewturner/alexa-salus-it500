@@ -131,6 +131,7 @@ class ControlService {
             t = process.env.DEFAULT_OFF_TEMP || '14';
         }
 
+        console.log(`Setting temperature to ${t}...`);
         await client.setTemperature(t);
         let updatedDevice = await client.device();
 
