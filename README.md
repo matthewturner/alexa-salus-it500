@@ -1,4 +1,4 @@
-[![Reviewed by Hound](https://img.shields.io/badge/Reviewed_by-Hound-8E64B0.svg)](https://houndci.com)
+[![Maintainability](https://api.codeclimate.com/v1/badges/1feb6f56bc1f877024b1/maintainability)](https://codeclimate.com/github/matthewturner/alexa-salus-it500/maintainability) [![Reviewed by Hound](https://img.shields.io/badge/Reviewed_by-Hound-8E64B0.svg)](https://houndci.com)
 
 # alexa-salus-it500
 
