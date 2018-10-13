@@ -1,5 +1,6 @@
 const alexa = require('alexa-app');
-const ThermostatRepository = require('./ThermostatRepository');
+const DynamodbThermostatRepository = require('./ThermostatRepository');
+const DefaultThermostatRepository = require('../core/ThermostatRepository');
 const AwsHoldStrategy = require('./HoldStrategy');
 const DefaultHoldStrategy = require('../core/HoldStrategy');
 const ControlService = require('../core/ControlService');
@@ -12,6 +13,12 @@ let app = new alexa.app('boiler');
 
 const controlService = (userId) => {
     let context = { userId };
+    let repository;
+    if (process.env.THERMOSTAT_REPOSITORY === 'dynamodb') {
+        repository = new DynamodbThermostatRepository();
+    } else {
+        repository = new DefaultThermostatRepository();
+    }
     let holdStrategy;
     if (process.env.HOLD_STRATEGY === 'aws') {
         holdStrategy = new AwsHoldStrategy(context);
@@ -19,7 +26,6 @@ const controlService = (userId) => {
         holdStrategy = new DefaultHoldStrategy(context);
     }
     let factory = new Factory();
-    let repository = new ThermostatRepository();
     return new ControlService(context, holdStrategy, factory, repository);
 };
 
@@ -123,12 +129,12 @@ app.intent('AMAZON.HelpIntent', {
     'slots': {},
     'utterances': []
 },
-(request, response) => {
-    let helpOutput = 'You can say \'set the temperature to 18 degrees\' or ask \'the temperature\'. You can also say stop or exit to quit.';
-    let reprompt = 'What would you like to do?';
-    // AMAZON.HelpIntent must leave session open -> .shouldEndSession(false)
-    response.say(helpOutput).reprompt(reprompt).shouldEndSession(false);
-}
+    (request, response) => {
+        let helpOutput = 'You can say \'set the temperature to 18 degrees\' or ask \'the temperature\'. You can also say stop or exit to quit.';
+        let reprompt = 'What would you like to do?';
+        // AMAZON.HelpIntent must leave session open -> .shouldEndSession(false)
+        response.say(helpOutput).reprompt(reprompt).shouldEndSession(false);
+    }
 );
 
 app.intent('AMAZON.StopIntent', {

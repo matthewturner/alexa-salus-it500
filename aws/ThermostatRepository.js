@@ -1,6 +1,5 @@
 'use strict';
 
-const Duration = require('durationjs');
 const AWS = require('aws-sdk');
 
 const TableName = 'thermostats';
@@ -36,9 +35,7 @@ class ThermostatRepository {
 
         let response = await this.client.get(params).promise();
         if (response.Item) {
-            let thermostat = response.Item;
-            thermostat.duration = new Duration(thermostat.duration);
-            return thermostat;
+            return response.Item;
         }
         return null;
     }
