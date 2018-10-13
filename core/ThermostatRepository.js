@@ -5,7 +5,8 @@ class ThermostatRepository {
         console.log('Thermostat data will not be persisted');
     }
 
-    async find(userId) { 
+    async find(userId) {
+        console.log('Retrieving thermostat data from environment...');
         return {
             userId: userId,
             type: process.env.THERMOSTAT_TYPE,
