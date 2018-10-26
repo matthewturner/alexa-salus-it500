@@ -1,5 +1,7 @@
+.vscode/
 node_modules/
 package.zip
 package-previous.zip
 
 test.sh
+test.heatmiser.sh

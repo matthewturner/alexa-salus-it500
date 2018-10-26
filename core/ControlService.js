@@ -44,22 +44,26 @@ class ControlService {
         let device = await client.device();
         this.verifyContactable(device);
 
-        let status = await this._holdStrategy.status();
-
         let messages = [];
         messages.push(`The current temperature is ${this.speakTemperature(device.currentTemperature)} degrees.`);
         messages.push(`The target is ${this.speakTemperature(device.targetTemperature)} degrees.`);
-        if (device.status == 'on') {
-            console.log(status);
-            if (status.status === 'running') {
-                messages.push(`The heating is on and will turn off in ${status.duration.ago().replace(' ago', '')}`);
-            } else {
-                messages.push('The heating is on');
-            }
-        }
+        await this.determineIfHolding(device, messages);
 
         this.logStatus(device);
         return messages;
+    }
+
+    async determineIfHolding(device, messages, qualifier = '') {
+        if (device.status !== 'on') { return; }
+        
+        let status = await this._holdStrategy.status();
+        console.log(status);
+        if (status.status === 'running') {
+            messages.push(`The heating is on ${qualifier} and will turn off in ${status.duration.ago().replace(' ago', '')}`);
+        }
+        else {
+            messages.push(`The heating is ${qualifier} on`);
+        }
     }
 
     async turnUp() {
@@ -79,7 +83,8 @@ class ControlService {
 
         let messages = [];
         messages.push(`The target temperature is now ${this.speakTemperature(updatedDevice.targetTemperature)} degrees.`);
-        if (updatedDevice.status == 'on') messages.push('The heating is now on.');
+        await this.determineIfHolding(updatedDevice, messages, 'now');
+
         this.logStatus(device);
         return messages;
     }
@@ -97,7 +102,8 @@ class ControlService {
 
         let messages = [];
         messages.push(`The target temperature is now ${this.speakTemperature(updatedDevice.targetTemperature)} degrees.`);
-        if (updatedDevice.status == 'on') messages.push('The heating is still on though.');
+        await this.determineIfHolding(updatedDevice, messages, 'still');
+
         this.logStatus(updatedDevice);
         return messages;
     }
@@ -114,7 +120,8 @@ class ControlService {
 
         let messages = [];
         messages.push(`The target temperature is now ${this.speakTemperature(updatedDevice.targetTemperature)} degrees.`);
-        if (updatedDevice.status == 'on') messages.push('The heating is now on.');
+        await this.determineIfHolding(updatedDevice, messages, 'now');
+
         this.logStatus(updatedDevice);
         return messages;
     }
