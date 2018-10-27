@@ -59,7 +59,7 @@ class ControlService {
         let status = await this._holdStrategy.status();
         console.log(status);
         if (status.status === 'running') {
-            messages.push(`The heating is on ${qualifier} and will turn off in ${status.duration.ago().replace(' ago', '')}`);
+            messages.push(`The heating is ${qualifier} on and will turn off in ${status.duration.ago().replace(' ago', '')}`);
         }
         else {
             messages.push(`The heating is ${qualifier} on`);
