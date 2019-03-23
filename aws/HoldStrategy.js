@@ -78,7 +78,8 @@ class HoldStrategy {
         if (!thermostat.executionId) {
             return {
                 status: 'n/a',
-                duration: null
+                duration: null,
+                startDate: null
             };
         }
 
@@ -88,7 +89,8 @@ class HoldStrategy {
         let currentExecution = await this._stepFunctions.describeExecution(params).promise();
         return {
             status: currentExecution.status.toLowerCase(),
-            duration: new Duration(JSON.parse(currentExecution.input).duration)
+            duration: new Duration(JSON.parse(currentExecution.input).duration),
+            startDate: currentExecution.startDate
         };
     }
 }

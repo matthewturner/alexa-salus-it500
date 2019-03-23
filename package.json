@@ -19,6 +19,7 @@
     "cryptiles": "^4.1.2",
     "durationjs": "^1.1.1",
     "fs": "^0.0.2",
+    "moment": "^2.24.0",
     "request": "^2.79.0",
     "request-promise": "^4.2.2"
   }

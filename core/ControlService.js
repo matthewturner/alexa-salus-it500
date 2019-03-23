@@ -1,3 +1,6 @@
+const moment = require('moment');
+const Duration = require('durationjs');
+
 class ControlService {
     constructor(context, holdStrategy, thermostatFactory, thermostatRepository) {
         this._context = context;
@@ -59,7 +62,10 @@ class ControlService {
         let status = await this._holdStrategy.status();
         console.log(status);
         if (status.status === 'running') {
-            messages.push(`The heating is ${qualifier} on and will turn off in ${status.duration.ago().replace(' ago', '')}`);
+            let timeSinceStart = (moment().diff(status.startDate) / 1000).toFixed(0);
+            let durationSinceStart = new Duration(`PT${timeSinceStart}S`);
+            let timeToGo = status.duration.subtract(durationSinceStart);
+            messages.push(`The heating is ${qualifier} on and will turn off in ${timeToGo.ago().replace(' ago', '')}`);
         }
         else {
             messages.push(`The heating is ${qualifier} on`);

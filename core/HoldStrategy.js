@@ -14,7 +14,8 @@ class HoldStrategy {
     async status() {
         return {
             status: 'n/a',
-            duration: null
+            duration: null,
+            startDate: null
         };
     }
 }
