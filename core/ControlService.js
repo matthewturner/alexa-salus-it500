@@ -114,7 +114,18 @@ class ControlService {
         return messages;
     }
 
-    async setTemperature(targetTemperature) {
+    async turn(onOff, duration) {
+        console.log(`Turning ${onOff}...`);
+
+        let t = process.env.DEFAULT_ON_TEMP || '20';
+        if (onOff === 'off') {
+            t = process.env.DEFAULT_OFF_TEMP || '14';
+        }
+
+        return this.setTemperature(t, duration);
+    }
+
+    async setTemperature(targetTemperature, forDuration) {
         console.log(`Setting temperature to ${targetTemperature}...`);
         let client = await this.login();
         await this.verifyOnline(client);
@@ -126,31 +137,9 @@ class ControlService {
 
         let messages = [];
         messages.push(`The target temperature is now ${this.speakTemperature(updatedDevice.targetTemperature)} degrees.`);
-        await this.determineIfHolding(updatedDevice, messages, 'now');
-
         this.logStatus(updatedDevice);
-        return messages;
-    }
 
-    async turn(onOff, duration) {
-        console.log(`Turning ${onOff}...`);
-        let client = await this.login();
-        await this.verifyOnline(client);
-        let device = await client.device();
-        this.verifyContactable(device);
-
-        let t = process.env.DEFAULT_ON_TEMP || '20';
-        if (onOff === 'off') {
-            t = process.env.DEFAULT_OFF_TEMP || '14';
-        }
-
-        console.log(`Setting temperature to ${t}...`);
-        await client.setTemperature(t);
-        let updatedDevice = await client.device();
-
-        let messages = [];
-        messages.push(`The target temperature is now ${this.speakTemperature(updatedDevice.targetTemperature)} degrees.`);
-        this.logStatus(updatedDevice);
+        let duration = forDuration || process.env.DEFAULT_DURATION;
 
         let intent = await this._holdStrategy.holdIfRequiredFor(duration);
         if (intent.holding) {

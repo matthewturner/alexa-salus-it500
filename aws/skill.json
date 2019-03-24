@@ -27,12 +27,19 @@
                           "{temp}",
                           "{temp} degrees"
                       ]
+                  },
+                  {
+                    "name": "duration",
+                    "type": "AMAZON.DURATION"
                   }
               ],
               "samples": [
                   "to set to {temp} degrees",
                   "to set the temperature to {temp} degrees",
-                  "to set the temp to {temp} degrees"
+                  "to set the temp to {temp} degrees",
+                  "to set to {temp} degrees for {duration}",
+                  "to set the temperature to {temp} degrees for {duration}",
+                  "to set the temp to {temp} degrees for {duration}"
               ]
           },
           {
