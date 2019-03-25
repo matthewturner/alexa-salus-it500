@@ -12,6 +12,10 @@ class ControlService {
     async login() {
         console.log('Finding thermostat...');
         let thermostat = await this._thermostatRepository.find(this._context.userId);
+        if (!thermostat) {
+            thermostat = { userId: this._context.userId, executionId: null };
+            await this._thermostatRepository.add(thermostat);
+        }
         let options = thermostat.options;
         let client = this._thermostatFactory.create(thermostat.type, options);
         await client.login();

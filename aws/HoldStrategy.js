@@ -14,13 +14,6 @@ class HoldStrategy {
     async holdIfRequiredFor(durationValue) {
         console.log(`Duration: ${durationValue}`);
         let thermostat = await this._thermostatRepository.find(this._context.userId);
-        if (!thermostat) {
-            thermostat = {
-                userId: this._context.userId,
-                executionId: null
-            };
-            await this._thermostatRepository.add(thermostat);
-        }
 
         if (!durationValue) {
             console.log('No callback required...');
