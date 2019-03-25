@@ -12,6 +12,7 @@ module.change_code = 0;
 let app = new alexa.app('boiler');
 
 const controlService = (userId) => {
+    console.log(`Creating context ${userId}...`);
     let context = { userId };
     let repository;
     if (process.env.THERMOSTAT_REPOSITORY === 'dynamodb') {
