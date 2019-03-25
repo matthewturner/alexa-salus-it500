@@ -65,7 +65,7 @@ class ControlService {
             let timeSinceStart = (moment().diff(status.startDate) / 1000).toFixed(0);
             let durationSinceStart = new Duration(`PT${timeSinceStart}S`);
             let timeToGo = status.duration.subtract(durationSinceStart);
-            messages.push(`The heating is ${qualifier} on and will turn off in ${timeToGo.ago().replace(' ago', '')}`);
+            messages.push(`The heating is ${qualifier} on and will turn off in ${this.speakDuration(timeToGo)}`);
         }
         else {
             messages.push(`The heating is ${qualifier} on`);
@@ -142,16 +142,25 @@ class ControlService {
         let duration = forDuration || process.env.DEFAULT_DURATION;
 
         let intent = await this._holdStrategy.holdIfRequiredFor(duration);
+        return messages.concat(this.summarize(intent, updatedDevice));
+    }
+
+    summarize(intent, updatedDevice) {
+        let messages = [];
         if (intent.holding) {
-            let durationText = intent.duration.ago().replace(' ago', '');
+            let durationText = this.speakDuration(intent.duration);
             console.log(`Holding for ${durationText} {${intent.executionId}}`);
             if (updatedDevice.status == 'on') {
                 messages.push(`The heating is now on and will turn off in ${durationText}`);
-            } else {
+            }
+            else {
                 messages.push(`The heating will turn off in ${durationText}`);
             }
-        } else {
-            if (updatedDevice.status == 'on') { messages.push('The heating is now on.'); }
+        }
+        else {
+            if (updatedDevice.status == 'on') {
+                messages.push('The heating is now on.');
+            }
         }
         return messages;
     }
@@ -160,6 +169,14 @@ class ControlService {
         console.log(`${new Date().toISOString()} ${device.currentTemperature} => ${device.targetTemperature} (${device.status})`);
     }
     
+    speakDuration(duration) {
+        if (duration.inHours() > 1 && duration.inHours() < 2) {
+            return `1 hour and ${duration.subtract(new Duration('PT1H')).ago().replace(' ago', '')}`;
+        } else {
+            return duration.ago().replace(' ago', '');
+        }
+    }
+
     speakTemperature(temp) {
         let t = parseFloat(temp);
         if (parseFloat(t.toFixed(0)) != t) return t.toFixed(1);
