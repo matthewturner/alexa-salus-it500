@@ -154,10 +154,12 @@ class ControlService {
         messages.push(`The target temperature is now ${this.speakTemperature(updatedDevice.targetTemperature)} degrees.`);
         this.logStatus(updatedDevice);
 
-        let duration = forDuration || process.env.DEFAULT_DURATION;
-
-        let intent = await this._holdStrategy.holdIfRequiredFor(duration);
-        return messages.concat(this.summarize(intent, updatedDevice));
+        if (this._context.source === 'user') {
+            let duration = forDuration || process.env.DEFAULT_DURATION;
+            let intent = await this._holdStrategy.holdIfRequiredFor(duration);
+            return messages.concat(this.summarize(intent, updatedDevice));
+        }
+        return messages;
     }
 
     summarize(intent, updatedDevice) {

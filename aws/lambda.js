@@ -11,9 +11,13 @@ module.change_code = 0;
 
 let app = new alexa.app('boiler');
 
-const controlService = (userId) => {
+const controlService = (userId, requestContext) => {
     console.log(`Creating context ${userId}...`);
-    let context = { userId };
+    let source = 'user';
+    if (!requestContext) {
+        source = 'callback';
+    }
+    let context = { userId: userId, source: source };
     let repository;
     if (process.env.THERMOSTAT_REPOSITORY === 'dynamodb') {
         repository = new DynamodbThermostatRepository();
@@ -45,7 +49,7 @@ const say = (response, messages) => {
 
 app.launch(async (request, response) => {
     console.log('Launching...');
-    let service = controlService(request.userId);
+    let service = controlService(request.userId, request.data.context);
     try {
         let messages = await service.launch();
         say(response, messages);
@@ -58,7 +62,7 @@ app.launch(async (request, response) => {
 app.intent('TempIntent', {
     'utterances': ['what the temperature is', 'the temperature', 'how hot it is']
 }, async (request, response) => {
-    let service = controlService(request.userId);
+    let service = controlService(request.userId, request.data.context);
     try {
         let messages = await service.status();
         say(response, messages);
@@ -71,7 +75,7 @@ app.intent('TempIntent', {
 app.intent('TurnUpIntent', {
     'utterances': ['to increase', 'to turn up', 'set warmer', 'set higher']
 }, async (request, response) => {
-    let service = controlService(request.userId);
+    let service = controlService(request.userId, request.data.context);
     try {
         let messages = await service.turnUp();
         say(response, messages);
@@ -84,7 +88,7 @@ app.intent('TurnUpIntent', {
 app.intent('TurnDownIntent', {
     'utterances': ['to decrease', 'to turn down', 'set cooler', 'set lower']
 }, async (request, response) => {
-    let service = controlService(request.userId);
+    let service = controlService(request.userId, request.data.context);
     try {
         let messages = await service.turnDown();
         say(response, messages);
@@ -100,7 +104,7 @@ app.intent('SetTempIntent', {
     },
     'utterances': ['to set to {temp} degrees', 'to set the temperature to {temp} degrees', 'to set the temp to {temp} degrees']
 }, async (request, response) => {
-    let service = controlService(request.userId);
+    let service = controlService(request.userId, request.data.context);
     try {
         let messages = await service.setTemperature(request.slot('temp'), request.slot('duration'));
         say(response, messages);
@@ -116,11 +120,22 @@ app.intent('TurnIntent', {
     },
     'utterances': ['to turn {onoff}', 'to turn heating {onoff}', 'to turn the heating {onoff}']
 }, async (request, response) => {
+    console.log('*******************************');
+    console.log(`UserId: ${request.userId}`);
+    console.log('Data');
+    console.log(request.data);
+    console.log('Context');
+    console.log(request.context);
+    if (request.data.context) {
+        console.log(`Deep UserId: ${request.data.context.System.user.userId}`);
+    }
+    console.log('*******************************');
+    
     let onOff = request.slot('onoff');
     let duration = request.slot('duration');
     // this could be a callback from a step function
     let userId = request.userId || request.data.session.user.userId;
-    let service = controlService(userId);
+    let service = controlService(userId, request.data.context);
     try {
         let messages = await service.turn(onOff, duration);
         say(response, messages);
@@ -144,7 +159,7 @@ app.intent('AMAZON.StopIntent', {
     'slots': {},
     'utterances': []
 }, async (request, response) => {
-    let service = controlService(request.userId);
+    let service = controlService(request.userId, request.data.context);
     try {
         let messages = await service.turn('off');
         say(response, messages);
