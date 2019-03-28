@@ -35,6 +35,7 @@ class ThermostatRepository {
 
         let response = await this.client.get(params).promise();
         if (response.Item) {
+            console.log(`Found thermostat for user ${userId} with username ${response.Item.options.username}`);
             return response.Item;
         }
         return null;

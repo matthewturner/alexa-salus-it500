@@ -1,15 +1,14 @@
 const cheerio = require('cheerio');
 
 // Enable cookies
-const request = require('request-promise').defaults({
-    jar: true
-});
+const request = require('request-promise');
 
 const host = 'https://salus-it500.com';
 
 class Salus {
     constructor(options) {
         this._options = options;
+        this._jar = request.jar();
     }
 
     get credentials() {
@@ -40,6 +39,7 @@ class Salus {
                 'password': this._options.password,
                 'login': 'Login'
             },
+            jar: this._jar,
             followRedirect: true,
             simple: false
         };
@@ -49,7 +49,7 @@ class Salus {
             console.log(host);
             await request.post(this.urlTo('login', false), options);
             console.log('Loading devices page...');
-            let body = await request.get(this.urlTo('devices', false));
+            let body = await request.get(this.urlTo('devices', false), { jar: this._jar });
             let $ = cheerio.load(body);
             this._devId = $('input[name="devId"]').val();
             this._token = $('#token').val();
@@ -62,13 +62,13 @@ class Salus {
 
     async online() {
         console.log('Checking device status...');
-        let body = await request.get(this.urlTo('ajax_device_online_status'));
+        let body = await request.get(this.urlTo('ajax_device_online_status'), { jar: this._jar });
         console.log(`Status: ${body}`);
         return ((body == '"online"') || (body == '"online lowBat"'));
     }
 
     async device() {
-        let body = await request.get(this.urlTo('ajax_device_values'));
+        let body = await request.get(this.urlTo('ajax_device_values'), { jar: this._jar });
         let deviceInfo = JSON.parse(body);
         return {
             contactable: !(deviceInfo.CH1currentSetPoint == 32.0),
@@ -79,19 +79,25 @@ class Salus {
     }
 
     async setTemperature(temp) {
-        let t = parseFloat(temp).toFixed(1);
+        let t = temp.toFixed(1);
         console.log(`Setting temp: ${t}...`);
-        let form = {
+        let options = {
             form: {
                 'token': this._token,
                 'tempUnit': 0,
                 'devId': this._devId,
                 'current_tempZ1_set': 1,
                 'current_tempZ1': t
-            }
+            },
+            jar: this._jar
         };
 
-        await request.post(`${host}/includes/set.php`, form);
+        await request.post(`${host}/includes/set.php`, options);
+    }
+
+    async logout() {
+        console.log('Logging out...');
+        await request.get(this.urlTo('logout', false), { jar: this._jar });
     }
 }
 

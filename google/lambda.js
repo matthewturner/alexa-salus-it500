@@ -5,26 +5,8 @@ const DefaultHoldStrategy = require('../core/HoldStrategy');
 const ControlService = require('../core/ControlService');
 const Factory = require('../thermostats/Factory');
 
-const controlService = (userId) => {
-    let context = { userId };
-    let repository;
-    if (process.env.THERMOSTAT_REPOSITORY === 'dynamodb') {
-        repository = new DynamodbThermostatRepository();
-    } else {
-        repository = new DefaultThermostatRepository();
-    }
-    let holdStrategy;
-    if (process.env.HOLD_STRATEGY === 'aws') {
-        holdStrategy = new AwsHoldStrategy(context);
-    } else {
-        holdStrategy = new DefaultHoldStrategy(context);
-    }
-    let factory = new Factory();
-    return new ControlService(context, holdStrategy, factory, repository);
-};
-
 const say = (messages) => {
-    var m = '';
+    let m = '';
     if (messages instanceof Array) {
         for (const message of messages) {
             console.log(message);
