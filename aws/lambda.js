@@ -12,17 +12,6 @@ module.change_code = 0;
 let app = new alexa.app('boiler');
 
 const controlService = (request) => {
-    console.log('*******************************');
-    console.log(`UserId: ${request.userId}`);
-    console.log('Data');
-    console.log(request.data);
-    console.log('Context');
-    console.log(request.context);
-    if (request.data.context) {
-        console.log(`Deep UserId: ${request.data.context.System.user.userId}`);
-    }
-    console.log('*******************************');
-    
     let userId = request.userId || request.data.session.user.userId;
     let source = 'user';
     if (!request.data.context) {
@@ -118,7 +107,7 @@ app.intent('SetTempIntent', {
 }, async (request, response) => {
     let service = controlService(request);
     try {
-        let messages = await service.setTemperature(request.slot('temp'), request.slot('duration'));
+        let messages = await service.setTemperature(request.slot('temp'), request.slot('duration', null));
         say(response, messages);
     } catch (e) {
         say(response, e);
