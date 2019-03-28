@@ -107,7 +107,9 @@ app.intent('SetTempIntent', {
 }, async (request, response) => {
     let service = controlService(request);
     try {
-        let messages = await service.setTemperature(request.slot('temp'), request.slot('duration', null));
+        let targetTemp = parseFloat(request.slot('temp'));
+        let optionalDuration = request.slot('duration', null);
+        let messages = await service.setTemperature(targetTemp, optionalDuration);
         say(response, messages);
     } catch (e) {
         say(response, e);

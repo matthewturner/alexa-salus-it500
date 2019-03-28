@@ -42,16 +42,20 @@ class HoldStrategy {
         }
         console.log(`Stopping hold ${executionId}...`);
         let params = {
-            cause: 'Superceded by user request',
             executionArn: executionId
         };
         try {
             let currentExecution = await this._stepFunctions.describeExecution(params).promise();
             if (currentExecution.status === 'RUNNING') {
+                params = {
+                    cause: 'Superceded by user request',
+                    executionArn: executionId
+                };
                 await this._stepFunctions.stopExecution(params).promise();
             }
         } catch (error) {
             console.log('Execution could not be stopped');
+            console.log(error);
         }
     }
 
