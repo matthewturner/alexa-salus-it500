@@ -20,16 +20,18 @@ class ControlService {
 
     async obtainThermostat() {
         let thermostat = await this._thermostatRepository.find(this._context.userId);
-        if (!thermostat) {
-            thermostat = await this._thermostatRepository.find('template');
-            if (thermostat) {
-                thermostat.userId = this._context.userId;
-            }
-            else {
-                thermostat = { userId: this._context.userId, executionId: null };
-            }
-            await this._thermostatRepository.add(thermostat);
+        if (thermostat) {
+            return thermostat;
         }
+
+        thermostat = await this._thermostatRepository.find('template');
+        if (thermostat) {
+            thermostat.userId = this._context.userId;
+        }
+        else {
+            thermostat = { userId: this._context.userId, executionId: null };
+        }
+        await this._thermostatRepository.add(thermostat);
         return thermostat;
     }
 
@@ -48,27 +50,35 @@ class ControlService {
 
     async launch() {
         let client = await this.login();
-        if (await client.online()) {
-            return 'Thermostat is online';
-        } else {
-            return 'Sorry, the thermostat is offline at the moment.';
+        try {
+            if (await client.online()) {
+                return 'Thermostat is online';
+            } else {
+                return 'Sorry, the thermostat is offline at the moment.';
+            }
+        } finally {
+            await client.logout();
         }
     }
 
     async status() {
         console.log('Requesting status...');
         let client = await this.login();
-        await this.verifyOnline(client);
-        let device = await client.device();
-        this.verifyContactable(device);
+        try {
+            await this.verifyOnline(client);
+            let device = await client.device();
+            this.verifyContactable(device);
 
-        let messages = [];
-        messages.push(`The current temperature is ${this.speakTemperature(device.currentTemperature)} degrees.`);
-        messages.push(`The target is ${this.speakTemperature(device.targetTemperature)} degrees.`);
-        await this.determineIfHolding(device, messages);
+            let messages = [];
+            messages.push(`The current temperature is ${this.speakTemperature(device.currentTemperature)} degrees.`);
+            messages.push(`The target is ${this.speakTemperature(device.targetTemperature)} degrees.`);
+            await this.determineIfHolding(device, messages);
 
-        this.logStatus(device);
-        return messages;
+            this.logStatus(device);
+            return messages;
+        } finally {
+            await client.logout();
+        }
     }
 
     async determineIfHolding(device, messages, qualifier = '') {
@@ -90,51 +100,61 @@ class ControlService {
     async turnUp() {
         console.log('Turning up...');
         let client = await this.login();
-        await this.verifyOnline(client);
-        let device = await client.device();
-        this.verifyContactable(device);
 
-        if (device.status == 'on') {
-            throw 'The heating is already on.';
+        try {
+            await this.verifyOnline(client);
+            let device = await client.device();
+            this.verifyContactable(device);
+
+            if (device.status == 'on') {
+                throw 'The heating is already on.';
+            }
+
+            let t = device.targetTemperature + 0.5;
+            await client.setTemperature(t);
+            let updatedDevice = await client.device();
+
+            let messages = [];
+            messages.push(`The target temperature is now ${this.speakTemperature(updatedDevice.targetTemperature)} degrees.`);
+            await this.determineIfHolding(updatedDevice, messages, 'now');
+
+            this.logStatus(device);
+            return messages;
+        } finally {
+            await client.logout();
         }
-
-        let t = device.targetTemperature + 0.5;
-        await client.setTemperature(t);
-        let updatedDevice = await client.device();
-
-        let messages = [];
-        messages.push(`The target temperature is now ${this.speakTemperature(updatedDevice.targetTemperature)} degrees.`);
-        await this.determineIfHolding(updatedDevice, messages, 'now');
-
-        this.logStatus(device);
-        return messages;
     }
 
     async turnDown() {
         console.log('Turning down...');
         let client = await this.login();
-        await this.verifyOnline(client);
-        let device = await client.device();
-        this.verifyContactable(device);
+        try {
+            await this.verifyOnline(client);
+            let device = await client.device();
+            this.verifyContactable(device);
 
-        let t = device.targetTemperature - 1.0;
-        await client.setTemperature(t);
-        let updatedDevice = await client.device();
+            let t = device.targetTemperature - 1.0;
+            await client.setTemperature(t);
+            let updatedDevice = await client.device();
 
-        let messages = [];
-        messages.push(`The target temperature is now ${this.speakTemperature(updatedDevice.targetTemperature)} degrees.`);
-        await this.determineIfHolding(updatedDevice, messages, 'still');
+            let messages = [];
+            messages.push(`The target temperature is now ${this.speakTemperature(updatedDevice.targetTemperature)} degrees.`);
+            await this.determineIfHolding(updatedDevice, messages, 'still');
 
-        this.logStatus(updatedDevice);
-        return messages;
+            this.logStatus(updatedDevice);
+            return messages;
+        } finally {
+            await client.logout();
+        }
     }
 
     async turn(onOff, duration) {
         console.log(`Turning ${onOff}...`);
 
-        let t = process.env.DEFAULT_ON_TEMP || '20';
+        let thermostat = await this.obtainThermostat();
+        let t = thermostat.defaultOnTemp;
         if (onOff === 'off') {
-            t = process.env.DEFAULT_OFF_TEMP || '14';
+            t = thermostat.defaultOffTemp;
         }
 
         return this.setTemperature(t, duration);
@@ -143,43 +163,45 @@ class ControlService {
     async setTemperature(targetTemperature, forDuration) {
         console.log(`Setting temperature to ${targetTemperature}...`);
         let client = await this.login();
-        await this.verifyOnline(client);
-        let device = await client.device();
-        this.verifyContactable(device);
+        try {
+            await this.verifyOnline(client);
+            let device = await client.device();
+            this.verifyContactable(device);
 
-        await client.setTemperature(targetTemperature);
-        let updatedDevice = await client.device();
+            await client.setTemperature(targetTemperature);
+            let updatedDevice = await client.device();
 
-        let messages = [];
-        messages.push(`The target temperature is now ${this.speakTemperature(updatedDevice.targetTemperature)} degrees.`);
-        this.logStatus(updatedDevice);
+            let messages = [];
+            messages.push(`The target temperature is now ${this.speakTemperature(updatedDevice.targetTemperature)} degrees.`);
+            this.logStatus(updatedDevice);
 
-        if (this._context.source === 'user') {
-            let duration = forDuration || process.env.DEFAULT_DURATION;
-            let intent = await this._holdStrategy.holdIfRequiredFor(duration);
-            return messages.concat(this.summarize(intent, updatedDevice));
+            if (this._context.source === 'user') {
+                let thermostat = await this.obtainThermostat();
+                let duration = forDuration || thermostat.defaultDuration;
+                let intent = await this._holdStrategy.holdIfRequiredFor(duration);
+                return messages.concat(this.summarize(intent, updatedDevice));
+            }
+            return messages;
+        } finally {
+            await client.logout();
         }
-        return messages;
     }
 
     summarize(intent, updatedDevice) {
-        let messages = [];
-        if (intent.holding) {
-            let durationText = this.speakDuration(intent.duration);
-            console.log(`Holding for ${durationText} {${intent.executionId}}`);
+        if (!intent.holding) {
             if (updatedDevice.status == 'on') {
-                messages.push(`The heating is now on and will turn off in ${durationText}`);
+                return ['The heating is now on.'];
             }
-            else {
-                messages.push(`The heating will turn off in ${durationText}`);
-            }
+            return [];
         }
-        else {
-            if (updatedDevice.status == 'on') {
-                messages.push('The heating is now on.');
-            }
+
+        let durationText = this.speakDuration(intent.duration);
+        console.log(`Holding for ${durationText} {${intent.executionId}}`);
+        if (updatedDevice.status == 'on') {
+            return [`The heating is now on and will turn off in ${durationText}`];
         }
-        return messages;
+        
+        return [`The heating will turn off in ${durationText}`];
     }
 
     logStatus(device) {
@@ -195,9 +217,8 @@ class ControlService {
     }
 
     speakTemperature(temp) {
-        let t = parseFloat(temp);
-        if (parseFloat(t.toFixed(0)) != t) return t.toFixed(1);
-        else return t.toFixed(0);
+        if (parseFloat(temp.toFixed(0)) != temp) return temp.toFixed(1);
+        else return temp.toFixed(0);
     }
 }
 
