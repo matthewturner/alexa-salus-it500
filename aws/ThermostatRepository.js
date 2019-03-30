@@ -42,7 +42,7 @@ class ThermostatRepository {
     }
 
     async save(thermostat) {
-        let existingThermostat = await find(thermostat.userId);
+        let existingThermostat = await this.find(thermostat.userId);
 
         let updateField = 'executionId';
         let updateValue = thermostat.executionId;

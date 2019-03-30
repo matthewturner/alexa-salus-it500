@@ -157,7 +157,7 @@ class ControlService {
             t = thermostat.defaultOffTemp;
         }
 
-        return this.setTemperature(t, duration, false);
+        return this.setTemperature(t, duration, onOff === 'on');
     }
 
     async setTemperature(targetTemperature, forDuration, allowAutoHold = true) {
