@@ -157,10 +157,10 @@ class ControlService {
             t = thermostat.defaultOffTemp;
         }
 
-        return this.setTemperature(t, duration);
+        return this.setTemperature(t, duration, onOff === 'on');
     }
 
-    async setTemperature(targetTemperature, forDuration) {
+    async setTemperature(targetTemperature, forDuration, allowAutoHold = true) {
         console.log(`Setting temperature to ${targetTemperature}...`);
         let client = await this.login();
         try {
@@ -175,7 +175,7 @@ class ControlService {
             messages.push(`The target temperature is now ${this.speakTemperature(updatedDevice.targetTemperature)} degrees.`);
             this.logStatus(updatedDevice);
 
-            if (this._context.source === 'user') {
+            if (this._context.source === 'user' && allowAutoHold) {
                 let thermostat = await this.obtainThermostat();
                 let duration = forDuration || thermostat.defaultDuration;
                 let intent = await this._holdStrategy.holdIfRequiredFor(duration);
@@ -202,6 +202,47 @@ class ControlService {
         }
         
         return [`The heating will turn off in ${durationText}`];
+    }
+
+    async setDefault(name, value) {
+        console.log(`Setting default ${name} to ${value}...`);
+
+        let thermostat = await this.obtainThermostat();
+        let nameText = '';
+        let valueText = '';
+        switch(name) {
+            case 'on':
+                thermostat.defaultOnTemp = value;
+                nameText = 'on temperature';
+                valueText = `${value} degrees`;
+                break;
+            case 'off':
+                thermostat.defaultOffTemp = value;
+                nameText = 'off temperature';
+                valueText = `${value} degrees`;
+                break;
+            case 'duration':
+                thermostat.defaultDuration = value;
+                nameText = 'duration';
+                valueText = this.speakDuration(new Duration(value));
+                break;
+        }
+
+        await this._thermostatRepository.save(thermostat);
+
+        return [`The default ${nameText} has been set to ${valueText}`];
+    }
+
+    async defaults() {
+        console.log('Retrieving default values...');
+
+        let thermostat = await this.obtainThermostat();
+
+        return [
+            `The default on temperature is ${thermostat.defaultOnTemp}.`,
+            `The default off temperature is ${thermostat.defaultOffTemp}.`,
+            `The default duration is ${this.speakDuration(new Duration(thermostat.defaultDuration))}.`
+        ];
     }
 
     logStatus(device) {
