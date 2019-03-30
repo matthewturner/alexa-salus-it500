@@ -52,6 +52,16 @@
               ]
           },
           {
+            "name": "DefaultsIntent",
+            "slots": [],
+            "samples": [
+                "the current default values",
+                "the default values",
+                "the current defaults",
+                "the defaults"
+            ]
+          },
+          {
               "name": "TurnDownIntent",
               "slots": [],
               "samples": [

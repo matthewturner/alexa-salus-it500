@@ -172,6 +172,20 @@ app.intent('SetDefaultDurationIntent', {
     return false;
 });
 
+app.intent('DefaultsIntent', {
+    'slots': {},
+    'utterances': ['the current default values', 'the default values', 'the current defaults', 'the defaults']
+}, async (request, response) => {
+    let service = controlService(request);
+    try {
+        let messages = await service.defaults();
+        say(response, messages);
+    } catch (e) {
+        say(response, e);
+    }
+    return false;
+});
+
 app.intent('AMAZON.HelpIntent', {
     'slots': {},
     'utterances': []

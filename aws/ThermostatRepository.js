@@ -42,14 +42,32 @@ class ThermostatRepository {
     }
 
     async save(thermostat) {
+        let existingThermostat = await find(thermostat.userId);
+
+        let updateField = 'executionId';
+        let updateValue = thermostat.executionId;
+        if (existingThermostat.executionId !== thermostat.executionId) {
+            updateField = 'executionId';
+            updateValue = thermostat.executionId;
+        } else if (existingThermostat.defaultDuration !== thermostat.defaultDuration) {
+            updateField = 'defaultDuration';
+            updateValue = thermostat.defaultDuration;
+        } else if (existingThermostat.defaultOnTemp !== thermostat.defaultOnTemp) {
+            updateField = 'defaultOnTemp';
+            updateValue = thermostat.defaultOnTemp;
+        } else if (existingThermostat.defaultOffTemp !== thermostat.defaultOffTemp) {
+            updateField = 'defaultOffTemp';
+            updateValue = thermostat.defaultOffTemp;
+        }
+
         const params = {
             TableName,
             Key: {
                 userId: thermostat.userId
             },
-            UpdateExpression: 'set executionId=:eid',
+            UpdateExpression: `set ${updateField}=:updateField`,
             ExpressionAttributeValues: {
-                ':eid': thermostat.executionId
+                ':updateField': updateValue
             },
             ReturnValues: 'UPDATED_NEW'
         };
