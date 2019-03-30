@@ -136,6 +136,42 @@ app.intent('TurnIntent', {
     return false;
 });
 
+app.intent('SetDefaultTempIntent', {
+    'slots': {
+        'onoff': 'ONOFF',
+        'temp': 'AMAZON.NUMBER'
+    },
+    'utterances': ['to set the default {onoff} temperature to {temp} degrees']
+}, async (request, response) => {    
+    let onOff = request.slot('onoff');
+    let temp = request.slot('temp');
+    let service = controlService(request);
+    try {
+        let messages = await service.setDefault(onOff, temp);
+        say(response, messages);
+    } catch (e) {
+        say(response, e);
+    }
+    return false;
+});
+
+app.intent('SetDefaultDurationIntent', {
+    'slots': {
+        'duration': 'AMAZON.DURATION'
+    },
+    'utterances': ['to set the default duration to {duration}']
+}, async (request, response) => {    
+    let duration = request.slot('duration');
+    let service = controlService(request);
+    try {
+        let messages = await service.setDefault('duration', duration);
+        say(response, messages);
+    } catch (e) {
+        say(response, e);
+    }
+    return false;
+});
+
 app.intent('AMAZON.HelpIntent', {
     'slots': {},
     'utterances': []

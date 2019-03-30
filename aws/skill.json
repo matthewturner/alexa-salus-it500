@@ -91,6 +91,38 @@
               ]
           },
           {
+            "name": "SetDefaultTempIntent",
+            "slots": [
+                {
+                    "name": "temp",
+                    "type": "AMAZON.NUMBER",
+                    "samples": [
+                        "{temp}",
+                        "{temp} degrees"
+                    ]
+                },
+                {
+                    "name": "onoff",
+                    "type": "ONOFF"
+                }
+            ],
+            "samples": [
+                "to set the default {onoff} temperature to {temp} degrees"
+            ]
+          },
+          {
+            "name": "SetDefaultDurationIntent",
+            "slots": [
+                {
+                    "name": "duration",
+                    "type": "AMAZON.DURATION"
+                }
+            ],
+            "samples": [
+                "to set the default duration to {duration}"
+            ]
+          },
+          {
               "name": "AMAZON.MoreIntent",
               "slots": [],
               "samples": []

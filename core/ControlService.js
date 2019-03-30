@@ -204,6 +204,35 @@ class ControlService {
         return [`The heating will turn off in ${durationText}`];
     }
 
+    async setDefault(name, value) {
+        console.log(`Setting default ${name} to ${value}...`);
+
+        let thermostat = await this.obtainThermostat();
+        let nameText = '';
+        let valueText = '';
+        switch(name) {
+            case 'on':
+                thermostat.defaultOnTemp = value;
+                nameText = 'on temperature';
+                valueText = `${value} degrees`;
+                break;
+            case 'off':
+                thermostat.defaultOffTemp = value;
+                nameText = 'off temperature';
+                valueText = `${value} degrees`;
+                break;
+            case 'duration':
+                thermostat.defaultDuration = value;
+                nameText = 'duration';
+                valueText = this.speakDuration(new Duration(value));
+                break;
+        }
+
+        await this._thermostatRepository.save(thermostat);
+
+        return [`The default ${nameText} has been set to ${valueText}`];
+    }
+
     logStatus(device) {
         console.log(`${new Date().toISOString()} ${device.currentTemperature} => ${device.targetTemperature} (${device.status})`);
     }

@@ -17,6 +17,8 @@ This skill has 5 intents :-
 * Alexa, ask boiler to set lower
 * Alexa, ask boiler to set to x degrees
 * Alexa, ask boiler to turn [on/off] [for x hours]
+* Alexa, ask boiler to set the default [on/off] temperature to x degrees
+* Alexa, ask boiler to set the default duration to [x hours]
 
 ## Auto-switch off/Hold time
 
@@ -26,7 +28,6 @@ The last intent can take an optional duration which can be any valid time statem
 
 * You will need to prevent Salus from overriding this by setting the off times to a late time (eg 10pm)
 * It is optional and requires a hosted lambda, step function and dynamodb table
-* Cancellation of the hold-time is not yet supported; the boiler will switch off
 
 ## Setting Up
 
