@@ -144,7 +144,7 @@ app.intent('SetDefaultTempIntent', {
     'utterances': ['to set the default {onoff} temperature to {temp} degrees']
 }, async (request, response) => {    
     let onOff = request.slot('onoff');
-    let temp = request.slot('temp');
+    let temp = parseFloat(request.slot('temp'));
     let service = controlService(request);
     try {
         let messages = await service.setDefault(onOff, temp);

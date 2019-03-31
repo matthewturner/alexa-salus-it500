@@ -1,6 +1,7 @@
 'use strict';
 
 const AWS = require('aws-sdk');
+const helpers = require('./helpers');
 
 const TableName = 'thermostats';
 
@@ -35,7 +36,8 @@ class ThermostatRepository {
 
         let response = await this.client.get(params).promise();
         if (response.Item) {
-            console.log(`Found thermostat for user ${userId} with username ${response.Item.options.username}`);
+            
+            console.log(`Found thermostat for user ${helpers.truncateUserId(userId)} with username ${response.Item.options.username}`);
             return response.Item;
         }
         return null;

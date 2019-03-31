@@ -157,10 +157,10 @@ class ControlService {
             t = thermostat.defaultOffTemp;
         }
 
-        return this.setTemperature(t, duration, onOff === 'on');
+        return this.setTemperature(t, duration, onOff);
     }
 
-    async setTemperature(targetTemperature, forDuration, allowAutoHold = true) {
+    async setTemperature(targetTemperature, forDuration, onOff = 'on') {
         console.log(`Setting temperature to ${targetTemperature}...`);
         let client = await this.login();
         try {
@@ -175,11 +175,15 @@ class ControlService {
             messages.push(`The target temperature is now ${this.speakTemperature(updatedDevice.targetTemperature)} degrees.`);
             this.logStatus(updatedDevice);
 
-            if (this._context.source === 'user' && allowAutoHold) {
+            if (this._context.source === 'user') {
                 let thermostat = await this.obtainThermostat();
-                let duration = forDuration || thermostat.defaultDuration;
-                let intent = await this._holdStrategy.holdIfRequiredFor(duration);
-                return messages.concat(this.summarize(intent, updatedDevice));
+                if (onOff === 'on') {
+                    let duration = forDuration || thermostat.defaultDuration;
+                    let intent = await this._holdStrategy.holdIfRequiredFor(duration);
+                    return messages.concat(this.summarize(intent, updatedDevice));
+                } else {
+                    await this._holdStrategy.stopHoldIfRequiredFor(thermostat.executionId);
+                }
             }
             return messages;
         } finally {
@@ -239,8 +243,8 @@ class ControlService {
         let thermostat = await this.obtainThermostat();
 
         return [
-            `The default on temperature is ${thermostat.defaultOnTemp}.`,
-            `The default off temperature is ${thermostat.defaultOffTemp}.`,
+            `The default on temperature is ${thermostat.defaultOnTemp} degrees.`,
+            `The default off temperature is ${thermostat.defaultOffTemp} degrees.`,
             `The default duration is ${this.speakDuration(new Duration(thermostat.defaultDuration))}.`
         ];
     }

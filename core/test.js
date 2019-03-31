@@ -27,12 +27,35 @@ const main = async () => {
     let factory = new Factory();
     let repository = new ThermostatRepository();
     let service = new ControlService(context, holdStrategy, factory, repository);
+
+    try {
+        let messages = await service.defaults();
+        say(messages);
+    } catch (e) {
+        say(e);
+    }
+
+    try {
+        let messages = await service.setDefault('defaultOnTemp', 22);
+        say(messages);
+    } catch (e) {
+        say(e);
+    }
+
+    try {
+        let messages = await service.defaults();
+        say(messages);
+    } catch (e) {
+        say(e);
+    }
+
     try {
         let messages = await service.turn(onOff, duration);
         say(messages);
     } catch (e) {
         say(e);
     }
+
     try {
         let messages = await service.status();
         say(messages);

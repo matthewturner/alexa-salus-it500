@@ -47,6 +47,14 @@ const turnOffCallbackPayload = (userId, duration) => {
     };
 };
 
-module.exports = { 
-    turnOffCallbackPayload
+const truncateUserId = (userId) => {
+    let id = userId.split('.').pop();
+    let startUserId = id.substr(0, 5);
+    let endUserId = id.substr(id.length - 5);
+    return `${startUserId}...${endUserId}`;
+};
+
+module.exports = {
+    turnOffCallbackPayload,
+    truncateUserId
 };

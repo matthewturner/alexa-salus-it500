@@ -1,6 +1,6 @@
 {
   "name": "thermostat",
-  "version": "1.6.0",
+  "version": "1.9.1",
   "description": "Alexa app to control Salus IT500 thermostat",
   "main": "aws/lambda.js",
   "author": "Matt Turner (matt@fiverings.uk)",
