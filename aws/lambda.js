@@ -119,7 +119,8 @@ app.intent('SetTempIntent', {
 
 app.intent('TurnIntent', {
     'slots': {
-        'onoff': 'ONOFF'
+        'onoff': 'ONOFF',
+        'duration': 'AMAZON.DURATION'
     },
     'utterances': ['to turn {onoff}', 'to turn heating {onoff}', 'to turn the heating {onoff}']
 }, async (request, response) => {    

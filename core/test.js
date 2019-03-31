@@ -15,9 +15,8 @@ const say = (messages) => {
 };
 
 const main = async () => {
-    let onOff = 'on';
     let duration = process.env.DURATION;
-    let context = { userId: process.env.ALEXA_USER_ID };
+    let context = { userId: process.env.ALEXA_USER_ID, source: 'user' };
     let holdStrategy;
     if (process.env.HOLD_STRATEGY === 'aws') {
         holdStrategy = new AwsHoldStrategy(context);
@@ -50,7 +49,7 @@ const main = async () => {
     }
 
     try {
-        let messages = await service.turn(onOff, duration);
+        let messages = await service.turn('on', duration);
         say(messages);
     } catch (e) {
         say(e);
@@ -58,6 +57,13 @@ const main = async () => {
 
     try {
         let messages = await service.status();
+        say(messages);
+    } catch (e) {
+        say(e);
+    }
+
+    try {
+        let messages = await service.turn('off');
         say(messages);
     } catch (e) {
         say(e);
