@@ -182,7 +182,7 @@ class ControlService {
                     let intent = await this._holdStrategy.holdIfRequiredFor(duration);
                     return messages.concat(this.summarize(intent, updatedDevice));
                 } else {
-                    await this._holdStrategy.stopHoldIfRequiredFor(thermostat.executionId);
+                    await this._holdStrategy.stopHoldIfRequired(thermostat.executionId);
                 }
             }
             return messages;
