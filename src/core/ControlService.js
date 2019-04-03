@@ -215,21 +215,21 @@ class ControlService {
         let nameText = '';
         let valueText = '';
         switch(name) {
-            case 'on':
-                thermostat.defaultOnTemp = value;
-                nameText = 'on temperature';
-                valueText = `${value} degrees`;
-                break;
-            case 'off':
-                thermostat.defaultOffTemp = value;
-                nameText = 'off temperature';
-                valueText = `${value} degrees`;
-                break;
-            case 'duration':
-                thermostat.defaultDuration = value;
-                nameText = 'duration';
-                valueText = this.speakDuration(new Duration(value));
-                break;
+        case 'on':
+            thermostat.defaultOnTemp = value;
+            nameText = 'on temperature';
+            valueText = `${value} degrees`;
+            break;
+        case 'off':
+            thermostat.defaultOffTemp = value;
+            nameText = 'off temperature';
+            valueText = `${value} degrees`;
+            break;
+        case 'duration':
+            thermostat.defaultDuration = value;
+            nameText = 'duration';
+            valueText = this.speakDuration(new Duration(value));
+            break;
         }
 
         await this._thermostatRepository.save(thermostat);

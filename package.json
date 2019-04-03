@@ -5,12 +5,18 @@
   "main": "aws/lambda.js",
   "author": "Matt Turner (matt@fiverings.uk)",
   "license": "GPL",
+  "scripts": {
+    "test": "./node_modules/.bin/mocha --recursive"
+  },
   "repository": "https://github.com/azw409/alexa-salus-it500",
   "alexa": {
     "applicationId": "amzn1.echo-sdk-ams.app.999999-d0ed-9999-ad00-999999d00ebe"
   },
   "devDependencies": {
-    "aws-sdk": "^2.329.0"
+    "aws-sdk": "^2.329.0",
+    "chai": "^4.2.0",
+    "mocha": "^6.0.2",
+    "sinon": "^7.3.1"
   },
   "dependencies": {
     "JSON": "^1.0.0",
