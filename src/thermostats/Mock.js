@@ -24,6 +24,10 @@ class Mock {
     async setTemperature(temp) {
         console.log(`Setting temp: ${temp}`);
     }
+
+    async logout() {
+        console.log('Logging out...');
+    }
 }
 
 module.exports = Mock;
