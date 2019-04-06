@@ -1,12 +1,16 @@
 'use strict';
 
 class ThermostatRepository {
+    constructor(logger) {
+        this._logger = logger;
+    }
+
     async add(thermostat) { // eslint-disable-line no-unused-vars
-        console.log('Thermostat data will not be persisted');
+        this._logger.debug('Thermostat data will not be persisted');
     }
 
     async find(userId) {
-        console.log('Retrieving thermostat data from environment...');
+        this._logger.debug('Retrieving thermostat data from environment...');
         return {
             userId: userId,
             type: process.env.THERMOSTAT_TYPE,
@@ -21,7 +25,7 @@ class ThermostatRepository {
     }
 
     async save(thermostat) { // eslint-disable-line no-unused-vars
-        console.log('Thermostat data will not be persisted');
+        this._logger.debug('Thermostat data will not be persisted');
     }
 }
 

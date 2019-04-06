@@ -25,4 +25,4 @@ export DURATION=PT1H
 export HOLD_STRATEGY=aws
 export THERMOSTAT_REPOSITORY=aws
 
-node ./core/test.js
+node ./src/core/test.js

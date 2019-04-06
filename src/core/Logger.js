@@ -7,6 +7,11 @@ const OFF = 1;
 class Logger {
     constructor(level = OFF) {
         this._level = level;
+        this._prefix = '';
+    }
+
+    set prefix(prefix) {
+        this._prefix = prefix;
     }
 
     debug(message) {
@@ -26,8 +31,12 @@ class Logger {
     }
 
     log(message, level) {
-        if(this._level >= level) {
-            console.log(message);
+        if(level >= this._level) {
+            if (this._prefix === '') {
+                console.log(message);
+            } else {
+                console.log(`${this._prefix}: ${message}`);
+            }
         }
     }
 }

@@ -5,22 +5,23 @@ const helpers = require('./helpers');
 const ThermostatRepository = require('./ThermostatRepository');
 
 class HoldStrategy {
-    constructor(context) {
+    constructor(logger, context) {
+        this._logger = logger;
         this._context = context;
-        this._thermostatRepository = new ThermostatRepository();
+        this._thermostatRepository = new ThermostatRepository(logger);
         this._stepFunctions = new AWS.StepFunctions();
     }
 
     async holdIfRequiredFor(durationValue) {
-        console.log(`Duration: ${durationValue}`);
+        this._logger.debug(`Duration: ${durationValue}`);
         let thermostat = await this._thermostatRepository.find(this._context.userId);
 
         if (!durationValue) {
-            console.log('No callback required...');
+            this._logger.debug('No callback required...');
             return { holding: false, duration: null };
         }
 
-        console.log('Configuring callback...');
+        this._logger.debug('Configuring callback...');
         let duration = new Duration(durationValue);
         await this.stopHoldIfRequired(thermostat.executionId);
         let data = await this.startHold(duration);
@@ -37,10 +38,10 @@ class HoldStrategy {
 
     async stopHoldIfRequired(executionId) {
         if (!executionId) {
-            console.log('No current execution id');
+            this._logger.debug('No current execution id');
             return;
         }
-        console.log(`Stopping hold ${executionId}...`);
+        this._logger.debug(`Stopping hold ${executionId}...`);
         let params = {
             executionArn: executionId
         };
@@ -54,13 +55,13 @@ class HoldStrategy {
                 await this._stepFunctions.stopExecution(params).promise();
             }
         } catch (error) {
-            console.log('Execution could not be stopped');
-            console.log(error);
+            this._logger.debug('Execution could not be stopped');
+            this._logger.debug(error);
         }
     }
 
     async startHold(duration) {
-        console.log(`Holding for ${duration.inSeconds()} seconds...`);
+        this._logger.debug(`Holding for ${duration.inSeconds()} seconds...`);
         let params = {
             stateMachineArn: process.env.STEP_FUNCTION_ARN,
             input: JSON.stringify(helpers.turnOffCallbackPayload(this._context.userId, duration.inSeconds()))
