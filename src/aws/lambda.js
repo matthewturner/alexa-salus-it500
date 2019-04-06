@@ -4,6 +4,7 @@ const DefaultThermostatRepository = require('../core/ThermostatRepository');
 const AwsHoldStrategy = require('./HoldStrategy');
 const DefaultHoldStrategy = require('../core/HoldStrategy');
 const ControlService = require('../core/ControlService');
+const Logger = require('../core/Logger');
 const Factory = require('../thermostats/Factory');
 
 // Allow this module to be reloaded by hotswap when changed
@@ -11,28 +12,28 @@ module.change_code = 0;
 
 let app = new alexa.app('boiler');
 
-const controlService = (request) => {
+const controlService = (request, logger = new Logger(Logger.DEBUG)) => {
     let userId = request.userId || request.data.session.user.userId;
     let source = 'user';
     if (!request.data.context) {
         source = 'callback';
     }
     let context = { userId: userId, source: source };
-    console.log(`Creating context for source: ${context.source}, user: ${context.userId}...`);
+    logger.debug(`Creating context for source: ${context.source}, user: ${context.userId}...`);
     let repository;
     if (process.env.THERMOSTAT_REPOSITORY === 'dynamodb') {
-        repository = new DynamodbThermostatRepository();
+        repository = new DynamodbThermostatRepository(logger);
     } else {
-        repository = new DefaultThermostatRepository();
+        repository = new DefaultThermostatRepository(logger);
     }
     let holdStrategy;
     if (process.env.HOLD_STRATEGY === 'aws') {
-        holdStrategy = new AwsHoldStrategy(context);
+        holdStrategy = new AwsHoldStrategy(logger, context);
     } else {
-        holdStrategy = new DefaultHoldStrategy(context);
+        holdStrategy = new DefaultHoldStrategy(logger, context);
     }
     let factory = new Factory();
-    return new ControlService(context, holdStrategy, factory, repository);
+    return new ControlService(logger, context, holdStrategy, factory, repository);
 };
 
 const say = (response, messages) => {
@@ -49,8 +50,9 @@ const say = (response, messages) => {
 };
 
 app.launch(async (request, response) => {
-    console.log('Launching...');
-    let service = controlService(request);
+    let logger = new Logger(Logger.DEBUG);
+    logger.debug('Launching...');
+    let service = controlService(request, logger);
     try {
         let messages = await service.launch();
         say(response, messages);

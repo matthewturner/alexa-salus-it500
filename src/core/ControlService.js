@@ -2,7 +2,8 @@ const moment = require('moment');
 const Duration = require('durationjs');
 
 class ControlService {
-    constructor(context, holdStrategy, thermostatFactory, thermostatRepository) {
+    constructor(logger, context, holdStrategy, thermostatFactory, thermostatRepository) {
+        this._logger = logger;
         this._context = context;
         this._holdStrategy = holdStrategy;
         this._thermostatRepository = thermostatRepository;
@@ -10,7 +11,7 @@ class ControlService {
     }
 
     async login() {
-        console.log('Finding thermostat...');
+        this._logger.debug('Finding thermostat...');
         let thermostat = await this.obtainThermostat();
         let options = thermostat.options;
         let client = this._thermostatFactory.create(thermostat.type, options);
@@ -62,7 +63,7 @@ class ControlService {
     }
 
     async status() {
-        console.log('Requesting status...');
+        this._logger.debug('Requesting status...');
         let client = await this.login();
         try {
             await this.verifyOnline(client);
@@ -83,9 +84,11 @@ class ControlService {
 
     async determineIfHolding(device, messages, qualifier = '') {
         if (device.status !== 'on') { return; }
+
+        if (qualifier !== '') { qualifier = ` ${qualifier}`; }
         
         let status = await this._holdStrategy.status();
-        console.log(status);
+        this._logger.debug(status);
         if (status.status === 'running') {
             let timeSinceStart = (moment().diff(status.startDate) / 1000).toFixed(0);
             let durationSinceStart = new Duration(`PT${timeSinceStart}S`);
@@ -93,12 +96,12 @@ class ControlService {
             messages.push(`The heating is ${qualifier} on and will turn off in ${this.speakDuration(timeToGo)}`);
         }
         else {
-            messages.push(`The heating is ${qualifier} on`);
+            messages.push(`The heating is${qualifier} on.`);
         }
     }
 
     async turnUp() {
-        console.log('Turning up...');
+        this._logger.debug('Turning up...');
         let client = await this.login();
 
         try {
@@ -126,7 +129,7 @@ class ControlService {
     }
 
     async turnDown() {
-        console.log('Turning down...');
+        this._logger.debug('Turning down...');
         let client = await this.login();
         try {
             await this.verifyOnline(client);
@@ -149,7 +152,7 @@ class ControlService {
     }
 
     async turn(onOff, duration) {
-        console.log(`Turning ${onOff}...`);
+        this._logger.debug(`Turning ${onOff}...`);
 
         let thermostat = await this.obtainThermostat();
         let t = thermostat.defaultOnTemp;
@@ -161,7 +164,7 @@ class ControlService {
     }
 
     async setTemperature(targetTemperature, forDuration, onOff = 'on') {
-        console.log(`Setting temperature to ${targetTemperature}...`);
+        this._logger.debug(`Setting temperature to ${targetTemperature}...`);
         let client = await this.login();
         try {
             await this.verifyOnline(client);
@@ -200,7 +203,7 @@ class ControlService {
         }
 
         let durationText = this.speakDuration(intent.duration);
-        console.log(`Holding for ${durationText} {${intent.executionId}}`);
+        this._logger.debug(`Holding for ${durationText} {${intent.executionId}}`);
         if (updatedDevice.status == 'on') {
             return [`The heating is now on and will turn off in ${durationText}`];
         }
@@ -209,7 +212,7 @@ class ControlService {
     }
 
     async setDefault(name, value) {
-        console.log(`Setting default ${name} to ${value}...`);
+        this._logger.debug(`Setting default ${name} to ${value}...`);
 
         let thermostat = await this.obtainThermostat();
         let nameText = '';
@@ -238,7 +241,7 @@ class ControlService {
     }
 
     async defaults() {
-        console.log('Retrieving default values...');
+        this._logger.debug('Retrieving default values...');
 
         let thermostat = await this.obtainThermostat();
 
@@ -250,7 +253,7 @@ class ControlService {
     }
 
     logStatus(device) {
-        console.log(`${new Date().toISOString()} ${device.currentTemperature} => ${device.targetTemperature} (${device.status})`);
+        this._logger.debug(`${new Date().toISOString()} ${device.currentTemperature} => ${device.targetTemperature} (${device.status})`);
     }
     
     speakDuration(duration) {

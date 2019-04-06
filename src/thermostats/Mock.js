@@ -1,18 +1,19 @@
 class Mock {
-    constructor(options) { // eslint-disable-line no-unused-vars
+    constructor(logger, options) { // eslint-disable-line no-unused-vars
+        this._logger = logger;
     }
 
     async login() {
-        console.log('Logging in...');
+        this._logger.debug('Logging in...');
     }
 
     async online() {
-        console.log('Checking device status...');
+        this._logger.debug('Checking device status...');
         return true;
     }
 
     async device() {
-        console.log('Contacting device...');
+        this._logger.debug('Contacting device...');
         return {
             contactable: true,
             currentTemperature: 20,
@@ -22,11 +23,11 @@ class Mock {
     }
 
     async setTemperature(temp) {
-        console.log(`Setting temp: ${temp}`);
+        this._logger.debug(`Setting temp: ${temp}`);
     }
 
     async logout() {
-        console.log('Logging out...');
+        this._logger.debug('Logging out...');
     }
 }
 
