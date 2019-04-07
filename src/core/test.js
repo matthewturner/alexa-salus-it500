@@ -1,72 +1,74 @@
 const ControlService = require('../core/ControlService');
 const AwsHoldStrategy = require('../aws/HoldStrategy');
 const DefaultHoldStrategy = require('../core/HoldStrategy');
+const Logger = require('../core/Logger');
 const ThermostatRepository = require('../aws/ThermostatRepository');
 const Factory = require('../thermostats/Factory');
 
-const say = (messages) => {
+const say = (messages, logger) => {
     if (messages instanceof Array) {
         for (const message of messages) {
-            console.log(message);
+            logger.debug(message);
         }
     } else {
-        console.log(messages);
+        logger.debug(messages);
     }
 };
 
 const main = async () => {
-    let duration = process.env.DURATION;
-    let context = { userId: process.env.ALEXA_USER_ID, source: 'user' };
+    const logger = new Logger(Logger.DEBUG);
+    const duration = process.env.DURATION;
+    const context = { userId: process.env.ALEXA_USER_ID, source: 'user' };
     let holdStrategy;
     if (process.env.HOLD_STRATEGY === 'aws') {
-        holdStrategy = new AwsHoldStrategy(context);
+        holdStrategy = new AwsHoldStrategy(logger, context);
     } else {
-        holdStrategy = new DefaultHoldStrategy(context);
+        holdStrategy = new DefaultHoldStrategy(logger, context);
     }
-    let factory = new Factory();
-    let repository = new ThermostatRepository();
-    let service = new ControlService(context, holdStrategy, factory, repository);
+    const factory = new Factory(logger);
+    const repository = new ThermostatRepository(logger);
+    const service = new ControlService(logger, context, holdStrategy, factory, repository);
 
     try {
         let messages = await service.defaults();
-        say(messages);
+        say(messages, logger);
     } catch (e) {
-        say(e);
+        say(e, logger);
     }
 
     try {
         let messages = await service.setDefault('defaultOnTemp', 22);
-        say(messages);
+        say(messages, logger);
     } catch (e) {
-        say(e);
+        say(e, logger);
     }
 
     try {
         let messages = await service.defaults();
-        say(messages);
+        say(messages, logger);
     } catch (e) {
-        say(e);
+        say(e, logger);
     }
 
     try {
         let messages = await service.turn('on', duration);
-        say(messages);
+        say(messages, logger);
     } catch (e) {
-        say(e);
+        say(e, logger);
     }
 
     try {
         let messages = await service.status();
-        say(messages);
+        say(messages, logger);
     } catch (e) {
-        say(e);
+        say(e, logger);
     }
 
     try {
         let messages = await service.turn('off');
-        say(messages);
+        say(messages, logger);
     } catch (e) {
-        say(e);
+        say(e, logger);
     }
 };
 

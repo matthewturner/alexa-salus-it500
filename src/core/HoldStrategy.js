@@ -1,14 +1,19 @@
 class HoldStrategy {
-    constructor() {
+    constructor(logger) {
+        this._logger = logger;
     }
 
     async holdIfRequiredFor(durationValue) {
-        console.log(`Hold request for ${durationValue} will be ignored`);
+        this._logger.debug(`Hold request for ${durationValue} will be ignored`);
         return {
             holding: false,
             duration: null,
             executionId: null
         };
+    }
+
+    async stopHoldIfRequired(executionId) {
+        this._logger.debug(`Stop hold request for ${executionId} will be ignored`);
     }
 
     async status() {

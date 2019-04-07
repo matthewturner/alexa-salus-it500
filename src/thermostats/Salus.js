@@ -6,7 +6,8 @@ const request = require('request-promise');
 const host = 'https://salus-it500.com';
 
 class Salus {
-    constructor(options) {
+    constructor(logger, options) {
+        this._logger = logger;
         this._options = options;
         this._jar = request.jar();
     }
@@ -45,25 +46,25 @@ class Salus {
         };
 
         try {
-            console.log('Logging in...');
-            console.log(host);
+            this._logger.debug('Logging in...');
+            this._logger.debug(host);
             await request.post(this.urlTo('login', false), options);
-            console.log('Loading devices page...');
+            this._logger.debug('Loading devices page...');
             let body = await request.get(this.urlTo('devices', false), { jar: this._jar });
             let $ = cheerio.load(body);
             this._devId = $('input[name="devId"]').val();
             this._token = $('#token').val();
-            console.log(`Logged on (${this._devId}, ${this._token})`);
+            this._logger.debug(`Logged on (${this._devId}, ${this._token})`);
         } catch(error) {
-            console.log('Error occurred:');
-            console.log(error);
+            this._logger.debug('Error occurred:');
+            this._logger.debug(error);
         }
     }
 
     async online() {
-        console.log('Checking device status...');
+        this._logger.debug('Checking device status...');
         let body = await request.get(this.urlTo('ajax_device_online_status'), { jar: this._jar });
-        console.log(`Status: ${body}`);
+        this._logger.debug(`Status: ${body}`);
         return ((body == '"online"') || (body == '"online lowBat"'));
     }
 
@@ -80,7 +81,7 @@ class Salus {
 
     async setTemperature(temp) {
         let t = temp.toFixed(1);
-        console.log(`Setting temp: ${t}...`);
+        this._logger.debug(`Setting temp: ${t}...`);
         let options = {
             form: {
                 'token': this._token,
@@ -96,7 +97,7 @@ class Salus {
     }
 
     async logout() {
-        console.log('Logging out...');
+        this._logger.debug('Logging out...');
         await request.get(this.urlTo('logout', false), { jar: this._jar });
     }
 }

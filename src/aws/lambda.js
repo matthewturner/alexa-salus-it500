@@ -4,6 +4,8 @@ const DefaultThermostatRepository = require('../core/ThermostatRepository');
 const AwsHoldStrategy = require('./HoldStrategy');
 const DefaultHoldStrategy = require('../core/HoldStrategy');
 const ControlService = require('../core/ControlService');
+const Logger = require('../core/Logger');
+const helpers = require('../core/Helpers');
 const Factory = require('../thermostats/Factory');
 
 // Allow this module to be reloaded by hotswap when changed
@@ -11,51 +13,59 @@ module.change_code = 0;
 
 let app = new alexa.app('boiler');
 
-const controlService = (request) => {
-    let userId = request.userId || request.data.session.user.userId;
+const controlService = (request, logger = new Logger(Logger.DEBUG)) => {
+    const userId = request.userId || request.data.session.user.userId;
+    const shortUserId = helpers.truncateUserId(userId);
+    logger.prefix = shortUserId;
     let source = 'user';
     if (!request.data.context) {
         source = 'callback';
     }
-    let context = { userId: userId, source: source };
-    console.log(`Creating context for source: ${context.source}, user: ${context.userId}...`);
+    const context = { userId: userId, shortUserId: shortUserId, source: source };
+    logger.debug(`Creating context for source: ${context.source}...`);
     let repository;
     if (process.env.THERMOSTAT_REPOSITORY === 'dynamodb') {
-        repository = new DynamodbThermostatRepository();
+        repository = new DynamodbThermostatRepository(logger);
     } else {
-        repository = new DefaultThermostatRepository();
+        repository = new DefaultThermostatRepository(logger);
     }
     let holdStrategy;
     if (process.env.HOLD_STRATEGY === 'aws') {
-        holdStrategy = new AwsHoldStrategy(context);
+        holdStrategy = new AwsHoldStrategy(logger, context);
     } else {
-        holdStrategy = new DefaultHoldStrategy(context);
+        holdStrategy = new DefaultHoldStrategy(logger, context);
     }
-    let factory = new Factory();
-    return new ControlService(context, holdStrategy, factory, repository);
+    const factory = new Factory();
+    const controlService = new ControlService(logger, context, holdStrategy, factory, repository);
+    return { logger, controlService };
 };
 
-const say = (response, messages) => {
+const say = (response, messages, logger) => {
     if (messages instanceof Array) {
         for (const message of messages) {
             response.say(message);
-            console.log(message);
+            logger.debug(message);
         }
     } else {
         response.say(messages);
-        console.log(messages);
+        logger.debug(messages);
     }
     response.send();
 };
 
+const report = (response, message, logger) => {
+    response.say(message);
+    logger.error(message);
+    response.send();
+};
+
 app.launch(async (request, response) => {
-    console.log('Launching...');
-    let service = controlService(request);
+    const { logger, service } = controlService(request);
     try {
-        let messages = await service.launch();
-        say(response, messages);
+        const messages = await service.launch();
+        say(response, messages, logger);
     } catch (e) {
-        say(response, e);
+        report(response, e, logger);
     }
     return false;
 });
@@ -63,12 +73,12 @@ app.launch(async (request, response) => {
 app.intent('TempIntent', {
     'utterances': ['what the temperature is', 'the temperature', 'how hot it is']
 }, async (request, response) => {
-    let service = controlService(request);
+    const { logger, service } = controlService(request);
     try {
-        let messages = await service.status();
-        say(response, messages);
+        const messages = await service.status();
+        say(response, messages, logger);
     } catch (e) {
-        say(response, e);
+        report(response, e, logger);
     }
     return false;
 });
@@ -76,12 +86,12 @@ app.intent('TempIntent', {
 app.intent('TurnUpIntent', {
     'utterances': ['to increase', 'to turn up', 'set warmer', 'set higher']
 }, async (request, response) => {
-    let service = controlService(request);
+    const { logger, service } = controlService(request);
     try {
-        let messages = await service.turnUp();
-        say(response, messages);
+        const messages = await service.turnUp();
+        say(response, messages, logger);
     } catch (e) {
-        say(response, e);
+        report(response, e, logger);
     }
     return false;
 });
@@ -89,12 +99,12 @@ app.intent('TurnUpIntent', {
 app.intent('TurnDownIntent', {
     'utterances': ['to decrease', 'to turn down', 'set cooler', 'set lower']
 }, async (request, response) => {
-    let service = controlService(request);
+    const { logger, service } = controlService(request);
     try {
-        let messages = await service.turnDown();
-        say(response, messages);
+        const messages = await service.turnDown();
+        say(response, messages, logger);
     } catch (e) {
-        say(response, e);
+        report(response, e, logger);
     }
     return false;
 });
@@ -105,14 +115,14 @@ app.intent('SetTempIntent', {
     },
     'utterances': ['to set to {temp} degrees', 'to set the temperature to {temp} degrees', 'to set the temp to {temp} degrees']
 }, async (request, response) => {
-    let service = controlService(request);
+    const { logger, service } = controlService(request);
     try {
         let targetTemp = parseFloat(request.slot('temp'));
         let optionalDuration = request.slot('duration', null);
-        let messages = await service.setTemperature(targetTemp, optionalDuration);
-        say(response, messages);
+        const messages = await service.setTemperature(targetTemp, optionalDuration);
+        say(response, messages, logger);
     } catch (e) {
-        say(response, e);
+        report(response, e, logger);
     }
     return false;
 });
@@ -127,12 +137,12 @@ app.intent('TurnIntent', {
     let onOff = request.slot('onoff');
     let duration = request.slot('duration');
     // this could be a callback from a step function
-    let service = controlService(request);
+    const { logger, service } = controlService(request);
     try {
-        let messages = await service.turn(onOff, duration);
-        say(response, messages);
+        const messages = await service.turn(onOff, duration);
+        say(response, messages, logger);
     } catch (e) {
-        say(response, e);
+        report(response, e, logger);
     }
     return false;
 });
@@ -146,12 +156,12 @@ app.intent('SetDefaultTempIntent', {
 }, async (request, response) => {    
     let onOff = request.slot('onoff');
     let temp = parseFloat(request.slot('temp'));
-    let service = controlService(request);
+    const { logger, service } = controlService(request);
     try {
-        let messages = await service.setDefault(onOff, temp);
-        say(response, messages);
+        const messages = await service.setDefault(onOff, temp);
+        say(response, messages, logger);
     } catch (e) {
-        say(response, e);
+        report(response, e, logger);
     }
     return false;
 });
@@ -163,12 +173,12 @@ app.intent('SetDefaultDurationIntent', {
     'utterances': ['to set the default duration to {duration}']
 }, async (request, response) => {    
     let duration = request.slot('duration');
-    let service = controlService(request);
+    const { logger, service } = controlService(request);
     try {
-        let messages = await service.setDefault('duration', duration);
-        say(response, messages);
+        const messages = await service.setDefault('duration', duration);
+        say(response, messages, logger);
     } catch (e) {
-        say(response, e);
+        report(response, e, logger);
     }
     return false;
 });
@@ -177,12 +187,12 @@ app.intent('DefaultsIntent', {
     'slots': {},
     'utterances': ['the current default values', 'the default values', 'the current defaults', 'the defaults']
 }, async (request, response) => {
-    let service = controlService(request);
+    const { logger, service } = controlService(request);
     try {
-        let messages = await service.defaults();
-        say(response, messages);
+        const messages = await service.defaults();
+        say(response, messages, logger);
     } catch (e) {
-        say(response, e);
+        report(response, e, logger);
     }
     return false;
 });
@@ -201,12 +211,12 @@ app.intent('AMAZON.StopIntent', {
     'slots': {},
     'utterances': []
 }, async (request, response) => {
-    let service = controlService(request);
+    const { logger, service } = controlService(request);
     try {
-        let messages = await service.turn('off');
-        say(response, messages);
+        const messages = await service.turn('off');
+        say(response, messages, logger);
     } catch (e) {
-        say(response, e);
+        report(response, e, logger);
     }
     return false;
 });
