@@ -1,0 +1,5 @@
+- type: parallel
+  steps:
+  - name: tests
+    service: smartheat
+    command: npm test
