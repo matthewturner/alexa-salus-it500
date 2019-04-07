@@ -1,4 +1,6 @@
-const expect = require('chai').expect;
+const chai = require('chai');
+chai.use(require('chai-as-promised'));
+const expect = chai.expect;
 const sinon = require('sinon');
 const Duration = require('durationjs');
 const ControlService = require('../../src/core/ControlService');
@@ -16,6 +18,9 @@ const createTarget = () => {
         defaultOffTemp: 14, defaultDuration: 'PT1H', options: {}
     };
     thermostatRepository.find.withArgs('user123').returns(thermostat);
+
+    thermostatRepository.save = sinon.stub();
+
     const thermostatFactory = sinon.fake();
     thermostatFactory.create = sinon.stub();
     const mock = new Mock(logger);
@@ -147,6 +152,56 @@ describe('ControlService', async () => {
         });
     });
 
+    describe('SetTemperature', async () => {
+        it('sets a hold time', async () => {
+            const target = createTarget();
+
+            target.holdStrategy.holdIfRequiredFor = sinon.stub();
+            target.holdStrategy.holdIfRequiredFor.withArgs('PT30M').returns({
+                holding: true,
+                duration: new Duration('PT30M'),
+                executionId: 'id123'
+            });
+        
+            const messages = await target.object().setTemperature(25, 'PT30M', 'on');
+        
+            expect(messages[0]).to.equal('The target temperature is now 25 degrees.');
+            expect(messages[1]).to.equal('The heating is now on and will turn off in 30 minutes.');
+        });
+
+        it('sets a hold time even when off', async () => {
+            const target = createTarget();
+
+            target.holdStrategy.holdIfRequiredFor = sinon.stub();
+            target.holdStrategy.holdIfRequiredFor.withArgs('PT30M').returns({
+                holding: true,
+                duration: new Duration('PT30M'),
+                executionId: 'id123'
+            });
+        
+            const messages = await target.object().setTemperature(16, 'PT30M', 'on');
+        
+            expect(messages[0]).to.equal('The target temperature is now 16 degrees.');
+            expect(messages[1]).to.equal('The heating will turn off in 30 minutes.');
+        });
+
+        it('raises error when not online', async () => {
+            const target = createTarget();
+            target.mock.online = sinon.stub().returns(false);
+        
+            await expect(target.object().setTemperature(16, 'PT30M'))
+                .to.be.rejectedWith('Sorry, the thermostat is offline at the moment.');
+        });
+
+        it('raises error when not contactable', async () => {
+            const target = createTarget();
+            target.mock.device = sinon.stub().returns({ contactable: false });
+        
+            await expect(target.object().setTemperature(16, 'PT30M'))
+                .to.be.rejectedWith('Sorry, I couldn\'t contact the thermostat.');
+        });
+    });
+
     describe('Defaults', async () => {
         it('returns the current defaults', async () => {
             const target = createTarget();
@@ -156,6 +211,42 @@ describe('ControlService', async () => {
             expect(messages[0]).to.equal('The default on temperature is 22 degrees.');
             expect(messages[1]).to.equal('The default off temperature is 14 degrees.');
             expect(messages[2]).to.equal('The default duration is 1 hour.');
+        });
+    });
+
+    describe('Speak duration', async () => {
+        it('handles between 1 and 2 hours correctly', async () => {
+            const target = createTarget();
+        
+            const messages = await target.object().setDefault('duration', 'PT1H30M');
+        
+            expect(messages[0]).to.equal('The default duration has been set to 1 hour and 30 minutes.');
+        });
+    });
+
+    describe('Set default', async () => {
+        it('updates the default on temperature', async () => {
+            const target = createTarget();
+        
+            const messages = await target.object().setDefault('on', 25);
+        
+            expect(messages[0]).to.equal('The default on temperature has been set to 25 degrees.');
+        });
+
+        it('updates the default off temperature', async () => {
+            const target = createTarget();
+        
+            const messages = await target.object().setDefault('off', 10);
+        
+            expect(messages[0]).to.equal('The default off temperature has been set to 10 degrees.');
+        });
+
+        it('updates the default duration temperature', async () => {
+            const target = createTarget();
+        
+            const messages = await target.object().setDefault('duration', 'PT2H');
+        
+            expect(messages[0]).to.equal('The default duration has been set to 2 hours.');
         });
     });
 });

@@ -28,8 +28,7 @@ class ControlService {
         thermostat = await this._thermostatRepository.find('template');
         if (thermostat) {
             thermostat.userId = this._context.userId;
-        }
-        else {
+        } else {
             thermostat = { userId: this._context.userId, executionId: null };
         }
         await this._thermostatRepository.add(thermostat);
@@ -241,7 +240,7 @@ class ControlService {
 
         await this._thermostatRepository.save(thermostat);
 
-        return [`The default ${nameText} has been set to ${valueText}`];
+        return [`The default ${nameText} has been set to ${valueText}.`];
     }
 
     async defaults() {
