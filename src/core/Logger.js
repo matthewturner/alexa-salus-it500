@@ -1,8 +1,8 @@
+const OFF = 0;
 const DEBUG = 4;
 const INFO = 3;
 const WARNING = 2;
 const ERROR = 1;
-const OFF = 1;
 
 class Logger {
     constructor(level = OFF) {
@@ -31,7 +31,7 @@ class Logger {
     }
 
     log(message, level) {
-        if(level >= this._level) {
+        if(level <= this._level) {
             if (this._prefix === '') {
                 console.log(message);
             } else {

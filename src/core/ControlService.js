@@ -53,7 +53,7 @@ class ControlService {
         let client = await this.login();
         try {
             if (await client.online()) {
-                return 'Thermostat is online';
+                return 'Thermostat is online.';
             } else {
                 return 'Sorry, the thermostat is offline at the moment.';
             }
@@ -93,7 +93,7 @@ class ControlService {
             let timeSinceStart = (moment().diff(status.startDate) / 1000).toFixed(0);
             let durationSinceStart = new Duration(`PT${timeSinceStart}S`);
             let timeToGo = status.duration.subtract(durationSinceStart);
-            messages.push(`The heating is ${qualifier} on and will turn off in ${this.speakDuration(timeToGo)}`);
+            messages.push(`The heating is${qualifier} on and will turn off in ${this.speakDuration(timeToGo)}.`);
         }
         else {
             messages.push(`The heating is${qualifier} on.`);
@@ -183,7 +183,7 @@ class ControlService {
                 if (onOff === 'on') {
                     let duration = forDuration || thermostat.defaultDuration;
                     let intent = await this._holdStrategy.holdIfRequiredFor(duration);
-                    return messages.concat(this.summarize(intent, updatedDevice));
+                    return messages.concat(this.summarize(duration, intent, updatedDevice));
                 } else {
                     await this._holdStrategy.stopHoldIfRequired(thermostat.executionId);
                 }
@@ -194,21 +194,25 @@ class ControlService {
         }
     }
 
-    summarize(intent, updatedDevice) {
+    summarize(duration, intent, updatedDevice) {
         if (!intent.holding) {
-            if (updatedDevice.status == 'on') {
-                return ['The heating is now on.'];
+            const messages = [];
+            if (duration) {
+                messages.push('Hold time is not supported on this device.');
             }
-            return [];
+            if (updatedDevice.status === 'on') {
+                messages.push('The heating is now on.');
+            }
+            return messages;
         }
 
         let durationText = this.speakDuration(intent.duration);
         this._logger.debug(`Holding for ${durationText} {${intent.executionId}}`);
-        if (updatedDevice.status == 'on') {
-            return [`The heating is now on and will turn off in ${durationText}`];
+        if (updatedDevice.status === 'on') {
+            return [`The heating is now on and will turn off in ${durationText}.`];
         }
         
-        return [`The heating will turn off in ${durationText}`];
+        return [`The heating will turn off in ${durationText}.`];
     }
 
     async setDefault(name, value) {
