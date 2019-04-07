@@ -1,9 +1,9 @@
-const DynamodbThermostatRepository = require('../aws/ThermostatRepository');
-const DefaultThermostatRepository = require('../core/ThermostatRepository');
-const AwsHoldStrategy = require('../aws/HoldStrategy');
-const DefaultHoldStrategy = require('../core/HoldStrategy');
-const ControlService = require('../core/ControlService');
-const Factory = require('../thermostats/Factory');
+// const DynamodbThermostatRepository = require('../aws/ThermostatRepository');
+// const DefaultThermostatRepository = require('../core/ThermostatRepository');
+// const AwsHoldStrategy = require('../aws/HoldStrategy');
+// const DefaultHoldStrategy = require('../core/HoldStrategy');
+// const ControlService = require('../core/ControlService');
+// const Factory = require('../thermostats/Factory');
 
 const say = (messages) => {
     let m = '';
