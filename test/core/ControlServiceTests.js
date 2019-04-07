@@ -12,7 +12,9 @@ const createTarget = () => {
     const holdStrategy = new HoldStrategy(logger);
     const thermostatRepository = sinon.fake();
     thermostatRepository.find = sinon.stub();
-    const thermostat = { type: 'mock', options: {} };
+    const thermostat = { type: 'mock', defaultOnTemp: 22, 
+        defaultOffTemp: 14, defaultDuration: 'PT1H', options: {}
+    };
     thermostatRepository.find.withArgs('user123').returns(thermostat);
     const thermostatFactory = sinon.fake();
     thermostatFactory.create = sinon.stub();
@@ -65,8 +67,8 @@ describe('ControlService:Status', async () => {
         
             const messages = await target.object().status();
         
-            expect(messages[0]).to.equal('The current temperature is 20 degrees.');
-            expect(messages[1]).to.equal('The target is 22 degrees.');
+            expect(messages[0]).to.equal('The current temperature is 19 degrees.');
+            expect(messages[1]).to.equal('The target is 20 degrees.');
             expect(messages[2]).to.equal('The heating is on.');
         });
     });
@@ -84,8 +86,8 @@ describe('ControlService:Status', async () => {
         
             const messages = await target.object().status();
         
-            expect(messages[0]).to.equal('The current temperature is 20 degrees.');
-            expect(messages[1]).to.equal('The target is 22 degrees.');
+            expect(messages[0]).to.equal('The current temperature is 19 degrees.');
+            expect(messages[1]).to.equal('The target is 20 degrees.');
             expect(messages[2]).to.equal('The heating is on and will turn off in 1 hour.');
         });
     });
@@ -116,8 +118,42 @@ describe('ControlService:Status', async () => {
             
                 const messages = await target.object().turn('off');
             
-                expect(messages[0]).to.equal('The target temperature is now 22 degrees.');
+                expect(messages[0]).to.equal('The target temperature is now 14 degrees.');
             });
+        });
+    });
+
+    describe('ControlService:TurnUp', async () => {
+        it('increases the target temperature by 1.0 degrees', async () => {
+            const target = createTarget();
+            target.mock.setTemperature(15);
+        
+            const messages = await target.object().turnUp();
+        
+            expect(messages[0]).to.equal('The target temperature is now 16 degrees.');
+        });
+    });
+
+    describe('ControlService:TurnDown', async () => {
+        it('decreases the target temperature by 1.0 degrees', async () => {
+            const target = createTarget();
+            target.mock.setTemperature(15);
+        
+            const messages = await target.object().turnDown();
+        
+            expect(messages[0]).to.equal('The target temperature is now 14 degrees.');
+        });
+    });
+
+    describe('ControlService:Defaults', async () => {
+        it('returns the current defaults', async () => {
+            const target = createTarget();
+        
+            const messages = await target.object().defaults();
+        
+            expect(messages[0]).to.equal('The default on temperature is 22 degrees.');
+            expect(messages[1]).to.equal('The default off temperature is 14 degrees.');
+            expect(messages[2]).to.equal('The default duration is 1 hour.');
         });
     });
 });

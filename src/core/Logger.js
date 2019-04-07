@@ -1,12 +1,7 @@
-const OFF = 0;
-const DEBUG = 4;
-const INFO = 3;
-const WARNING = 2;
-const ERROR = 1;
-
 class Logger {
-    constructor(level = OFF) {
+    constructor(level = Logger.OFF, destination = console) {
         this._level = level;
+        this._destination = destination;
         this._prefix = '';
     }
 
@@ -15,30 +10,42 @@ class Logger {
     }
 
     debug(message) {
-        this.log(message, DEBUG);
+        this.log(message, Logger.DEBUG);
     }
 
     info(message) {
-        this.log(message, INFO);
+        this.log(message, Logger.INFO);
     }
 
     warning(message) {
-        this.log(message, WARNING);
+        this.log(message, Logger.WARNING);
     }
 
     error(message) {
-        this.log(message, ERROR);
+        this.log(message, Logger.ERROR);
     }
 
     log(message, level) {
         if(level <= this._level) {
             if (this._prefix === '') {
-                console.log(message);
+                this._destination.log(message);
             } else {
-                console.log(`${this._prefix}: ${message}`);
+                this._destination.log(`${this._prefix}: ${message}`);
             }
         }
     }
 }
+
+Logger.OFF = 0;
+Logger.DEBUG = 4;
+Logger.INFO = 3;
+Logger.WARNING = 2;
+Logger.ERROR = 1;
+
+Object.freeze(Logger.OFF);
+Object.freeze(Logger.DEBUG);
+Object.freeze(Logger.INFO);
+Object.freeze(Logger.WARNING);
+Object.freeze(Logger.ERROR);
 
 module.exports = Logger;

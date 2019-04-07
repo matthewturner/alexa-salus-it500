@@ -109,11 +109,11 @@ class ControlService {
             let device = await client.device();
             this.verifyContactable(device);
 
-            if (device.status == 'on') {
+            if (device.status === 'on') {
                 throw 'The heating is already on.';
             }
 
-            let t = device.targetTemperature + 0.5;
+            let t = device.targetTemperature + 1.0;
             await client.setTemperature(t);
             let updatedDevice = await client.device();
 

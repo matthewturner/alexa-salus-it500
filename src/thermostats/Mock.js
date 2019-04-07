@@ -1,6 +1,7 @@
 class Mock {
     constructor(logger, options) { // eslint-disable-line no-unused-vars
         this._logger = logger;
+        this._targetTemperature = 20;
     }
 
     async login() {
@@ -16,14 +17,15 @@ class Mock {
         this._logger.debug('Contacting device...');
         return {
             contactable: true,
-            currentTemperature: 20,
-            targetTemperature: 22,
-            status: 'on'
+            currentTemperature: 19,
+            targetTemperature: this._targetTemperature,
+            status: this._targetTemperature > 19 ? 'on' : 'off'
         };
     }
 
     async setTemperature(temp) {
         this._logger.debug(`Setting temp: ${temp}`);
+        this._targetTemperature = temp;
     }
 
     async logout() {
