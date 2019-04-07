@@ -92,7 +92,7 @@ describe('ControlService:Status', async () => {
 
     describe('ControlService:Turn', async () => {
         context('when turning on', async () => {
-            it('returns the new target', async () => {
+            it('returns the new target temperature', async () => {
                 const target = createTarget();
             
                 const messages = await target.object().turn('on');
@@ -100,7 +100,7 @@ describe('ControlService:Status', async () => {
                 expect(messages[0]).to.equal('The target temperature is now 22 degrees.');
             });
 
-            it('returns the new target with hold time', async () => {
+            it('returns the new target temperature with hold time', async () => {
                 const target = createTarget();
             
                 const messages = await target.object().turn('on', 'PT1H');
@@ -111,6 +111,13 @@ describe('ControlService:Status', async () => {
         });
     
         context('when turning off', async () => {
+            it('returns the new target temperature', async () => {
+                const target = createTarget();
+            
+                const messages = await target.object().turn('off');
+            
+                expect(messages[0]).to.equal('The target temperature is now 22 degrees.');
+            });
         });
     });
 });

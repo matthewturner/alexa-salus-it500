@@ -12,6 +12,10 @@ class HoldStrategy {
         };
     }
 
+    async stopHoldIfRequired(executionId) {
+        this._logger.debug(`Stop hold request for ${executionId} will be ignored`);
+    }
+
     async status() {
         return {
             status: 'n/a',
