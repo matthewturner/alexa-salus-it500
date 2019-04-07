@@ -35,64 +35,66 @@ const createTarget = () => {
     };
 };
 
-describe('ControlService:Launch', async () => {
-    context('when the thermostat is online', async () => {
-        it('returns online', async () => {
-            const target = createTarget();
-        
-            const message = await target.object().launch();
-        
-            expect(message).to.equal('Thermostat is online.');
+describe('ControlService', async () => {
+    describe('Launch', async () => {
+        context('when the thermostat is online', async () => {
+            it('returns online', async () => {
+                const target = createTarget();
+            
+                const message = await target.object().launch();
+            
+                expect(message).to.equal('Thermostat is online.');
+            });
         });
-    });
 
-    context('when the thermostat is offline', async () => {
-        it('returns offline', async () => {
-            const target = createTarget();
-            target.mock.online = async() => {
-                return false;
-            };
-        
-            const message = await target.object().launch();
-        
-            expect(message).to.equal('Sorry, the thermostat is offline at the moment.');
-        });
-    });
-});
-
-describe('ControlService:Status', async () => {
-    context('when there is no hold time', async () => {
-        it('returns the status', async () => {
-            const target = createTarget();
-        
-            const messages = await target.object().status();
-        
-            expect(messages[0]).to.equal('The current temperature is 19 degrees.');
-            expect(messages[1]).to.equal('The target is 20 degrees.');
-            expect(messages[2]).to.equal('The heating is on.');
-        });
-    });
-
-    context('when a hold time has been set', async () => {
-        it('includes the hold time', async () => {
-            const target = createTarget();
-            target.holdStrategy.status = async () => {
-                return {
-                    status: 'running',
-                    duration: new Duration('PT1H'),
-                    startDate: new Date()
+        context('when the thermostat is offline', async () => {
+            it('returns offline', async () => {
+                const target = createTarget();
+                target.mock.online = async() => {
+                    return false;
                 };
-            };
-        
-            const messages = await target.object().status();
-        
-            expect(messages[0]).to.equal('The current temperature is 19 degrees.');
-            expect(messages[1]).to.equal('The target is 20 degrees.');
-            expect(messages[2]).to.equal('The heating is on and will turn off in 1 hour.');
+            
+                const message = await target.object().launch();
+            
+                expect(message).to.equal('Sorry, the thermostat is offline at the moment.');
+            });
         });
     });
 
-    describe('ControlService:Turn', async () => {
+    describe('Status', async () => {
+        context('when there is no hold time', async () => {
+            it('returns the status', async () => {
+                const target = createTarget();
+            
+                const messages = await target.object().status();
+            
+                expect(messages[0]).to.equal('The current temperature is 19 degrees.');
+                expect(messages[1]).to.equal('The target is 20 degrees.');
+                expect(messages[2]).to.equal('The heating is on.');
+            });
+        });
+
+        context('when a hold time has been set', async () => {
+            it('includes the hold time', async () => {
+                const target = createTarget();
+                target.holdStrategy.status = async () => {
+                    return {
+                        status: 'running',
+                        duration: new Duration('PT1H'),
+                        startDate: new Date()
+                    };
+                };
+            
+                const messages = await target.object().status();
+            
+                expect(messages[0]).to.equal('The current temperature is 19 degrees.');
+                expect(messages[1]).to.equal('The target is 20 degrees.');
+                expect(messages[2]).to.equal('The heating is on and will turn off in 1 hour.');
+            });
+        });
+    });
+
+    describe('Turn', async () => {
         context('when turning on', async () => {
             it('returns the new target temperature', async () => {
                 const target = createTarget();
@@ -111,7 +113,7 @@ describe('ControlService:Status', async () => {
                 expect(messages[1]).to.equal('Hold time is not supported on this device.');
             });
         });
-    
+
         context('when turning off', async () => {
             it('returns the new target temperature', async () => {
                 const target = createTarget();
@@ -123,7 +125,7 @@ describe('ControlService:Status', async () => {
         });
     });
 
-    describe('ControlService:TurnUp', async () => {
+    describe('TurnUp', async () => {
         it('increases the target temperature by 1.0 degrees', async () => {
             const target = createTarget();
             target.mock.setTemperature(15);
@@ -134,7 +136,7 @@ describe('ControlService:Status', async () => {
         });
     });
 
-    describe('ControlService:TurnDown', async () => {
+    describe('TurnDown', async () => {
         it('decreases the target temperature by 1.0 degrees', async () => {
             const target = createTarget();
             target.mock.setTemperature(15);
@@ -145,7 +147,7 @@ describe('ControlService:Status', async () => {
         });
     });
 
-    describe('ControlService:Defaults', async () => {
+    describe('Defaults', async () => {
         it('returns the current defaults', async () => {
             const target = createTarget();
         
