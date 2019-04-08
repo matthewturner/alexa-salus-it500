@@ -31,6 +31,16 @@ class Mock {
     async logout() {
         this._logger.debug('Logging out...');
     }
+
+    card() {
+        return {
+            title: 'Mock Thermostat',
+            image: {
+                smallImageUrl: 'http://smallimage.url',
+                largeImageUrl: 'http://largeimage.url',
+            }
+        };
+    }
 }
 
 module.exports = Mock;

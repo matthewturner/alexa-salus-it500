@@ -46,9 +46,9 @@ describe('ControlService', async () => {
             it('returns online', async () => {
                 const target = createTarget();
             
-                const message = await target.object().launch();
+                const { messages, } = await target.object().launch();
             
-                expect(message).to.equal('Thermostat is online.');
+                expect(messages[0]).to.equal('Thermostat is online.');
             });
         });
 
@@ -59,9 +59,9 @@ describe('ControlService', async () => {
                     return false;
                 };
             
-                const message = await target.object().launch();
+                const { messages, } = await target.object().launch();
             
-                expect(message).to.equal('Sorry, the thermostat is offline at the moment.');
+                expect(messages[0]).to.equal('Sorry, the thermostat is offline at the moment.');
             });
         });
     });
@@ -71,7 +71,7 @@ describe('ControlService', async () => {
             it('returns the status', async () => {
                 const target = createTarget();
             
-                const messages = await target.object().status();
+                const { messages, } = await target.object().status();
             
                 expect(messages[0]).to.equal('The current temperature is 19 degrees.');
                 expect(messages[1]).to.equal('The target is 20 degrees.');
@@ -90,7 +90,7 @@ describe('ControlService', async () => {
                     };
                 };
             
-                const messages = await target.object().status();
+                const { messages, } = await target.object().status();
             
                 expect(messages[0]).to.equal('The current temperature is 19 degrees.');
                 expect(messages[1]).to.equal('The target is 20 degrees.');
@@ -104,7 +104,7 @@ describe('ControlService', async () => {
             it('returns the new target temperature', async () => {
                 const target = createTarget();
             
-                const messages = await target.object().turn('on');
+                const { messages, } = await target.object().turn('on');
             
                 expect(messages[0]).to.equal('The target temperature is now 22 degrees.');
             });
@@ -112,7 +112,7 @@ describe('ControlService', async () => {
             it('returns the new target temperature with hold time', async () => {
                 const target = createTarget();
             
-                const messages = await target.object().turn('on', 'PT1H');
+                const { messages, } = await target.object().turn('on', 'PT1H');
             
                 expect(messages[0]).to.equal('The target temperature is now 22 degrees.');
                 expect(messages[1]).to.equal('Hold time is not supported on this device.');
@@ -123,7 +123,7 @@ describe('ControlService', async () => {
             it('returns the new target temperature', async () => {
                 const target = createTarget();
             
-                const messages = await target.object().turn('off');
+                const { messages, } = await target.object().turn('off');
             
                 expect(messages[0]).to.equal('The target temperature is now 14 degrees.');
             });
@@ -135,7 +135,7 @@ describe('ControlService', async () => {
             const target = createTarget();
             target.client.setTemperature(15);
         
-            const messages = await target.object().turnUp();
+            const { messages, } = await target.object().turnUp();
         
             expect(messages[0]).to.equal('The target temperature is now 16 degrees.');
         });
@@ -154,7 +154,7 @@ describe('ControlService', async () => {
             const target = createTarget();
             target.client.setTemperature(15);
         
-            const messages = await target.object().turnDown();
+            const { messages, } = await target.object().turnDown();
         
             expect(messages[0]).to.equal('The target temperature is now 14 degrees.');
         });
@@ -163,7 +163,7 @@ describe('ControlService', async () => {
             const target = createTarget();
             target.client.setTemperature(25);
         
-            const messages = await target.object().turnDown();
+            const { messages, } = await target.object().turnDown();
         
             expect(messages[0]).to.equal('The target temperature is now 24 degrees.');
             expect(messages[1]).to.equal('The heating is still on.');
@@ -181,7 +181,7 @@ describe('ControlService', async () => {
                 executionId: 'id123'
             });
         
-            const messages = await target.object().setTemperature(25, 'PT30M', 'on');
+            const { messages, } = await target.object().setTemperature(25, 'PT30M', 'on');
         
             expect(messages[0]).to.equal('The target temperature is now 25 degrees.');
             expect(messages[1]).to.equal('The heating is now on and will turn off in 30 minutes.');
@@ -197,7 +197,7 @@ describe('ControlService', async () => {
                 executionId: 'id123'
             });
         
-            const messages = await target.object().setTemperature(16, 'PT30M', 'on');
+            const { messages, } = await target.object().setTemperature(16, 'PT30M', 'on');
         
             expect(messages[0]).to.equal('The target temperature is now 16 degrees.');
             expect(messages[1]).to.equal('The heating will turn off in 30 minutes.');
@@ -224,11 +224,26 @@ describe('ControlService', async () => {
         it('returns the current defaults', async () => {
             const target = createTarget();
         
-            const messages = await target.object().defaults();
+            const { messages, } = await target.object().defaults();
         
             expect(messages[0]).to.equal('The default on temperature is 22 degrees.');
             expect(messages[1]).to.equal('The default off temperature is 14 degrees.');
             expect(messages[2]).to.equal('The default duration is 1 hour.');
+        });
+
+        it('returns the card', async () => {
+            const target = createTarget();
+        
+            const { messages, card } = await target.object().defaults();
+        
+            expect(messages.length).to.equal(3);
+            expect(card).to.deep.equal({ 
+                title: 'Mock Thermostat', 
+                image: {
+                    smallImageUrl: 'http://smallimage.url',
+                    largeImageUrl: 'http://largeimage.url',
+                } 
+            });
         });
     });
 
@@ -236,7 +251,7 @@ describe('ControlService', async () => {
         it('handles between 1 and 2 hours correctly', async () => {
             const target = createTarget();
         
-            const messages = await target.object().setDefault('duration', 'PT1H30M');
+            const { messages, } = await target.object().setDefault('duration', 'PT1H30M');
         
             expect(messages[0]).to.equal('The default duration has been set to 1 hour and 30 minutes.');
         });
@@ -246,7 +261,7 @@ describe('ControlService', async () => {
         it('updates the default on temperature', async () => {
             const target = createTarget();
         
-            const messages = await target.object().setDefault('on', 25);
+            const { messages, } = await target.object().setDefault('on', 25);
         
             expect(messages[0]).to.equal('The default on temperature has been set to 25 degrees.');
         });
@@ -254,7 +269,7 @@ describe('ControlService', async () => {
         it('updates the default off temperature', async () => {
             const target = createTarget();
         
-            const messages = await target.object().setDefault('off', 10);
+            const { messages, } = await target.object().setDefault('off', 10);
         
             expect(messages[0]).to.equal('The default off temperature has been set to 10 degrees.');
         });
@@ -262,7 +277,7 @@ describe('ControlService', async () => {
         it('updates the default duration temperature', async () => {
             const target = createTarget();
         
-            const messages = await target.object().setDefault('duration', 'PT2H');
+            const { messages, } = await target.object().setDefault('duration', 'PT2H');
         
             expect(messages[0]).to.equal('The default duration has been set to 2 hours.');
         });

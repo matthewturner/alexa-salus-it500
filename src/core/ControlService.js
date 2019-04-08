@@ -52,9 +52,9 @@ class ControlService {
         let client = await this.login();
         try {
             if (await client.online()) {
-                return 'Thermostat is online.';
+                return this.createResponse(['Thermostat is online.'], client);
             } else {
-                return 'Sorry, the thermostat is offline at the moment.';
+                return this.createResponse(['Sorry, the thermostat is offline at the moment.'], client);
             }
         } finally {
             await client.logout();
@@ -75,7 +75,7 @@ class ControlService {
             await this.determineIfHolding(device, messages);
 
             this.logStatus(device);
-            return messages;
+            return this.createResponse(messages, client);
         } finally {
             await client.logout();
         }
@@ -121,7 +121,7 @@ class ControlService {
             await this.determineIfHolding(updatedDevice, messages, 'now');
 
             this.logStatus(device);
-            return messages;
+            return this.createResponse(messages, client);
         } finally {
             await client.logout();
         }
@@ -144,7 +144,7 @@ class ControlService {
             await this.determineIfHolding(updatedDevice, messages, 'still');
 
             this.logStatus(updatedDevice);
-            return messages;
+            return this.createResponse(messages, client);
         } finally {
             await client.logout();
         }
@@ -182,12 +182,13 @@ class ControlService {
                 if (onOff === 'on') {
                     let duration = forDuration || thermostat.defaultDuration;
                     let intent = await this._holdStrategy.holdIfRequiredFor(duration);
-                    return messages.concat(this.summarize(duration, intent, updatedDevice));
+                    messages = messages.concat(this.summarize(duration, intent, updatedDevice));
+                    return this.createResponse(messages, client);
                 } else {
                     await this._holdStrategy.stopHoldIfRequired(thermostat.executionId);
                 }
             }
-            return messages;
+            return this.createResponse(messages, client);
         } finally {
             await client.logout();
         }
@@ -239,20 +240,25 @@ class ControlService {
         }
 
         await this._thermostatRepository.save(thermostat);
+        
+        const client = this._thermostatFactory.create(thermostat.type, thermostat.options);
 
-        return [`The default ${nameText} has been set to ${valueText}.`];
+        return this.createResponse([
+            `The default ${nameText} has been set to ${valueText}.`
+        ], client);
     }
 
     async defaults() {
         this._logger.debug('Retrieving default values...');
 
-        let thermostat = await this.obtainThermostat();
+        const thermostat = await this.obtainThermostat();
+        const client = this._thermostatFactory.create(thermostat.type, thermostat.options);
 
-        return [
+        return this.createResponse([
             `The default on temperature is ${thermostat.defaultOnTemp} degrees.`,
             `The default off temperature is ${thermostat.defaultOffTemp} degrees.`,
             `The default duration is ${this.speakDuration(new Duration(thermostat.defaultDuration))}.`
-        ];
+        ], client);
     }
 
     logStatus(device) {
@@ -270,6 +276,11 @@ class ControlService {
     speakTemperature(temp) {
         if (parseFloat(temp.toFixed(0)) != temp) return temp.toFixed(1);
         else return temp.toFixed(0);
+    }
+
+    createResponse(messages, client) {
+        const card = client.card();
+        return { messages, card };
     }
 }
 

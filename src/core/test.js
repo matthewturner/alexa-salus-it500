@@ -30,42 +30,42 @@ const main = async () => {
     const service = new ControlService(logger, context, holdStrategy, factory, repository);
 
     try {
-        let messages = await service.defaults();
+        const { messages, } = await service.defaults();
         say(messages, logger);
     } catch (e) {
         say(e, logger);
     }
 
     try {
-        let messages = await service.setDefault('defaultOnTemp', 22);
+        const { messages, } = await service.setDefault('defaultOnTemp', 22);
         say(messages, logger);
     } catch (e) {
         say(e, logger);
     }
 
     try {
-        let messages = await service.defaults();
+        const { messages, } = await service.defaults();
         say(messages, logger);
     } catch (e) {
         say(e, logger);
     }
 
     try {
-        let messages = await service.turn('on', duration);
+        const { messages, } = await service.turn('on', duration);
         say(messages, logger);
     } catch (e) {
         say(e, logger);
     }
 
     try {
-        let messages = await service.status();
+        const { messages, } = await service.status();
         say(messages, logger);
     } catch (e) {
         say(e, logger);
     }
 
     try {
-        let messages = await service.turn('off');
+        const { messages, } = await service.turn('off');
         say(messages, logger);
     } catch (e) {
         say(e, logger);

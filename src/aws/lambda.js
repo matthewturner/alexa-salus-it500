@@ -40,16 +40,23 @@ const controlService = (request, logger = new Logger(Logger.DEBUG)) => {
     return { logger, controlService };
 };
 
-const say = (response, messages, logger) => {
+const say = (response, output, logger) => {
+    const { messages, card } = output;
+    let text = '';
     if (messages instanceof Array) {
         for (const message of messages) {
             response.say(message);
             logger.debug(message);
         }
+        text = messages.join('\n');
     } else {
         response.say(messages);
+        text += messages;
         logger.debug(messages);
     }
+    card.type = 'Standard';
+    card.text = text;
+    response.card(card);
     response.send();
 };
 
@@ -62,8 +69,8 @@ const report = (response, message, logger) => {
 app.launch(async (request, response) => {
     const { logger, service } = controlService(request);
     try {
-        const messages = await service.launch();
-        say(response, messages, logger);
+        const output = await service.launch();
+        say(response, output, logger);
     } catch (e) {
         report(response, e, logger);
     }
@@ -75,8 +82,8 @@ app.intent('TempIntent', {
 }, async (request, response) => {
     const { logger, service } = controlService(request);
     try {
-        const messages = await service.status();
-        say(response, messages, logger);
+        const output = await service.status();
+        say(response, output, logger);
     } catch (e) {
         report(response, e, logger);
     }
@@ -88,8 +95,8 @@ app.intent('TurnUpIntent', {
 }, async (request, response) => {
     const { logger, service } = controlService(request);
     try {
-        const messages = await service.turnUp();
-        say(response, messages, logger);
+        const output = await service.turnUp();
+        say(response, output, logger);
     } catch (e) {
         report(response, e, logger);
     }
@@ -101,8 +108,8 @@ app.intent('TurnDownIntent', {
 }, async (request, response) => {
     const { logger, service } = controlService(request);
     try {
-        const messages = await service.turnDown();
-        say(response, messages, logger);
+        const output = await service.turnDown();
+        say(response, output, logger);
     } catch (e) {
         report(response, e, logger);
     }
@@ -119,8 +126,8 @@ app.intent('SetTempIntent', {
     try {
         let targetTemp = parseFloat(request.slot('temp'));
         let optionalDuration = request.slot('duration', null);
-        const messages = await service.setTemperature(targetTemp, optionalDuration);
-        say(response, messages, logger);
+        const output = await service.setTemperature(targetTemp, optionalDuration);
+        say(response, output, logger);
     } catch (e) {
         report(response, e, logger);
     }
@@ -139,8 +146,8 @@ app.intent('TurnIntent', {
     // this could be a callback from a step function
     const { logger, service } = controlService(request);
     try {
-        const messages = await service.turn(onOff, duration);
-        say(response, messages, logger);
+        const output = await service.turn(onOff, duration);
+        say(response, output, logger);
     } catch (e) {
         report(response, e, logger);
     }
@@ -158,8 +165,8 @@ app.intent('SetDefaultTempIntent', {
     let temp = parseFloat(request.slot('temp'));
     const { logger, service } = controlService(request);
     try {
-        const messages = await service.setDefault(onOff, temp);
-        say(response, messages, logger);
+        const output = await service.setDefault(onOff, temp);
+        say(response, output, logger);
     } catch (e) {
         report(response, e, logger);
     }
@@ -175,8 +182,8 @@ app.intent('SetDefaultDurationIntent', {
     let duration = request.slot('duration');
     const { logger, service } = controlService(request);
     try {
-        const messages = await service.setDefault('duration', duration);
-        say(response, messages, logger);
+        const output = await service.setDefault('duration', duration);
+        say(response, output, logger);
     } catch (e) {
         report(response, e, logger);
     }
@@ -189,8 +196,8 @@ app.intent('DefaultsIntent', {
 }, async (request, response) => {
     const { logger, service } = controlService(request);
     try {
-        const messages = await service.defaults();
-        say(response, messages, logger);
+        const output = await service.defaults();
+        say(response, output, logger);
     } catch (e) {
         report(response, e, logger);
     }
@@ -213,8 +220,8 @@ app.intent('AMAZON.StopIntent', {
 }, async (request, response) => {
     const { logger, service } = controlService(request);
     try {
-        const messages = await service.turn('off');
-        say(response, messages, logger);
+        const output = await service.turn('off');
+        say(response, output, logger);
     } catch (e) {
         report(response, e, logger);
     }

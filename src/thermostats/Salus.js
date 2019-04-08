@@ -100,6 +100,16 @@ class Salus {
         this._logger.debug('Logging out...');
         await request.get(this.urlTo('logout', false), { jar: this._jar });
     }
+
+    card() {
+        return {
+            title: 'Salus',
+            image: {
+                smallImageUrl: 'https://salus-it500.com/public/assets/it500_icon.png',
+                largeImageUrl: 'https://salus-it500.com/public/assets/logo.png',
+            }
+        };
+    }
 }
 
 module.exports = Salus;
