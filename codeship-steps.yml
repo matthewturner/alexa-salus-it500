@@ -1,5 +1,3 @@
-- type: parallel
-  steps:
-  - name: tests
-    service: smartheat
-    command: ./node_modules/.bin/mocha --recursive
+name: tests
+service: smartheat
+command: ./node_modules/.bin/mocha --recursive
