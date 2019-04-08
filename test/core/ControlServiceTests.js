@@ -23,14 +23,14 @@ const createTarget = () => {
 
     const thermostatFactory = sinon.fake();
     thermostatFactory.create = sinon.stub();
-    const mock = new Mock(logger);
-    thermostatFactory.create.withArgs(thermostat.type, {}).returns(mock);
+    const client = new Mock(logger);
+    thermostatFactory.create.withArgs(thermostat.type, {}).returns(client);
 
     return {
         logger: logger,
         context: context,
         holdStrategy: holdStrategy,
-        mock: mock,
+        client: client,
         thermostatFactory: thermostatFactory,
         thermostatRepository: thermostatRepository,
         object: () => {
@@ -55,7 +55,7 @@ describe('ControlService', async () => {
         context('when the thermostat is offline', async () => {
             it('returns offline', async () => {
                 const target = createTarget();
-                target.mock.online = async() => {
+                target.client.online = async() => {
                     return false;
                 };
             
@@ -133,18 +133,26 @@ describe('ControlService', async () => {
     describe('TurnUp', async () => {
         it('increases the target temperature by 1.0 degrees', async () => {
             const target = createTarget();
-            target.mock.setTemperature(15);
+            target.client.setTemperature(15);
         
             const messages = await target.object().turnUp();
         
             expect(messages[0]).to.equal('The target temperature is now 16 degrees.');
+        });
+
+        it('reports the heating is already on', async () => {
+            const target = createTarget();
+            target.client.setTemperature(20);
+        
+            await expect(target.object().turnUp())
+                .to.be.rejectedWith('The heating is already on.');
         });
     });
 
     describe('TurnDown', async () => {
         it('decreases the target temperature by 1.0 degrees', async () => {
             const target = createTarget();
-            target.mock.setTemperature(15);
+            target.client.setTemperature(15);
         
             const messages = await target.object().turnDown();
         
@@ -153,7 +161,7 @@ describe('ControlService', async () => {
 
         it('reports that the heating is still on', async () => {
             const target = createTarget();
-            target.mock.setTemperature(25);
+            target.client.setTemperature(25);
         
             const messages = await target.object().turnDown();
         
@@ -197,7 +205,7 @@ describe('ControlService', async () => {
 
         it('raises error when not online', async () => {
             const target = createTarget();
-            target.mock.online = sinon.stub().returns(false);
+            target.client.online = sinon.stub().returns(false);
         
             await expect(target.object().setTemperature(16, 'PT30M'))
                 .to.be.rejectedWith('Sorry, the thermostat is offline at the moment.');
@@ -205,7 +213,7 @@ describe('ControlService', async () => {
 
         it('raises error when not contactable', async () => {
             const target = createTarget();
-            target.mock.device = sinon.stub().returns({ contactable: false });
+            target.client.device = sinon.stub().returns({ contactable: false });
         
             await expect(target.object().setTemperature(16, 'PT30M'))
                 .to.be.rejectedWith('Sorry, I couldn\'t contact the thermostat.');
