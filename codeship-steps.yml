@@ -2,4 +2,4 @@
   steps:
   - name: tests
     service: smartheat
-    command: npm test
+    command: ./node_modules/.bin/mocha --recursive
