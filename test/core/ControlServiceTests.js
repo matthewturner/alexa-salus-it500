@@ -150,6 +150,16 @@ describe('ControlService', async () => {
         
             expect(messages[0]).to.equal('The target temperature is now 14 degrees.');
         });
+
+        it('reports that the heating is still on', async () => {
+            const target = createTarget();
+            target.mock.setTemperature(25);
+        
+            const messages = await target.object().turnDown();
+        
+            expect(messages[0]).to.equal('The target temperature is now 24 degrees.');
+            expect(messages[1]).to.equal('The heating is still on.');
+        });
     });
 
     describe('SetTemperature', async () => {
@@ -224,7 +234,7 @@ describe('ControlService', async () => {
         });
     });
 
-    describe('Set default', async () => {
+    describe('SetDefault', async () => {
         it('updates the default on temperature', async () => {
             const target = createTarget();
         
@@ -247,6 +257,64 @@ describe('ControlService', async () => {
             const messages = await target.object().setDefault('duration', 'PT2H');
         
             expect(messages[0]).to.equal('The default duration has been set to 2 hours.');
+        });
+    });
+
+    describe('ObtainThermostat', async () => {
+        context('when user is not registered', async () => {
+            it('creates a new thermostat', async () => {
+                const target = createTarget();
+                target.context.userId = 'user999';
+            
+                target.thermostatRepository.add = sinon.mock()
+                    .withExactArgs({ userId: 'user999', executionId: null });
+
+                const thermostat = await target.object().obtainThermostat();
+
+                expect(thermostat.userId).to.equal('user999');
+                target.thermostatRepository.add.verify();
+            });
+
+            it('copies the template thermostat', async () => {
+                const target = createTarget();
+                target.context.userId = 'user999';
+                const template = { userId: 'template', type: 'mock', defaultOnTemp: 25, 
+                    defaultOffTemp: 10, defaultDuration: 'PT1H', options: {}
+                };
+                target.thermostatRepository.find.withArgs('template').returns(template);
+                
+                target.thermostatRepository.add = sinon.mock()
+                    .withExactArgs({ userId: 'user999', type: 'mock', defaultOnTemp: 25, 
+                        defaultOffTemp: 10, defaultDuration: 'PT1H', options: {}
+                    });
+
+                const thermostat = await target.object().obtainThermostat();
+
+                expect(thermostat.userId).to.equal('user999');
+                target.thermostatRepository.add.verify();
+            });
+        });
+    });
+
+    describe('SpeakTemperature', async () => {
+        context('when temperature is a fraction', async () => {
+            it('rounds the temperature to 1 decimal place', async () => {
+                const target = createTarget();
+                
+                const temp = target.object().speakTemperature(1.55);
+
+                expect(temp).to.equal('1.6');
+            });
+        });
+
+        context('when temperature is a whole number', async () => {
+            it('rounds the temperature to 0 decimal places', async () => {
+                const target = createTarget();
+                
+                const temp = target.object().speakTemperature(2.0);
+
+                expect(temp).to.equal('2');
+            });
         });
     });
 });
