@@ -23,21 +23,25 @@ const controlService = (request, logger = new Logger(Logger.DEBUG)) => {
     }
     const context = { userId: userId, shortUserId: shortUserId, source: source };
     logger.debug(`Creating context for source: ${context.source}...`);
-    let repository;
-    if (process.env.THERMOSTAT_REPOSITORY === 'dynamodb') {
-        repository = new DynamodbThermostatRepository(logger);
-    } else {
-        repository = new DefaultThermostatRepository(logger);
-    }
-    let holdStrategy;
-    if (process.env.HOLD_STRATEGY === 'aws') {
-        holdStrategy = new AwsHoldStrategy(logger, context);
-    } else {
-        holdStrategy = new DefaultHoldStrategy(logger, context);
-    }
+    const repository = createRepository(logger);
+    const holdStrategy = createHoldStrategy(logger, context);
     const factory = new Factory();
     const controlService = new ControlService(logger, context, holdStrategy, factory, repository);
     return { logger, controlService };
+};
+
+const createHoldStrategy = (logger, context) => {
+    if (process.env.HOLD_STRATEGY === 'aws') {
+        return new AwsHoldStrategy(logger, context);
+    }
+    return new DefaultHoldStrategy(logger, context);
+};
+
+const createRepository = (logger) => {
+    if (process.env.THERMOSTAT_REPOSITORY === 'dynamodb') {
+        return new DynamodbThermostatRepository(logger);
+    }
+    return new DefaultThermostatRepository(logger);
 };
 
 const say = (response, output, logger) => {
