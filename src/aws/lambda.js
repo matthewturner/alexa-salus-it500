@@ -25,7 +25,7 @@ const controlService = (request, logger = new Logger(Logger.DEBUG)) => {
     logger.debug(`Creating context for source: ${context.source}...`);
     const repository = createRepository(logger);
     const holdStrategy = createHoldStrategy(logger, context);
-    const factory = new Factory();
+    const factory = new Factory(logger);
     const service = new ControlService(logger, context, holdStrategy, factory, repository);
     return { logger, service };
 };
