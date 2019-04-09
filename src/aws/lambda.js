@@ -5,7 +5,7 @@ const AwsHoldStrategy = require('./HoldStrategy');
 const DefaultHoldStrategy = require('../core/HoldStrategy');
 const ControlService = require('../core/ControlService');
 const Logger = require('../core/Logger');
-const helpers = require('../core/Helpers');
+const helpers = require('./helpers');
 const Factory = require('../thermostats/Factory');
 
 // Allow this module to be reloaded by hotswap when changed
@@ -26,8 +26,8 @@ const controlService = (request, logger = new Logger(Logger.DEBUG)) => {
     const repository = createRepository(logger);
     const holdStrategy = createHoldStrategy(logger, context);
     const factory = new Factory();
-    const controlService = new ControlService(logger, context, holdStrategy, factory, repository);
-    return { logger, controlService };
+    const service = new ControlService(logger, context, holdStrategy, factory, repository);
+    return { logger, service };
 };
 
 const createHoldStrategy = (logger, context) => {
