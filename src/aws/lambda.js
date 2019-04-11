@@ -13,7 +13,7 @@ module.change_code = 0;
 
 let app = new alexa.app('boiler');
 
-const controlService = (request, logger = new Logger(Logger.DEBUG)) => {
+const controlService = (request, logger = new Logger(process.env.LOG_LEVEL || Logger.DEBUG)) => {
     const userId = request.userId || request.data.session.user.userId;
     const shortUserId = helpers.truncateUserId(userId);
     logger.prefix = shortUserId;

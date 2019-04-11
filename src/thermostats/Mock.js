@@ -1,7 +1,7 @@
 class Mock {
     constructor(logger, options) { // eslint-disable-line no-unused-vars
         this._logger = logger;
-        this._targetTemperature = 20;
+        this._targetTemperature = parseInt(process.env.MOCK_TARGET_TEMPERATURE) || 20;
     }
 
     async login() {

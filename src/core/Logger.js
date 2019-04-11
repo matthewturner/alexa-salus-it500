@@ -1,8 +1,31 @@
 class Logger {
     constructor(level = Logger.OFF, destination = console) {
-        this._level = level;
+        this.level = level;
         this._destination = destination;
         this._prefix = '';
+    }
+
+    set level(level) {
+        switch (level) {
+        case 'OFF':
+            this._level = Logger.OFF;
+            break;
+        case 'DEBUG':
+            this._level = Logger.DEBUG;
+            break;
+        case 'INFO':
+            this._level = Logger.INFO;
+            break;
+        case 'WARNING':
+            this._level = Logger.WARNING;
+            break;
+        case 'ERROR':
+            this._level = Logger.ERROR;
+            break;
+        default:
+            this._level = level;
+            break;
+        }
     }
 
     set prefix(prefix) {
@@ -26,7 +49,7 @@ class Logger {
     }
 
     log(message, level) {
-        if(level <= this._level) {
+        if (level <= this._level) {
             if (this._prefix === '') {
                 this._destination.log(message);
             } else {

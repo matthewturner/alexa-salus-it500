@@ -1,0 +1,25 @@
+{
+    "version": "1.0",
+    "session": {
+      "new": true,
+      "user": {
+        "userId": "amzn1.ask.account.xyz123xyz123xyz123xyz123"
+      }
+    },
+    "request": {
+      "type": "IntentRequest",
+      "intent": {
+        "name": "TurnIntent",
+        "slots": {
+          "duration": {
+            "name": "duration",
+            "value": "PT1M"
+          },
+          "onoff": {
+            "name": "onoff",
+            "value": "on"
+          }
+        }
+      }
+    }
+  }
