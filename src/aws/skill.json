@@ -35,7 +35,7 @@
                 "to turn water {onoff}",
                 "to turn the water {onoff}",
                 "to turn water {onoff} for {duration}",
-                "to turn the water {onoff} for {duration}",
+                "to turn the water {onoff} for {duration}"
             ]
           },
           {
