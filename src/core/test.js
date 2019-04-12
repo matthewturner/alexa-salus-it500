@@ -51,7 +51,7 @@ const main = async () => {
     }
 
     try {
-        const { messages, } = await service.turnOn(duration);
+        const { messages, } = await service.turnHeatingOn(duration);
         say(messages, logger);
     } catch (e) {
         say(e, logger);
@@ -65,7 +65,7 @@ const main = async () => {
     }
 
     try {
-        const { messages, } = await service.turnOff();
+        const { messages, } = await service.turnHeatingOff();
         say(messages, logger);
     } catch (e) {
         say(e, logger);
