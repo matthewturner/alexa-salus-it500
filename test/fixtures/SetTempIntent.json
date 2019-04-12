@@ -1,0 +1,25 @@
+{
+    "version": "1.0",
+    "session": {
+      "new": true,
+      "user": {
+        "userId": "amzn1.ask.account.xyz123xyz123xyz123xyz123"
+      }
+    },
+    "request": {
+      "type": "IntentRequest",
+      "intent": {
+        "name": "SetTempIntent",
+        "slots": {
+          "duration": {
+            "name": "duration",
+            "value": "PT1M"
+          },
+          "temp": {
+            "name": "temp",
+            "value": "21"
+          }
+        }
+      }
+    }
+  }

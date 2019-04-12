@@ -226,6 +226,166 @@ describe('lambda', async () => {
         });
     });
 
+    describe('SetTempIntent', async () => {
+        it('says the current temperature', async () => {
+            const target = createTarget();
+        
+            const request = JSON.parse(await fs.readFile('./test/fixtures/SetTempIntent.json'));
+            const context = {};
+
+            const handler = util.promisify(target.object().handler);
+
+            const response = await handler(request, context);
+
+            expect(response.response.outputSpeech.ssml).to.equal('<speak>The target temperature is now 21 degrees.</speak>');
+        });
+
+        it('shows the current temperature', async () => {
+            const target = createTarget();
+        
+            const request = JSON.parse(await fs.readFile('./test/fixtures/SetTempIntent.json'));
+            const context = {};
+
+            const handler = util.promisify(target.object().handler);
+
+            const response = await handler(request, context);
+            expect(response.response.card.text).to.equal('The target temperature is now 21 degrees.');
+        });
+
+        it('says the error', async () => {
+            const target = createTarget();
+            process.env.THERMOSTAT_TYPE = 'unknown';
+        
+            const request = JSON.parse(await fs.readFile('./test/fixtures/SetTempIntent.json'));
+            const context = {};
+
+            const handler = util.promisify(target.object().handler);
+
+            const response = await handler(request, context);
+            expect(response.response.outputSpeech.ssml).to.equal('<speak>Unknown thermostat type unknown</speak>');
+        });
+    });
+
+    describe('SetDefaultTempIntent', async () => {
+        it('says the current default temperature', async () => {
+            const target = createTarget();
+        
+            const request = JSON.parse(await fs.readFile('./test/fixtures/SetDefaultTempIntent.json'));
+            const context = {};
+
+            const handler = util.promisify(target.object().handler);
+
+            const response = await handler(request, context);
+
+            expect(response.response.outputSpeech.ssml).to.equal('<speak>The default on temperature has been set to 21 degrees.</speak>');
+        });
+
+        it('shows the current default temperature', async () => {
+            const target = createTarget();
+        
+            const request = JSON.parse(await fs.readFile('./test/fixtures/SetDefaultTempIntent.json'));
+            const context = {};
+
+            const handler = util.promisify(target.object().handler);
+
+            const response = await handler(request, context);
+            expect(response.response.card.text).to.equal('The default on temperature has been set to 21 degrees.');
+        });
+
+        it('says the error', async () => {
+            const target = createTarget();
+            process.env.THERMOSTAT_TYPE = 'unknown';
+        
+            const request = JSON.parse(await fs.readFile('./test/fixtures/SetDefaultTempIntent.json'));
+            const context = {};
+
+            const handler = util.promisify(target.object().handler);
+
+            const response = await handler(request, context);
+            expect(response.response.outputSpeech.ssml).to.equal('<speak>Unknown thermostat type unknown</speak>');
+        });
+    });
+
+    describe('SetDefaultDurationIntent', async () => {
+        it('says the current default duration', async () => {
+            const target = createTarget();
+        
+            const request = JSON.parse(await fs.readFile('./test/fixtures/SetDefaultDurationIntent.json'));
+            const context = {};
+
+            const handler = util.promisify(target.object().handler);
+
+            const response = await handler(request, context);
+
+            expect(response.response.outputSpeech.ssml).to.equal('<speak>The default duration has been set to 1 minute.</speak>');
+        });
+
+        it('shows the current default duration', async () => {
+            const target = createTarget();
+        
+            const request = JSON.parse(await fs.readFile('./test/fixtures/SetDefaultDurationIntent.json'));
+            const context = {};
+
+            const handler = util.promisify(target.object().handler);
+
+            const response = await handler(request, context);
+            expect(response.response.card.text).to.equal('The default duration has been set to 1 minute.');
+        });
+
+        it('says the error', async () => {
+            const target = createTarget();
+            process.env.THERMOSTAT_TYPE = 'unknown';
+        
+            const request = JSON.parse(await fs.readFile('./test/fixtures/SetDefaultDurationIntent.json'));
+            const context = {};
+
+            const handler = util.promisify(target.object().handler);
+
+            const response = await handler(request, context);
+            expect(response.response.outputSpeech.ssml).to.equal('<speak>Unknown thermostat type unknown</speak>');
+        });
+    });
+
+    describe('StopIntent', async () => {
+        it('says the current default duration', async () => {
+            const target = createTarget();
+        
+            const request = JSON.parse(await fs.readFile('./test/fixtures/StopIntent.json'));
+            const context = {};
+
+            const handler = util.promisify(target.object().handler);
+
+            const response = await handler(request, context);
+
+            expect(response.response.outputSpeech.ssml).to.equal('<speak>The target temperature is now 14 degrees.</speak>');
+        });
+
+        it('shows the current default duration', async () => {
+            const target = createTarget();
+        
+            const request = JSON.parse(await fs.readFile('./test/fixtures/StopIntent.json'));
+            const context = {};
+
+            const handler = util.promisify(target.object().handler);
+
+            const response = await handler(request, context);
+            expect(response.response.card.text).to.equal('The target temperature is now 14 degrees.');
+        });
+
+        it('says the error', async () => {
+            const target = createTarget();
+            process.env.THERMOSTAT_TYPE = 'unknown';
+        
+            const request = JSON.parse(await fs.readFile('./test/fixtures/StopIntent.json'));
+            const context = {};
+
+            const handler = util.promisify(target.object().handler);
+
+            const response = await handler(request, context);
+            expect(response.response.outputSpeech.ssml).to.equal('<speak>Unknown thermostat type unknown</speak>');
+        });
+    });
+
     describe('HelpIntent', async () => {
         it('says the help text', async () => {
             const target = createTarget();
