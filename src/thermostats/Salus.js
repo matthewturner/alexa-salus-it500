@@ -96,6 +96,21 @@ class Salus {
         await request.post(`${host}/includes/set.php`, options);
     }
 
+    async turnWaterOnFor(hours) {
+        this._logger.debug(`Setting water boost time: ${hours} hours...`);
+        let options = {
+            form: {
+                'token': this._token,
+                'devId': this._devId,
+                'hwboosthours_set': 1,
+                'hwboosthours': hours
+            },
+            jar: this._jar
+        };
+
+        await request.post(`${host}/includes/set.php`, options);
+    }
+
     async logout() {
         this._logger.debug('Logging out...');
         await request.get(this.urlTo('logout', false), { jar: this._jar });

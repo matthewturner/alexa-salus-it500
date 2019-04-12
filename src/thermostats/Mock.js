@@ -32,6 +32,10 @@ class Mock {
         this._logger.debug('Logging out...');
     }
 
+    async turnWaterOnFor(hours) {
+        this._logger.debug(`Boosting water for: ${hours} hours`);
+    }
+
     card() {
         return {
             title: 'Mock Thermostat',

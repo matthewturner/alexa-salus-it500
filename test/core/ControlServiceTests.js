@@ -99,34 +99,32 @@ describe('ControlService', async () => {
         });
     });
 
-    describe('Turn', async () => {
-        context('when turning on', async () => {
-            it('returns the new target temperature', async () => {
-                const target = createTarget();
-            
-                const { messages, } = await target.object().turn('on');
-            
-                expect(messages[0]).to.equal('The target temperature is now 22 degrees.');
-            });
-
-            it('returns the new target temperature with hold time', async () => {
-                const target = createTarget();
-            
-                const { messages, } = await target.object().turn('on', 'PT1H');
-            
-                expect(messages[0]).to.equal('The target temperature is now 22 degrees.');
-                expect(messages[1]).to.equal('Hold time is not supported on this device.');
-            });
+    describe('TurnHeatingOn', async () => {
+        it('returns the new target temperature', async () => {
+            const target = createTarget();
+        
+            const { messages, } = await target.object().turnHeatingOn();
+        
+            expect(messages[0]).to.equal('The target temperature is now 22 degrees.');
         });
 
-        context('when turning off', async () => {
-            it('returns the new target temperature', async () => {
-                const target = createTarget();
-            
-                const { messages, } = await target.object().turn('off');
-            
-                expect(messages[0]).to.equal('The target temperature is now 14 degrees.');
-            });
+        it('returns the new target temperature with hold time', async () => {
+            const target = createTarget();
+        
+            const { messages, } = await target.object().turnHeatingOn('PT1H');
+        
+            expect(messages[0]).to.equal('The target temperature is now 22 degrees.');
+            expect(messages[1]).to.equal('Hold time is not supported on this device.');
+        });
+    });
+
+    describe('TurnHeatingOff', async () => {
+        it('returns the new target temperature', async () => {
+            const target = createTarget();
+        
+            const { messages, } = await target.object().turnHeatingOff();
+        
+            expect(messages[0]).to.equal('The target temperature is now 14 degrees.');
         });
     });
 
@@ -338,6 +336,43 @@ describe('ControlService', async () => {
 
                 expect(temp).to.equal('2');
             });
+        });
+    });
+
+    describe('TurnWaterOn', async () => {
+        it('returns the new boost time', async () => {
+            const target = createTarget();
+        
+            const { messages, } = await target.object().turnWaterOn('PT1H');
+        
+            expect(messages[0]).to.equal('The water is now on for 1 hour.');
+        });
+
+        it('converts the boost time to integer hours', async () => {
+            const target = createTarget();
+            target.client.turnWaterOnFor = sinon.mock().withExactArgs(1);
+        
+            await target.object().turnWaterOn('PT1H');
+        
+            target.client.turnWaterOnFor.verify();
+        });
+
+        it('returns the new boost time as hours', async () => {
+            const target = createTarget();
+        
+            const { messages, } = await target.object().turnWaterOn('PT2H30M');
+        
+            expect(messages[0]).to.equal('The water is now on for 2 hours.');
+        });
+    });
+
+    describe('TurnWaterOff', async () => {
+        it('returns the off message', async () => {
+            const target = createTarget();
+        
+            const { messages, } = await target.object().turnWaterOff();
+        
+            expect(messages[0]).to.equal('The water is now off.');
         });
     });
 });

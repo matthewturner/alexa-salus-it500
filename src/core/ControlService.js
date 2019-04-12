@@ -12,9 +12,9 @@ class ControlService {
 
     async login() {
         this._logger.debug('Finding thermostat...');
-        let thermostat = await this.obtainThermostat();
-        let options = thermostat.options;
-        let client = this._thermostatFactory.create(thermostat.type, options);
+        const thermostat = await this.obtainThermostat();
+        const options = thermostat.options;
+        const client = this._thermostatFactory.create(thermostat.type, options);
         await client.login();
         return client;
     }
@@ -36,7 +36,7 @@ class ControlService {
     }
 
     async verifyOnline(client) {
-        let online = await client.online();
+        const online = await client.online();
         if (!online) {
             throw 'Sorry, the thermostat is offline at the moment.';
         }
@@ -49,7 +49,7 @@ class ControlService {
     }
 
     async launch() {
-        let client = await this.login();
+        const client = await this.login();
         try {
             if (await client.online()) {
                 return this.createResponse(['Thermostat is online.'], client);
@@ -63,13 +63,13 @@ class ControlService {
 
     async status() {
         this._logger.debug('Requesting status...');
-        let client = await this.login();
+        const client = await this.login();
         try {
             await this.verifyOnline(client);
-            let device = await client.device();
+            const device = await client.device();
             this.verifyContactable(device);
 
-            let messages = [];
+            const messages = [];
             messages.push(`The current temperature is ${this.speakTemperature(device.currentTemperature)} degrees.`);
             messages.push(`The target is ${this.speakTemperature(device.targetTemperature)} degrees.`);
             await this.determineIfHolding(device, messages);
@@ -86,12 +86,12 @@ class ControlService {
 
         if (qualifier !== '') { qualifier = ` ${qualifier}`; }
         
-        let status = await this._holdStrategy.status();
+        const status = await this._holdStrategy.status();
         this._logger.debug(status);
         if (status.status === 'running') {
-            let timeSinceStart = (moment().diff(status.startDate) / 1000).toFixed(0);
-            let durationSinceStart = new Duration(`PT${timeSinceStart}S`);
-            let timeToGo = status.duration.subtract(durationSinceStart);
+            const timeSinceStart = (moment().diff(status.startDate) / 1000).toFixed(0);
+            const durationSinceStart = new Duration(`PT${timeSinceStart}S`);
+            const timeToGo = status.duration.subtract(durationSinceStart);
             messages.push(`The heating is${qualifier} on and will turn off in ${this.speakDuration(timeToGo)}.`);
         }
         else {
@@ -101,22 +101,22 @@ class ControlService {
 
     async turnUp() {
         this._logger.debug('Turning up...');
-        let client = await this.login();
+        const client = await this.login();
 
         try {
             await this.verifyOnline(client);
-            let device = await client.device();
+            const device = await client.device();
             this.verifyContactable(device);
 
             if (device.status === 'on') {
                 throw 'The heating is already on.';
             }
 
-            let t = device.targetTemperature + 1.0;
+            const t = device.targetTemperature + 1.0;
             await client.setTemperature(t);
-            let updatedDevice = await client.device();
+            const updatedDevice = await client.device();
 
-            let messages = [];
+            const messages = [];
             messages.push(`The target temperature is now ${this.speakTemperature(updatedDevice.targetTemperature)} degrees.`);
             await this.determineIfHolding(updatedDevice, messages, 'now');
 
@@ -129,17 +129,17 @@ class ControlService {
 
     async turnDown() {
         this._logger.debug('Turning down...');
-        let client = await this.login();
+        const client = await this.login();
         try {
             await this.verifyOnline(client);
-            let device = await client.device();
+            const device = await client.device();
             this.verifyContactable(device);
 
-            let t = device.targetTemperature - 1.0;
+            const t = device.targetTemperature - 1.0;
             await client.setTemperature(t);
-            let updatedDevice = await client.device();
+            const updatedDevice = await client.device();
 
-            let messages = [];
+            const messages = [];
             messages.push(`The target temperature is now ${this.speakTemperature(updatedDevice.targetTemperature)} degrees.`);
             await this.determineIfHolding(updatedDevice, messages, 'still');
 
@@ -150,38 +150,87 @@ class ControlService {
         }
     }
 
-    async turn(onOff, duration) {
-        this._logger.debug(`Turning ${onOff}...`);
+    async turnHeatingOn(duration) {
+        this._logger.debug('Turning heating on...');
 
-        let thermostat = await this.obtainThermostat();
+        const thermostat = await this.obtainThermostat();
         let t = thermostat.defaultOnTemp;
-        if (onOff === 'off') {
-            t = thermostat.defaultOffTemp;
-        }
 
-        return this.setTemperature(t, duration, onOff);
+        return this.setTemperature(t, duration, 'on');
+    }
+
+    async turnHeatingOff() {
+        this._logger.debug('Turning heating off...');
+
+        const thermostat = await this.obtainThermostat();
+        let t = thermostat.defaultOffTemp;
+
+        return this.setTemperature(t, null, 'off');
+    }
+
+    async turnWaterOn(duration) {
+        this._logger.debug(`Boosting water for ${duration}...`);
+
+        const client = await this.login();
+        try {
+            await this.verifyOnline(client);
+            const device = await client.device();
+            this.verifyContactable(device);
+
+            let d = duration;
+            if (!d) {
+                const thermostat = await this.obtainThermostat();
+                d = thermostat.defaultWaterDuration;
+            }
+            const actualDuration = parseInt(new Duration(d).inHours());
+
+            client.turnWaterOnFor(actualDuration);
+            
+            return this.createResponse(
+                [`The water is now on for ${this.speakDuration(new Duration(d))}.`],
+                client);
+        } finally {
+            await client.logout();
+        }
+    }
+
+    async turnWaterOff() {
+        this._logger.debug('Turning water off...');
+
+        const client = await this.login();
+        try {
+            await this.verifyOnline(client);
+            const device = await client.device();
+            this.verifyContactable(device);
+
+            client.turnWaterOnFor('PT0M');
+            
+            return this.createResponse(['The water is now off.'], client);
+        } finally {
+            await client.logout();
+        }
     }
 
     async setTemperature(targetTemperature, forDuration, onOff = 'on') {
         this._logger.debug(`Setting temperature to ${targetTemperature}...`);
-        let client = await this.login();
+        const client = await this.login();
         try {
             await this.verifyOnline(client);
-            let device = await client.device();
+            const device = await client.device();
             this.verifyContactable(device);
 
             await client.setTemperature(targetTemperature);
-            let updatedDevice = await client.device();
+            const updatedDevice = await client.device();
 
             let messages = [];
             messages.push(`The target temperature is now ${this.speakTemperature(updatedDevice.targetTemperature)} degrees.`);
             this.logStatus(updatedDevice);
 
             if (this._context.source === 'user') {
-                let thermostat = await this.obtainThermostat();
+                const thermostat = await this.obtainThermostat();
                 if (onOff === 'on') {
-                    let duration = forDuration || thermostat.defaultDuration;
-                    let intent = await this._holdStrategy.holdIfRequiredFor(duration);
+                    const duration = forDuration || thermostat.defaultDuration;
+                    const intent = await this._holdStrategy.holdIfRequiredFor(duration);
                     messages = messages.concat(this.summarize(duration, intent, updatedDevice));
                     return this.createResponse(messages, client);
                 } else {
@@ -206,7 +255,7 @@ class ControlService {
             return messages;
         }
 
-        let durationText = this.speakDuration(intent.duration);
+        const durationText = this.speakDuration(intent.duration);
         this._logger.debug(`Holding for ${durationText} {${intent.executionId}}`);
         if (updatedDevice.status === 'on') {
             return [`The heating is now on and will turn off in ${durationText}.`];
@@ -218,7 +267,7 @@ class ControlService {
     async setDefault(name, value) {
         this._logger.debug(`Setting default ${name} to ${value}...`);
 
-        let thermostat = await this.obtainThermostat();
+        const thermostat = await this.obtainThermostat();
         let nameText = '';
         let valueText = '';
         switch(name) {

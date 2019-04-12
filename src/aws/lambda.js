@@ -150,8 +150,39 @@ app.intent('TurnIntent', {
     // this could be a callback from a step function
     const { logger, service } = controlService(request);
     try {
-        const output = await service.turn(onOff, duration);
-        say(response, output, logger);
+        if(onOff === 'on') {
+            const output = await service.turnHeatingOn(duration);
+            say(response, output, logger);
+        } else {
+            const output = await service.turnHeatingOff();
+            say(response, output, logger);
+        }
+    } catch (e) {
+        report(response, e, logger);
+    }
+    return false;
+});
+
+app.intent('TurnWaterIntent', {
+    'slots': {
+        'onoff': 'ONOFF',
+        'duration': 'AMAZON.DURATION'
+    },
+    'utterances': ['to boost the water', 'to boost the water for {duration}',
+        'to turn water {onoff}', 'to turn the water {onoff}',
+        'to turn the water on for {duration}' ]
+}, async (request, response) => {
+    let onOff = request.slot('onoff') || 'on';
+    let duration = request.slot('duration');
+    const { logger, service } = controlService(request);
+    try {
+        if(onOff === 'on') {
+            const output = await service.turnWaterOn(duration);
+            say(response, output, logger);
+        } else {
+            const output = await service.turnWaterOff();
+            say(response, output, logger); 
+        }
     } catch (e) {
         report(response, e, logger);
     }
@@ -224,7 +255,7 @@ app.intent('AMAZON.StopIntent', {
 }, async (request, response) => {
     const { logger, service } = controlService(request);
     try {
-        const output = await service.turn('off');
+        const output = await service.turnHeatingOff();
         say(response, output, logger);
     } catch (e) {
         report(response, e, logger);

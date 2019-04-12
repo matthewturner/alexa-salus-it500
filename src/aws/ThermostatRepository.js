@@ -64,6 +64,9 @@ class ThermostatRepository {
         } else if (existingThermostat.defaultOffTemp !== thermostat.defaultOffTemp) {
             updateField = 'defaultOffTemp';
             updateValue = thermostat.defaultOffTemp;
+        } else if (existingThermostat.defaultWaterDuration !== thermostat.defaultWaterDuration) {
+            updateField = 'defaultWaterDuration';
+            updateValue = thermostat.defaultWaterDuration;
         }
 
         const params = {
