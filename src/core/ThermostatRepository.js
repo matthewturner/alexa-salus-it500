@@ -20,7 +20,8 @@ class ThermostatRepository {
             },
             defaultOnTemp: parseFloat(process.env.DEFAULT_ON_TEMP || '20'),
             defaultOffTemp: parseFloat(process.env.DEFAULT_OFF_TEMP || '14'),
-            defaultDuration: process.env.DEFAULT_DURATION || 'PT1H'
+            defaultDuration: process.env.DEFAULT_DURATION || 'PT1H',
+            defaultWaterDuration: process.env.DEFAULT_WATER_DURATION || 'PT1H'
         };
     }
 

@@ -18,6 +18,27 @@
               "samples": []
           },
           {
+            "name": "TurnWaterIntent",
+            "slots": [
+                {
+                    "name": "onoff",
+                    "type": "ONOFF"
+                },
+                {
+                  "name": "duration",
+                  "type": "AMAZON.DURATION"
+                }
+            ],
+            "samples": [
+                "to boost the water",
+                "to boost the water for {duration}",
+                "to turn water {onoff}",
+                "to turn the water {onoff}",
+                "to turn water {onoff} for {duration}",
+                "to turn the water {onoff} for {duration}"
+            ]
+          },
+          {
               "name": "SetTempIntent",
               "slots": [
                   {

@@ -400,4 +400,98 @@ describe('lambda', async () => {
             expect(response.response.outputSpeech.ssml).to.equal('<speak>You can say \'set the temperature to 18 degrees\' or ask \'the temperature\'. You can also say stop or exit to quit.</speak>');
         });
     });
+
+    describe('TurnWaterIntent', async () => {
+        context('when turning on', async() => {
+            it('says the duration', async () => {
+                const target = createTarget();
+            
+                const request = JSON.parse(await fs.readFile('./test/fixtures/TurnWaterOnIntent.json'));
+                const context = {};
+
+                const handler = util.promisify(target.object().handler);
+
+                const response = await handler(request, context);
+
+                expect(response.response.outputSpeech.ssml).to.equal('<speak>The water is now on for 1 minute.</speak>');
+            });
+
+            it('shows the duration', async () => {
+                const target = createTarget();
+            
+                const request = JSON.parse(await fs.readFile('./test/fixtures/TurnWaterOnIntent.json'));
+                const context = {};
+
+                const handler = util.promisify(target.object().handler);
+
+                const response = await handler(request, context);
+                expect(response.response.card.text).to.equal('The water is now on for 1 minute.');
+            });
+
+            it('defaults to on', async () => {
+                const target = createTarget();
+            
+                const request = JSON.parse(await fs.readFile('./test/fixtures/TurnWaterOnNotSpecifiedIntent.json'));
+                const context = {};
+
+                const handler = util.promisify(target.object().handler);
+
+                const response = await handler(request, context);
+                expect(response.response.card.text).to.equal('The water is now on for 1 hour.');
+            });
+
+            it('says the error', async () => {
+                const target = createTarget();
+                process.env.THERMOSTAT_TYPE = 'unknown';
+            
+                const request = JSON.parse(await fs.readFile('./test/fixtures/TurnWaterOnIntent.json'));
+                const context = {};
+
+                const handler = util.promisify(target.object().handler);
+
+                const response = await handler(request, context);
+                expect(response.response.outputSpeech.ssml).to.equal('<speak>Unknown thermostat type unknown</speak>');
+            });
+        });
+
+        context('when turning off', async() => {
+            it('says the duration', async () => {
+                const target = createTarget();
+            
+                const request = JSON.parse(await fs.readFile('./test/fixtures/TurnWaterOffIntent.json'));
+                const context = {};
+
+                const handler = util.promisify(target.object().handler);
+
+                const response = await handler(request, context);
+
+                expect(response.response.outputSpeech.ssml).to.equal('<speak>The water is now off.</speak>');
+            });
+
+            it('shows the duration', async () => {
+                const target = createTarget();
+            
+                const request = JSON.parse(await fs.readFile('./test/fixtures/TurnWaterOffIntent.json'));
+                const context = {};
+
+                const handler = util.promisify(target.object().handler);
+
+                const response = await handler(request, context);
+                expect(response.response.card.text).to.equal('The water is now off.');
+            });
+
+            it('says the error', async () => {
+                const target = createTarget();
+                process.env.THERMOSTAT_TYPE = 'unknown';
+            
+                const request = JSON.parse(await fs.readFile('./test/fixtures/TurnWaterOffIntent.json'));
+                const context = {};
+
+                const handler = util.promisify(target.object().handler);
+
+                const response = await handler(request, context);
+                expect(response.response.outputSpeech.ssml).to.equal('<speak>Unknown thermostat type unknown</speak>');
+            });
+        });
+    });
 });
