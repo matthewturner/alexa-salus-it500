@@ -20,6 +20,7 @@ This skill has 8 intents :-
 * Alexa, ask boiler to set the default [on/off] temperature to x degrees
 * Alexa, ask boiler to set the default duration to [x hours]
 * Alexa, ask boiler the current defaults
+* Alexa, ask boiler to turn the water [on/off] [for x hours]
 
 ## Auto-switch off/Hold time
 

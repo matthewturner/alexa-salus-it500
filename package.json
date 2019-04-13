@@ -1,10 +1,10 @@
 {
   "name": "thermostat",
-  "version": "1.9.1",
+  "version": "1.10.0",
   "description": "Alexa app to control Salus IT500 thermostat",
   "main": "aws/lambda.js",
   "author": "Matt Turner (matt@fiverings.uk)",
-  "license": "GPL",
+  "license": "GPL-2.0-or-later",
   "scripts": {
     "test": "nyc --reporter=html ./node_modules/.bin/mocha --recursive"
   },
@@ -13,13 +13,16 @@
     "applicationId": "amzn1.echo-sdk-ams.app.999999-d0ed-9999-ad00-999999d00ebe"
   },
   "devDependencies": {
+    "ajv": "^6.9.1",
     "aws-sdk": "^2.329.0",
     "chai": "^4.2.0",
     "chai-as-promised": "^7.1.1",
+    "eslint": "^5.4.0",
     "mocha": "^6.0.2",
     "nyc": "^13.3.0",
     "promise-fs": "^2.1.0",
-    "sinon": "^7.3.1"
+    "sinon": "^7.3.1",
+    "validate-npm-package-license": "^3.0.4"
   },
   "dependencies": {
     "JSON": "^1.0.0",
