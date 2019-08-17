@@ -158,6 +158,12 @@ class AlexaResponse {
             capability['properties']['proactivelyReported'] = this.checkValue(opts.proactivelyReported, false);
             capability['properties']['retrievable'] = this.checkValue(opts.retrievable, false);
         }
+        let configuration = this.checkValue(opts.configuration, false);
+        if (configuration) {
+            capability['configuration'] = {};
+            capability['configuration']['supportsScheduling'] = this.checkValue(opts.configuration.supportsScheduling, false);
+            capability['configuration']['supportedModes'] = this.checkValue(opts.configuration, []);
+        }
         return capability;
     }
 

@@ -1,17 +1,45 @@
 'use strict';
 
-// const DynamodbThermostatRepository = require('./ThermostatRepository');
-// const DefaultThermostatRepository = require('../core/ThermostatRepository');
-// const AwsHoldStrategy = require('./HoldStrategy');
-// const DefaultHoldStrategy = require('../core/HoldStrategy');
-// const ControlService = require('../core/ControlService');
+const DynamodbThermostatRepository = require('./ThermostatRepository');
+const DefaultThermostatRepository = require('../core/ThermostatRepository');
+const AwsHoldStrategy = require('./HoldStrategy');
+const DefaultHoldStrategy = require('../core/HoldStrategy');
+const ControlService = require('../core/ControlService');
 const Logger = require('../core/Logger');
 const axios = require('axios');
-// const helpers = require('./helpers');
-// const Factory = require('../thermostats/Factory');
+const helpers = require('./helpers');
+const Factory = require('../thermostats/Factory');
 const AlexaResponse = require('./AlexaResponse');
 
 const logger = new Logger(process.env.LOG_LEVEL || Logger.DEBUG);
+
+const controlService = (profile) => {
+    const userId = profile.user_id;
+    const shortUserId = helpers.truncateUserId(userId);
+    logger.prefix = shortUserId;
+    let source = 'user';
+    const context = { userId: userId, shortUserId: shortUserId, source: source };
+    logger.debug(`Creating context for source: ${context.source}...`);
+    const repository = createRepository(logger);
+    const holdStrategy = createHoldStrategy(logger, context);
+    const factory = new Factory(logger);
+    const service = new ControlService(logger, context, holdStrategy, factory, repository);
+    return service;
+};
+
+const createHoldStrategy = (logger, context) => {
+    if (process.env.HOLD_STRATEGY === 'aws') {
+        return new AwsHoldStrategy(logger, context);
+    }
+    return new DefaultHoldStrategy(logger, context);
+};
+
+const createRepository = (logger) => {
+    if (process.env.THERMOSTAT_REPOSITORY === 'dynamodb') {
+        return new DynamodbThermostatRepository(logger);
+    }
+    return new DefaultThermostatRepository(logger);
+};
 
 exports.handler = async (event, context) => {
     logger.debug('index.handler request  -----');
@@ -52,7 +80,6 @@ exports.handler = async (event, context) => {
 
     logger.debug('Retrieving profile data...');
     let profile = await retrieveProfile(event);
-    
 
     if (namespace.toLowerCase() === 'alexa.authorization') {
         let aar = new AlexaResponse({'namespace': 'Alexa.Authorization', 'name': 'AcceptGrant.Response',});
@@ -83,9 +110,44 @@ const retrieveProfile = async (event) => {
 };
 
 const handleDiscovery = async (profile, event) => {
-    let adr = new AlexaResponse({'namespace': 'Alexa.Discovery', 'name': 'Discover.Response'});
-    let capability_alexa = adr.createPayloadEndpointCapability();
-    let capability_alexa_powercontroller = adr.createPayloadEndpointCapability({'interface': 'Alexa.PowerController', 'supported': [{'name': 'powerState'}]});
-    adr.addPayloadEndpoint({'friendlyName': 'Sample Switch', 'endpointId': 'sample-switch-01', 'capabilities': [capability_alexa, capability_alexa_powercontroller]});
+    const controlService = controlService(profile);
+    controlService.
+
+    let adr = new AlexaResponse({
+        namespace: 'Alexa.Discovery',
+        name: 'Discover.Response'
+    });
+    let capability = adr.createPayloadEndpointCapability();
+    let thermostat = adr.createPayloadEndpointCapability({
+        interface: 'Alexa.ThermostatController',
+        supported: [
+            {name: 'targetSetpoint'},
+            {name: 'thermostatMode'}
+        ],
+        proactivelyReported: false,
+        retrievable: true,
+        configuration: {
+            supportsScheduling: false,
+            supportedModes: ['HEAT']
+        }
+    });
+    let sensor = adr.createPayloadEndpointCapability({
+        interface: 'Alexa.TemperatureSensor',
+        supported: [
+            {name: 'temperature'}
+        ],
+        proactivelyReported: false,
+        retrievable: true
+    });
+    adr.addPayloadEndpoint({
+        friendlyName: 'Salus',
+        manufacturerName: '',
+        description: '',
+        displayCategories: [],
+        endpointId: 'sample-switch-01',
+        capabilities: [
+            capability, thermostat, sensor
+        ]
+    });
     return sendResponse(adr.get());
 };
