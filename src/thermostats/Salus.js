@@ -125,6 +125,18 @@ class Salus {
             }
         };
     }
+
+    get friendlyName() {
+        return 'thermostat'
+    }
+
+    get manufacturerName() {
+        return 'Salus'
+    }
+
+    get description() {
+        return 'Controls the Salus IT-500';
+    }
 }
 
 module.exports = Salus;

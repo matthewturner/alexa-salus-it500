@@ -162,7 +162,7 @@ class AlexaResponse {
         if (configuration) {
             capability['configuration'] = {};
             capability['configuration']['supportsScheduling'] = this.checkValue(opts.configuration.supportsScheduling, false);
-            capability['configuration']['supportedModes'] = this.checkValue(opts.configuration, []);
+            capability['configuration']['supportedModes'] = this.checkValue(opts.configuration.supportedModes, []);
         }
         return capability;
     }

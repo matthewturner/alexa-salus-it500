@@ -32,17 +32,35 @@ class ThermostatRepository {
 
     async find(userId) {
         const params = {
-            TableName,
-            Key: {
-                userId
-            }
+            TableName
         };
 
-        let response = await this.client.get(params).promise();
-        if (response.Item) {
+        if (userId.startsWith('amzn1.ask.') || userId === 'template') {
+            this._logger.debug(`Searching by userId ${userId}...`);
+            params.Key = {
+                userId
+            }
+            let response = await this.client.get(params).promise();
+            if (response.Item) {
             
-            this._logger.debug(`Found thermostat for user ${helpers.truncateUserId(userId)} with username ${response.Item.options.username}`);
-            return response.Item;
+                this._logger.debug(`Found thermostat for user ${helpers.truncateUserId(userId)} with username ${response.Item.options.username}`);
+                return response.Item;
+            }
+            return null;
+        } 
+        
+        this._logger.debug(`Searching by linkedUserId ${userId}...`);
+        params.IndexName = 'linkedUserId-index',
+        params.KeyConditionExpression = "linkedUserId = :linkedUserId",
+        params.ExpressionAttributeValues = {
+            ":linkedUserId": userId
+        };
+        this._logger.debug(JSON.stringify(params));
+        let response = await this.client.query(params).promise();
+        if (response.Count == 1) {
+        
+            this._logger.debug(`Found thermostat for user ${helpers.truncateUserId(userId)} with username ${response.Items[0].options.username}`);
+            return response.Items[0];
         }
         return null;
     }

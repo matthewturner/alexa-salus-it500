@@ -310,18 +310,18 @@ class ControlService {
         ], client);
     }
 
-    async summary() {
+    async thermostatDetails() {
         this._logger.debug('Retrieving client details...');
 
         const thermostat = await this.obtainThermostat();
         const client = this._thermostatFactory.create(thermostat.type, thermostat.options);
 
         return {
-            friendlyName: 'Salus',
-            manufacturerName: 'Salus',
-            description: 'Controls the Salus IT-500',
+            friendlyName: client.friendlyName,
+            manufacturerName: client.manufacturerName,
+            description: client.description,
             displayCategories: ['THERMOSTAT'],
-            endpointId: 'sample-switch-01',
+            endpointId: thermostat.guid
         };
     }
 

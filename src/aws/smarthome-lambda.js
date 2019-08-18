@@ -13,7 +13,73 @@ const AlexaResponse = require('./AlexaResponse');
 
 const logger = new Logger(process.env.LOG_LEVEL || Logger.DEBUG);
 
-const controlService = (profile) => {
+exports.handler = async (event, context) => {
+    logEntry(event, context);
+
+    let validationFailedResponse = validateEvent(event);
+    if (validationFailedResponse) {
+        return sendResponse(validationFailedResponse.get());
+    }
+
+    let namespace = (((event.directive || {}).header || {}).namespace).toLowerCase();
+
+    if (namespace === 'alexa.authorization') {
+        let aar = new AlexaResponse({'namespace': 'Alexa.Authorization', 'name': 'AcceptGrant.Response',});
+        return sendResponse(aar.get());
+    }
+
+    logger.debug('Retrieving profile data...');
+    let profile = await retrieveProfile(event);
+
+    if (namespace === 'alexa.discovery') {
+        let discoveryResponse = await handleDiscovery(profile, event);
+        return sendResponse(discoveryResponse.get());
+    }
+};
+
+const logEntry = (event, context) => {
+    logger.debug('Event details:');
+    logger.debug(JSON.stringify(event));
+
+    if (context !== undefined) {
+        logger.debug('Context details:');
+        logger.debug(JSON.stringify(context));
+    }
+}
+
+const validateEvent = (event) => {
+    // Validate we have an Alexa directive
+    if (!('directive' in event)) {
+        return new AlexaResponse({
+            'name': 'ErrorResponse',
+            'payload': {
+                'type': 'INVALID_DIRECTIVE',
+                'message': 'Missing key: directive, Is request a valid Alexa directive?'
+            }
+        });
+    }
+
+    // Check the payload version
+    if (event.directive.header.payloadVersion !== '3') {
+        return new AlexaResponse({
+            'name': 'ErrorResponse',
+            'payload': {
+                'type': 'INTERNAL_ERROR',
+                'message': 'This skill only supports Smart Home API version 3'
+            }
+        });
+    }
+    return null;
+}
+
+const sendResponse = (response) => {
+    // TODO Validate the response
+    logger.debug('Response details:');
+    logger.debug(JSON.stringify(response));
+    return response;
+};
+
+const createControlService = (profile) => {
     const userId = profile.user_id;
     const shortUserId = helpers.truncateUserId(userId);
     logger.prefix = shortUserId;
@@ -41,63 +107,6 @@ const createRepository = (logger) => {
     return new DefaultThermostatRepository(logger);
 };
 
-exports.handler = async (event, context) => {
-    logger.debug('index.handler request  -----');
-    logger.debug(JSON.stringify(event));
-
-    if (context !== undefined) {
-        logger.debug('index.handler context  -----');
-        logger.debug(JSON.stringify(context));
-    }
-
-    // Validate we have an Alexa directive
-    if (!('directive' in event)) {
-        let aer = new AlexaResponse(
-            {
-                'name': 'ErrorResponse',
-                'payload': {
-                    'type': 'INVALID_DIRECTIVE',
-                    'message': 'Missing key: directive, Is request a valid Alexa directive?'
-                }
-            });
-        return sendResponse(aer.get());
-    }
-
-    // Check the payload version
-    if (event.directive.header.payloadVersion !== '3') {
-        let aer = new AlexaResponse(
-            {
-                'name': 'ErrorResponse',
-                'payload': {
-                    'type': 'INTERNAL_ERROR',
-                    'message': 'This skill only supports Smart Home API version 3'
-                }
-            });
-        return sendResponse(aer.get());
-    }
-
-    let namespace = ((event.directive || {}).header || {}).namespace;
-
-    logger.debug('Retrieving profile data...');
-    let profile = await retrieveProfile(event);
-
-    if (namespace.toLowerCase() === 'alexa.authorization') {
-        let aar = new AlexaResponse({'namespace': 'Alexa.Authorization', 'name': 'AcceptGrant.Response',});
-        return sendResponse(aar.get());
-    }
-
-    if (namespace.toLowerCase() === 'alexa.discovery') {
-        return await handleDiscovery(profile, event);
-    }
-};
-
-const sendResponse = (response) => {
-    // TODO Validate the response
-    logger.debug('index.handler response -----');
-    logger.debug(JSON.stringify(response));
-    return response;
-};
-
 const retrieveProfile = async (event) => {
     const accessToken = event.directive.payload.scope.token;
     const headers = {
@@ -110,7 +119,9 @@ const retrieveProfile = async (event) => {
 };
 
 const handleDiscovery = async (profile, event) => {
-    const controlService = controlService(profile);
+    const controlService = createControlService(profile);
+    let thermostatDetails = await controlService.thermostatDetails();
+    logger.debug(JSON.stringify(thermostatDetails));
 
     let adr = new AlexaResponse({
         namespace: 'Alexa.Discovery',
@@ -138,10 +149,9 @@ const handleDiscovery = async (profile, event) => {
         proactivelyReported: false,
         retrievable: true
     });
-    let description = await controlService.summary();
-    description.capabilities = [
+    thermostatDetails.capabilities = [
         capability, thermostat, sensor
     ];
-    adr.addPayloadEndpoint(description);
-    return sendResponse(adr.get());
+    adr.addPayloadEndpoint(thermostatDetails);
+    return adr;
 };
