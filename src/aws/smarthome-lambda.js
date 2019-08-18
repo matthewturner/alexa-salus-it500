@@ -111,7 +111,6 @@ const retrieveProfile = async (event) => {
 
 const handleDiscovery = async (profile, event) => {
     const controlService = controlService(profile);
-    controlService.
 
     let adr = new AlexaResponse({
         namespace: 'Alexa.Discovery',
@@ -139,15 +138,10 @@ const handleDiscovery = async (profile, event) => {
         proactivelyReported: false,
         retrievable: true
     });
-    adr.addPayloadEndpoint({
-        friendlyName: 'Salus',
-        manufacturerName: '',
-        description: '',
-        displayCategories: [],
-        endpointId: 'sample-switch-01',
-        capabilities: [
-            capability, thermostat, sensor
-        ]
-    });
+    let description = await controlService.summary();
+    description.capabilities = [
+        capability, thermostat, sensor
+    ];
+    adr.addPayloadEndpoint(description);
     return sendResponse(adr.get());
 };
