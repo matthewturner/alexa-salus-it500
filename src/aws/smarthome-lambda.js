@@ -21,20 +21,61 @@ exports.handler = async (event, context) => {
         return sendResponse(validationFailedResponse.get());
     }
 
-    let namespace = (((event.directive || {}).header || {}).namespace).toLowerCase();
+    let namespace = ((event.directive || {}).header || {}).namespace;
 
-    if (namespace === 'alexa.authorization') {
+    if (namespace === 'Alexa.Authorization') {
         let aar = new AlexaResponse({'namespace': 'Alexa.Authorization', 'name': 'AcceptGrant.Response',});
         return sendResponse(aar.get());
     }
 
-    logger.debug('Retrieving profile data...');
-    let profile = await retrieveProfile(event);
-
-    if (namespace === 'alexa.discovery') {
-        let discoveryResponse = await handleDiscovery(profile, event);
-        return sendResponse(discoveryResponse.get());
+    if (namespace === 'Alexa.Discovery') {
+        let response = await handleDiscovery(event);
+        return sendResponse(response.get());
     }
+
+    if (namespace === 'Alexa.ThermostatController') {
+        if (event.directive.header.name === 'SetTargetTemperature') {
+            let response = await handleSetTargetTemperature(event);
+            return sendResponse(response.get());
+        }
+        if (event.directive.header.name === 'AdjustTargetTemperature') {
+            let response = await handleAdjustTargetTemperature(event);
+            return sendResponse(response.get());
+        }
+    }
+};
+
+const handleSetTargetTemperature = async (event) => {
+    let profile = await retrieveProfile(event);
+    const service = createControlService(profile);
+    try {
+        let targetTemp = event.directive.payload.targetSetpoint.value;
+        let optionalDuration = event.directive.payload.schedule.duration;
+        const output = await service.setTemperature(targetTemp, optionalDuration);
+    } catch (e) {
+        report(e);
+    }
+};
+
+const handleAdjustTargetTemperature = async (event) => {
+    let profile = await retrieveProfile(event);
+    const service = createControlService(profile);
+    try {
+        let targetTempDelta = event.directive.payload.targetSetpointDelta.value;
+        if (targetTempDelta >= 0) {
+            const output = await service.turnUp();
+        } else {
+            const output = await service.turnDown();
+        }
+    } catch (e) {
+        report(e);
+    }
+};
+
+const report = (message) => {
+    // response.say(message);
+    logger.error(message);
+    // response.send();
 };
 
 const logEntry = (event, context) => {
@@ -108,7 +149,9 @@ const createRepository = (logger) => {
 };
 
 const retrieveProfile = async (event) => {
-    const accessToken = event.directive.payload.scope.token;
+    logger.debug('Retrieving profile data...');
+    const tokenContainer = event.directive.endpoint || event.directive.payload;
+    const accessToken = tokenContainer.scope.token;
     const headers = {
         Authorization: 'Bearer ' + accessToken,
         'content-type': 'application/json'
@@ -118,9 +161,10 @@ const retrieveProfile = async (event) => {
     return res.data;
 };
 
-const handleDiscovery = async (profile, event) => {
-    const controlService = createControlService(profile);
-    let thermostatDetails = await controlService.thermostatDetails();
+const handleDiscovery = async (event) => {
+    let profile = await retrieveProfile(event);
+    const service = createControlService(profile);
+    let thermostatDetails = await service.thermostatDetails();
     logger.debug(JSON.stringify(thermostatDetails));
 
     let adr = new AlexaResponse({
