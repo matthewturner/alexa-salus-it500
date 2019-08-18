@@ -52,9 +52,33 @@ const handleSetTargetTemperature = async (event) => {
         let targetTemp = event.directive.payload.targetSetpoint.value;
         let optionalDuration = event.directive.payload.schedule.duration;
         const output = await service.setTemperature(targetTemp, optionalDuration);
+        let response = createResponse(event);
+        response.addContextProperty({
+            namespace: 'Alexa.ThermostatController', 
+            name: 'targetSetpoint', 
+            value: { 
+                value: targetTemp,
+                scale: 'CELSIUS'
+            }
+        });
+        return response;
     } catch (e) {
         report(e);
     }
+};
+
+const createResponse = (event) => {
+    let endpointId = event.directive.endpoint.endpointId;
+    let token = event.directive.endpoint.scope.token;
+    let correlationToken = event.directive.header.correlationToken;
+
+    let ar = new AlexaResponse({
+        correlationToken: correlationToken,
+        token: token,
+        endpointId: endpointId
+    });
+
+    return ar;
 };
 
 const handleAdjustTargetTemperature = async (event) => {
