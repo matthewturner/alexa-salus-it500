@@ -1,7 +1,7 @@
 const chai = require('chai');
 chai.use(require('chai-as-promised'));
 const expect = chai.expect;
-const lambda = require('../../src/aws/lambda');
+const lambda = require('../../src/aws/legacy-lambda');
 const fs = require('promise-fs');
 const util = require('util');
 
@@ -19,7 +19,7 @@ const createTarget = () => {
     };
 };
 
-describe('lambda', async () => {
+describe('Legacy Lambda', async () => {
     describe('TempIntent', async () => {
         it('says the current temperature', async () => {
             const target = createTarget();
