@@ -45,7 +45,7 @@ exports.handler = async (event, context) => {
 };
 
 const responseFor = (event) => {
-    return new AlexaResponseBuilder().from(event);
+    return new AlexaResponseBuilder(logger).from(event);
 }
 
 const handleReportState = async (event) => {
@@ -53,7 +53,10 @@ const handleReportState = async (event) => {
         let profile = await retrieveProfile(event);
         const service = createControlService(profile);
         const status = await service.status();
-        return responseFor(event).with.targetSetpoint(status.targetTemperature).as.stateReport().response();
+        return responseFor(event)
+            .with.targetSetpoint(status.targetTemperature)
+            .and.currentTemperature(status.currentTemperature)
+            .as.stateReport().response();
     } catch (e) {
         return responseFor(event).as.error(e).response();
     }
@@ -69,7 +72,7 @@ const handleSetTargetTemperature = async (event) => {
             optionalDuration = event.directive.payload.schedule.duration;
         }
         const output = await service.setTemperature(targetTemp, optionalDuration);
-        return responseFor(event).with.targetSetpoint(targetTemp).response();
+        return responseFor(event).with.targetSetpoint(output.targetTemperature).response();
     } catch (e) {
         return responseFor(event).as.error(e).response();
     }
@@ -80,11 +83,16 @@ const handleAdjustTargetTemperature = async (event) => {
         let profile = await retrieveProfile(event);
         const service = createControlService(profile);
         let targetTempDelta = event.directive.payload.targetSetpointDelta.value;
+        let output = null;
         if (targetTempDelta >= 0) {
-            const output = await service.turnUp();
+            output = await service.turnUp();
         } else {
-            const output = await service.turnDown();
+            output = await service.turnDown();
         }
+        return responseFor(event)
+            .with.targetSetpoint(output.targetTemperature)
+            .and.currentTemperature(output.currentTemperature)
+            .response();
     } catch (e) {
         return responseFor(event).as.error(e).response();
     }

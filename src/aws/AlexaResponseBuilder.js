@@ -2,17 +2,15 @@
 
 const AlexaResponse = require('./AlexaResponse');
 const SmartHomeError = require('./Errors').SmartHomeError;
-const Logger = require('../core/Logger');
 const _ = require('lodash');
-
-const logger = new Logger(process.env.LOG_LEVEL || Logger.DEBUG);
 
 /**
  * Helper class to generate an AlexaResponse for a thermostat.
  * @class
  */
 class AlexaResponseBuilder {
-    constructor() {
+    constructor(logger) {
+        this._logger = logger;
         this._options = null;
         this._event = null;
         this._thermostatDetails = null;
@@ -56,6 +54,11 @@ class AlexaResponseBuilder {
 
     targetSetpoint(targetTemperature) {
         this._targetTemperature = targetTemperature;
+        return this;
+    }
+
+    currentTemperature(currentTemperature) {
+        this._currentTemperature = currentTemperature;
         return this;
     }
 
@@ -126,8 +129,19 @@ class AlexaResponseBuilder {
             });
         }
 
-        logger.debug('Response details:');
-        logger.debug(JSON.stringify(response));
+        if (this._currentTemperature) {
+            response.addContextProperty({
+                namespace: 'Alexa.TemperatureSensor',
+                name: 'temperature',
+                value: {
+                    value: this._currentTemperature,
+                    scale: 'CELSIUS'
+                }
+            });
+        }
+
+        this._logger.debug('Response details:');
+        this._logger.debug(JSON.stringify(response));
 
         return response.get();
     }

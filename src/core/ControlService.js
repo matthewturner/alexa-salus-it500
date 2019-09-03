@@ -125,7 +125,10 @@ class ControlService {
             await this.determineIfHolding(updatedDevice, messages, 'now');
 
             this.logStatus(device);
-            return this.createResponse(messages, client);
+            return this.createResponse(messages, client, {
+                targetTemperature: updatedDevice.targetTemperature,
+                currentTemperature: updatedDevice.currentTemperature
+            });
         } finally {
             await client.logout();
         }
@@ -148,7 +151,10 @@ class ControlService {
             await this.determineIfHolding(updatedDevice, messages, 'still');
 
             this.logStatus(updatedDevice);
-            return this.createResponse(messages, client);
+            return this.createResponse(messages, client, {
+                targetTemperature: updatedDevice.targetTemperature,
+                currentTemperature: updatedDevice.currentTemperature
+            });
         } finally {
             await client.logout();
         }
@@ -236,12 +242,12 @@ class ControlService {
                     const duration = forDuration || thermostat.defaultDuration;
                     const intent = await this._holdStrategy.holdIfRequiredFor(duration);
                     messages = messages.concat(this.summarize(duration, intent, updatedDevice));
-                    return this.createResponse(messages, client);
+                    return this.createResponse(messages, client, { targetTemperature: updatedDevice.targetTemperature });
                 } else {
                     await this._holdStrategy.stopHoldIfRequired(thermostat.executionId);
                 }
             }
-            return this.createResponse(messages, client);
+            return this.createResponse(messages, client, { targetTemperature: updatedDevice.targetTemperature });
         } finally {
             await client.logout();
         }
