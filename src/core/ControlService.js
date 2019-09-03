@@ -1,5 +1,6 @@
 const moment = require('moment');
 const Duration = require('durationjs');
+const _ = require('lodash');
 
 class ControlService {
     constructor(logger, context, holdStrategy, thermostatFactory, thermostatRepository) {
@@ -75,7 +76,10 @@ class ControlService {
             await this.determineIfHolding(device, messages);
 
             this.logStatus(device);
-            return this.createResponse(messages, client);
+            return this.createResponse(messages, client, {
+                currentTemperature: device.currentTemperature,
+                targetTemperature: device.targetTemperature
+            });
         } finally {
             await client.logout();
         }
@@ -85,7 +89,7 @@ class ControlService {
         if (device.status !== 'on') { return; }
 
         if (qualifier !== '') { qualifier = ` ${qualifier}`; }
-        
+
         const status = await this._holdStrategy.status();
         this._logger.debug(status);
         if (status.status === 'running') {
@@ -185,7 +189,7 @@ class ControlService {
             const actualDuration = parseInt(new Duration(d).inHours());
 
             client.turnWaterOnFor(actualDuration);
-            
+
             return this.createResponse(
                 [`The water is now on for ${this.speakDuration(new Duration(d))}.`],
                 client);
@@ -204,7 +208,7 @@ class ControlService {
             this.verifyContactable(device);
 
             client.turnWaterOnFor('PT0M');
-            
+
             return this.createResponse(['The water is now off.'], client);
         } finally {
             await client.logout();
@@ -260,7 +264,7 @@ class ControlService {
         if (updatedDevice.status === 'on') {
             return [`The heating is now on and will turn off in ${durationText}.`];
         }
-        
+
         return [`The heating will turn off in ${durationText}.`];
     }
 
@@ -270,26 +274,26 @@ class ControlService {
         const thermostat = await this.obtainThermostat();
         let nameText = '';
         let valueText = '';
-        switch(name) {
-        case 'on':
-            thermostat.defaultOnTemp = value;
-            nameText = 'on temperature';
-            valueText = `${value} degrees`;
-            break;
-        case 'off':
-            thermostat.defaultOffTemp = value;
-            nameText = 'off temperature';
-            valueText = `${value} degrees`;
-            break;
-        case 'duration':
-            thermostat.defaultDuration = value;
-            nameText = 'duration';
-            valueText = this.speakDuration(new Duration(value));
-            break;
+        switch (name) {
+            case 'on':
+                thermostat.defaultOnTemp = value;
+                nameText = 'on temperature';
+                valueText = `${value} degrees`;
+                break;
+            case 'off':
+                thermostat.defaultOffTemp = value;
+                nameText = 'off temperature';
+                valueText = `${value} degrees`;
+                break;
+            case 'duration':
+                thermostat.defaultDuration = value;
+                nameText = 'duration';
+                valueText = this.speakDuration(new Duration(value));
+                break;
         }
 
         await this._thermostatRepository.save(thermostat);
-        
+
         const client = this._thermostatFactory.create(thermostat.type, thermostat.options);
 
         return this.createResponse([
@@ -328,7 +332,7 @@ class ControlService {
     logStatus(device) {
         this._logger.debug(`${new Date().toISOString()} ${device.currentTemperature} => ${device.targetTemperature} (${device.status})`);
     }
-    
+
     speakDuration(duration) {
         if (duration.inHours() > 1 && duration.inHours() < 2) {
             return `1 hour and ${duration.subtract(new Duration('PT1H')).ago().replace(' ago', '')}`;
@@ -342,9 +346,9 @@ class ControlService {
         else return temp.toFixed(0);
     }
 
-    createResponse(messages, client) {
+    createResponse(messages, client, options = {}) {
         const card = client.card();
-        return { messages, card };
+        return _.merge({ messages, card }, options);
     }
 }
 

@@ -1,0 +1,20 @@
+{
+    "directive": {
+        "header": {
+            "namespace": "Alexa",
+            "name": "ReportState",
+            "payloadVersion": "3",
+            "messageId": "a0c8c385-a3e6-4ccd-ac63-74ffb40012b5",
+            "correlationToken": "correlation123"
+        },
+        "endpoint": {
+            "scope": {
+                "type": "BearerToken",
+                "token": "bearer123"
+            },
+            "endpointId": "12d8b441-234d-4d1e-80ce-d90c83332f90",
+            "cookie": {}
+        },
+        "payload": {}
+    }
+}

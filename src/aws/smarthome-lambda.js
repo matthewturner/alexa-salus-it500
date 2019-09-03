@@ -5,67 +5,80 @@ const DefaultThermostatRepository = require('../core/ThermostatRepository');
 const AwsHoldStrategy = require('./HoldStrategy');
 const DefaultHoldStrategy = require('../core/HoldStrategy');
 const ControlService = require('../core/ControlService');
+const { ProfileGateway, MockProfileGateway } = require('./ProfileGateway');
 const Logger = require('../core/Logger');
-const axios = require('axios');
 const helpers = require('./helpers');
 const Factory = require('../thermostats/Factory');
 const AlexaResponseBuilder = require('./AlexaResponseBuilder');
+const AlexaResponse = require('./AlexaResponse');
 
 const logger = new Logger(process.env.LOG_LEVEL || Logger.DEBUG);
 
 exports.handler = async (event, context) => {
     logEntry(event, context);
 
-    let validationFailedResponse = validateEvent(event);
-    if (validationFailedResponse) {
-        return sendResponse(validationFailedResponse.get());
-    }
-
     let namespace = ((event.directive || {}).header || {}).namespace;
 
     if (namespace === 'Alexa.Authorization') {
-        let aar = new AlexaResponse({'namespace': 'Alexa.Authorization', 'name': 'AcceptGrant.Response',});
-        return sendResponse(aar.get());
+        return responseFor(event).and.acceptAuthorizationRequest().response();
     }
 
     if (namespace === 'Alexa.Discovery') {
         let response = await handleDiscovery(event);
-        return sendResponse(response.get());
+        return response;
+    }
+
+    if (namespace === 'Alexa') {
+        if (event.directive.header.name === 'ReportState') {
+            return await handleReportState(event);
+        }
     }
 
     if (namespace === 'Alexa.ThermostatController') {
         if (event.directive.header.name === 'SetTargetTemperature') {
-            let response = await handleSetTargetTemperature(event);
-            return sendResponse(response.get());
+            return await handleSetTargetTemperature(event);
         }
         if (event.directive.header.name === 'AdjustTargetTemperature') {
-            let response = await handleAdjustTargetTemperature(event);
-            return sendResponse(response.get());
+            return await handleAdjustTargetTemperature(event);
         }
     }
 };
 
-const response = () => {
-    return new AlexaResponseBuilder(event);
+const responseFor = (event) => {
+    return new AlexaResponseBuilder().from(event);
 }
 
-const handleSetTargetTemperature = async (event) => {
-    let profile = await retrieveProfile(event);
-    const service = createControlService(profile);
+const handleReportState = async (event) => {
     try {
-        let targetTemp = event.directive.payload.targetSetpoint.value;
-        let optionalDuration = event.directive.payload.schedule.duration;
-        const output = await service.setTemperature(targetTemp, optionalDuration);
-        return response().from(event).with.targetSetpoint(targetTemp).finish();
+        let profile = await retrieveProfile(event);
+        const service = createControlService(profile);
+        const status = await service.status();
+        return responseFor(event).with.targetSetpoint(status.targetTemperature).as.stateReport().response();
     } catch (e) {
-        report(e);
+        return responseFor(event).as.error(e).response();
+    }
+};
+
+const handleSetTargetTemperature = async (event) => {
+    try {
+        let profile = await retrieveProfile(event);
+        const service = createControlService(profile);
+        let targetTemp = event.directive.payload.targetSetpoint.value;
+        let optionalDuration = null;
+        if (event.directive.payload.schedule) {
+            optionalDuration = event.directive.payload.schedule.duration;
+        }
+        const output = await service.setTemperature(targetTemp, optionalDuration);
+        return responseFor(event).with.targetSetpoint(targetTemp).response();
+    } catch (e) {
+        return responseFor(event).as.error(e).response();
     }
 };
 
 const handleAdjustTargetTemperature = async (event) => {
-    let profile = await retrieveProfile(event);
-    const service = createControlService(profile);
     try {
+        let profile = await retrieveProfile(event);
+        const service = createControlService(profile);
         let targetTempDelta = event.directive.payload.targetSetpointDelta.value;
         if (targetTempDelta >= 0) {
             const output = await service.turnUp();
@@ -73,14 +86,20 @@ const handleAdjustTargetTemperature = async (event) => {
             const output = await service.turnDown();
         }
     } catch (e) {
-        report(e);
+        return responseFor(event).as.error(e).response();
     }
 };
 
-const report = (message) => {
-    // response.say(message);
-    logger.error(message);
-    // response.send();
+const handleDiscovery = async (event) => {
+    try {
+        let profile = await retrieveProfile(event);
+        const service = createControlService(profile);
+        let thermostatDetails = await service.thermostatDetails();
+        logger.debug(JSON.stringify(thermostatDetails));
+        return responseFor(event).with.capabilities(thermostatDetails).response();
+    } catch (e) {
+        return responseFor(event).as.error(e).response();
+    }
 };
 
 const logEntry = (event, context) => {
@@ -92,38 +111,6 @@ const logEntry = (event, context) => {
         logger.debug(JSON.stringify(context));
     }
 }
-
-const validateEvent = (event) => {
-    // Validate we have an Alexa directive
-    if (!('directive' in event)) {
-        return new AlexaResponse({
-            'name': 'ErrorResponse',
-            'payload': {
-                'type': 'INVALID_DIRECTIVE',
-                'message': 'Missing key: directive, Is request a valid Alexa directive?'
-            }
-        });
-    }
-
-    // Check the payload version
-    if (event.directive.header.payloadVersion !== '3') {
-        return new AlexaResponse({
-            'name': 'ErrorResponse',
-            'payload': {
-                'type': 'INTERNAL_ERROR',
-                'message': 'This skill only supports Smart Home API version 3'
-            }
-        });
-    }
-    return null;
-}
-
-const sendResponse = (response) => {
-    // TODO Validate the response
-    logger.debug('Response details:');
-    logger.debug(JSON.stringify(response));
-    return response;
-};
 
 const createControlService = (profile) => {
     const userId = profile.user_id;
@@ -153,54 +140,17 @@ const createRepository = (logger) => {
     return new DefaultThermostatRepository(logger);
 };
 
+const createProfileGateway = () => {
+    if (process.env.PROFILE_GATEWAY_TYPE === 'aws') {
+        return new ProfileGateway();
+    }
+    return new MockProfileGateway();
+};
+
 const retrieveProfile = async (event) => {
     logger.debug('Retrieving profile data...');
     const tokenContainer = event.directive.endpoint || event.directive.payload;
     const accessToken = tokenContainer.scope.token;
-    const headers = {
-        Authorization: 'Bearer ' + accessToken,
-        'content-type': 'application/json'
-    };
-    const res = await axios.get('https://api.amazon.com/user/profile', { headers: headers });
-    logger.debug(JSON.stringify(res.data));
-    return res.data;
-};
-
-const handleDiscovery = async (event) => {
-    let profile = await retrieveProfile(event);
-    const service = createControlService(profile);
-    let thermostatDetails = await service.thermostatDetails();
-    logger.debug(JSON.stringify(thermostatDetails));
-
-    let adr = new AlexaResponse({
-        namespace: 'Alexa.Discovery',
-        name: 'Discover.Response'
-    });
-    let capability = adr.createPayloadEndpointCapability();
-    let thermostat = adr.createPayloadEndpointCapability({
-        interface: 'Alexa.ThermostatController',
-        supported: [
-            {name: 'targetSetpoint'},
-            {name: 'thermostatMode'}
-        ],
-        proactivelyReported: false,
-        retrievable: true,
-        configuration: {
-            supportsScheduling: false,
-            supportedModes: ['HEAT']
-        }
-    });
-    let sensor = adr.createPayloadEndpointCapability({
-        interface: 'Alexa.TemperatureSensor',
-        supported: [
-            {name: 'temperature'}
-        ],
-        proactivelyReported: false,
-        retrievable: true
-    });
-    thermostatDetails.capabilities = [
-        capability, thermostat, sensor
-    ];
-    adr.addPayloadEndpoint(thermostatDetails);
-    return adr;
+    let profileGateway = createProfileGateway();
+    return await profileGateway.get(accessToken);
 };

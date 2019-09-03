@@ -13,7 +13,7 @@
 
 'use strict';
 
-let uuid = require('uuid');
+const uuid = require('uuid');
 
 /**
  * Helper class to generate an AlexaResponse.
@@ -82,7 +82,7 @@ class AlexaResponse {
     addContextProperty(opts) {
 
         if (this.context === undefined)
-            this.context = {properties: []};
+            this.context = { properties: [] };
 
         this.context.properties.push(this.createContextProperty(opts));
     }
@@ -107,7 +107,7 @@ class AlexaResponse {
         return {
             'namespace': this.checkValue(opts.namespace, 'Alexa.EndpointHealth'),
             'name': this.checkValue(opts.name, 'connectivity'),
-            'value': this.checkValue(opts.value, {'value': 'OK'}),
+            'value': this.checkValue(opts.value, { 'value': 'OK' }),
             'timeOfSample': new Date().toISOString(),
             'uncertaintyInMilliseconds': this.checkValue(opts.uncertaintyInMilliseconds, 0)
         };
@@ -123,15 +123,15 @@ class AlexaResponse {
 
         // Return the proper structure expected for the endpoint
         let endpoint =
-            {
-                'capabilities': this.checkValue(opts.capabilities, []),
-                'description': this.checkValue(opts.description, 'Sample Endpoint Description'),
-                'displayCategories': this.checkValue(opts.displayCategories, ['OTHER']),
-                'endpointId': this.checkValue(opts.endpointId, 'endpoint-001'),
-                // "endpointId": this.checkValue(opts.endpointId, 'endpoint_' + (Math.floor(Math.random() * 90000) + 10000)),
-                'friendlyName': this.checkValue(opts.friendlyName, 'Sample Endpoint'),
-                'manufacturerName': this.checkValue(opts.manufacturerName, 'Sample Manufacturer')
-            };
+        {
+            'capabilities': this.checkValue(opts.capabilities, []),
+            'description': this.checkValue(opts.description, 'Sample Endpoint Description'),
+            'displayCategories': this.checkValue(opts.displayCategories, ['OTHER']),
+            'endpointId': this.checkValue(opts.endpointId, 'endpoint-001'),
+            // "endpointId": this.checkValue(opts.endpointId, 'endpoint_' + (Math.floor(Math.random() * 90000) + 10000)),
+            'friendlyName': this.checkValue(opts.friendlyName, 'Sample Endpoint'),
+            'manufacturerName': this.checkValue(opts.manufacturerName, 'Sample Manufacturer')
+        };
 
         if (opts.hasOwnProperty('cookie'))
             endpoint['cookie'] = this.checkValue('cookie', {});
