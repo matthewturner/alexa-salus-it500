@@ -10,7 +10,6 @@ const Logger = require('../core/Logger');
 const helpers = require('./helpers');
 const Factory = require('../thermostats/Factory');
 const AlexaResponseBuilder = require('./AlexaResponseBuilder');
-const AlexaResponse = require('./AlexaResponse');
 
 const logger = new Logger(process.env.LOG_LEVEL || Logger.DEBUG);
 
