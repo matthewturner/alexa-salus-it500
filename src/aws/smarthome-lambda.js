@@ -71,7 +71,10 @@ const handleSetTargetTemperature = async (event) => {
             optionalDuration = event.directive.payload.schedule.duration;
         }
         const output = await service.setTemperature(targetTemp, optionalDuration);
-        return responseFor(event).with.targetSetpoint(output.targetTemperature).response();
+        return responseFor(event)
+            .with.targetSetpoint(output.targetTemperature)
+            .and.currentTemperature(output.currentTemperature)
+            .response();
     } catch (e) {
         return responseFor(event).as.error(e).response();
     }

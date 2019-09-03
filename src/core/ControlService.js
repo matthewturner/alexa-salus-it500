@@ -242,12 +242,18 @@ class ControlService {
                     const duration = forDuration || thermostat.defaultDuration;
                     const intent = await this._holdStrategy.holdIfRequiredFor(duration);
                     messages = messages.concat(this.summarize(duration, intent, updatedDevice));
-                    return this.createResponse(messages, client, { targetTemperature: updatedDevice.targetTemperature });
+                    return this.createResponse(messages, client, {
+                        targetTemperature: updatedDevice.targetTemperature,
+                        currentTemperature: updatedDevice.currentTemperature
+                    });
                 } else {
                     await this._holdStrategy.stopHoldIfRequired(thermostat.executionId);
                 }
             }
-            return this.createResponse(messages, client, { targetTemperature: updatedDevice.targetTemperature });
+            return this.createResponse(messages, client, {
+                targetTemperature: updatedDevice.targetTemperature,
+                currentTemperature: updatedDevice.currentTemperature
+            });
         } finally {
             await client.logout();
         }

@@ -52,6 +52,7 @@ describe('SmartHome Lambda', async () => {
 
             actual.event.header.messageId = 'messageId123';
             actual.context.properties[0].timeOfSample = '2019-09-03T10:45:31.258Z';
+            actual.context.properties[1].timeOfSample = '2019-09-03T10:45:31.258Z';
 
             const expected = JSON.parse(await fs.readFile('./test/fixtures/smarthome/SetTargetTempResponse.json'));
 
@@ -69,6 +70,7 @@ describe('SmartHome Lambda', async () => {
 
             actual.event.header.messageId = 'messageId123';
             actual.context.properties[0].timeOfSample = '2019-09-03T10:45:31.258Z';
+            actual.context.properties[1].timeOfSample = '2019-09-03T10:45:31.258Z';
 
             const expected = JSON.parse(await fs.readFile('./test/fixtures/smarthome/SetTargetTempWithScheduleResponse.json'));
 
