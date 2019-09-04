@@ -1,0 +1,19 @@
+{
+    "event": {
+        "header": {
+            "namespace": "Alexa",
+            "name": "StateReport",
+            "messageId": "messageId123",
+            "correlationToken": "correlation123",
+            "payloadVersion": "3"
+        },
+        "endpoint": {
+            "scope": {
+                "type": "BearerToken",
+                "token": "bearer123"
+            },
+            "endpointId": "12d8b441-234d-4d1e-80ce-d90c83332f90"
+        },
+        "payload": {}
+    }
+}

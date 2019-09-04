@@ -45,6 +45,18 @@ class Mock {
             }
         };
     }
+
+    get friendlyName() {
+        return 'Mock Thermostat';
+    }
+
+    get manufacturerName() {
+        return 'Acme Ltd';
+    }
+
+    get description() {
+        return 'Mock thermostat used for testing';
+    }
 }
 
 module.exports = Mock;

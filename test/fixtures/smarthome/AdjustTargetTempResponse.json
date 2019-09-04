@@ -1,0 +1,43 @@
+{
+    "event": {
+        "header": {
+            "namespace": "Alexa",
+            "name": "Response",
+            "messageId": "messageId123",
+            "correlationToken": "correlation123",
+            "payloadVersion": "3"
+        },
+        "endpoint": {
+            "scope": {
+                "type": "BearerToken",
+                "token": "bearer123"
+            },
+            "endpointId": "12d8b441-234d-4d1e-80ce-d90c83332f90"
+        },
+        "payload": {}
+    },
+    "context": {
+        "properties": [
+            {
+                "namespace": "Alexa.ThermostatController",
+                "name": "targetSetpoint",
+                "value": {
+                    "value": 19,
+                    "scale": "CELSIUS"
+                },
+                "timeOfSample": "2019-09-03T10:45:31.258Z",
+                "uncertaintyInMilliseconds": 0
+            },
+            {
+                "namespace": "Alexa.TemperatureSensor",
+                "name": "temperature",
+                "value": {
+                    "value": 19,
+                    "scale": "CELSIUS"
+                },
+                "timeOfSample": "2019-09-03T10:45:31.258Z",
+                "uncertaintyInMilliseconds": 0
+            }
+        ]
+    }
+}

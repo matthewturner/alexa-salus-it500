@@ -55,7 +55,7 @@ class Salus {
             this._devId = $('input[name="devId"]').val();
             this._token = $('#token').val();
             this._logger.debug(`Logged on (${this._devId}, ${this._token})`);
-        } catch(error) {
+        } catch (error) {
             this._logger.debug('Error occurred:');
             this._logger.debug(error);
         }
@@ -124,6 +124,18 @@ class Salus {
                 largeImageUrl: 'https://salus-it500.com/public/assets/logo.png',
             }
         };
+    }
+
+    get friendlyName() {
+        return 'thermostat';
+    }
+
+    get manufacturerName() {
+        return 'Salus';
+    }
+
+    get description() {
+        return 'Controls the Salus IT-500';
     }
 }
 

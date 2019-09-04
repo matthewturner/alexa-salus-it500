@@ -1,0 +1,67 @@
+{
+    "event": {
+        "header": {
+            "namespace": "Alexa.Discovery",
+            "name": "Discover.Response",
+            "messageId": "messageId123",
+            "payloadVersion": "3"
+        },
+        "payload": {
+            "endpoints": [
+                {
+                    "capabilities": [
+                        {
+                            "type": "AlexaInterface",
+                            "interface": "Alexa",
+                            "version": "3"
+                        },
+                        {
+                            "type": "AlexaInterface",
+                            "interface": "Alexa.ThermostatController",
+                            "version": "3",
+                            "properties": {
+                                "supported": [
+                                    {
+                                        "name": "targetSetpoint"
+                                    },
+                                    {
+                                        "name": "thermostatMode"
+                                    }
+                                ],
+                                "proactivelyReported": false,
+                                "retrievable": true
+                            },
+                            "configuration": {
+                                "supportsScheduling": true,
+                                "supportedModes": [
+                                    "HEAT"
+                                ]
+                            }
+                        },
+                        {
+                            "type": "AlexaInterface",
+                            "interface": "Alexa.TemperatureSensor",
+                            "version": "3",
+                            "properties": {
+                                "supported": [
+                                    {
+                                        "name": "temperature"
+                                    }
+                                ],
+                                "proactivelyReported": false,
+                                "retrievable": true
+                            }
+                        }
+                    ],
+                    "description": "Mock thermostat used for testing",
+                    "displayCategories": [
+                        "THERMOSTAT"
+                    ],
+                    "endpointId": "endpoint-001",
+                    "friendlyName": "Mock Thermostat",
+                    "manufacturerName": "Acme Ltd"
+                }
+            ]
+        }
+    }
+}

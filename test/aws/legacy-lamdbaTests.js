@@ -1,7 +1,7 @@
 const chai = require('chai');
 chai.use(require('chai-as-promised'));
 const expect = chai.expect;
-const lambda = require('../../src/aws/lambda');
+const lambda = require('../../src/aws/legacy-lambda');
 const fs = require('promise-fs');
 const util = require('util');
 
@@ -19,12 +19,12 @@ const createTarget = () => {
     };
 };
 
-describe('lambda', async () => {
+describe('Legacy Lambda', async () => {
     describe('TempIntent', async () => {
         it('says the current temperature', async () => {
             const target = createTarget();
-        
-            const request = JSON.parse(await fs.readFile('./test/fixtures/TempIntent.json'));
+
+            const request = JSON.parse(await fs.readFile('./test/fixtures/legacy/TempIntent.json'));
             const context = {};
 
             const handler = util.promisify(target.object().handler);
@@ -35,8 +35,8 @@ describe('lambda', async () => {
 
         it('shows the current temperature', async () => {
             const target = createTarget();
-        
-            const request = JSON.parse(await fs.readFile('./test/fixtures/TempIntent.json'));
+
+            const request = JSON.parse(await fs.readFile('./test/fixtures/legacy/TempIntent.json'));
             const context = {};
 
             const handler = util.promisify(target.object().handler);
@@ -48,8 +48,8 @@ describe('lambda', async () => {
         it('says the error', async () => {
             const target = createTarget();
             process.env.THERMOSTAT_TYPE = 'unknown';
-        
-            const request = JSON.parse(await fs.readFile('./test/fixtures/TempIntent.json'));
+
+            const request = JSON.parse(await fs.readFile('./test/fixtures/legacy/TempIntent.json'));
             const context = {};
 
             const handler = util.promisify(target.object().handler);
@@ -62,8 +62,8 @@ describe('lambda', async () => {
     describe('DefaultsIntent', async () => {
         it('says the current temperature', async () => {
             const target = createTarget();
-        
-            const request = JSON.parse(await fs.readFile('./test/fixtures/DefaultsIntent.json'));
+
+            const request = JSON.parse(await fs.readFile('./test/fixtures/legacy/DefaultsIntent.json'));
             const context = {};
 
             const handler = util.promisify(target.object().handler);
@@ -74,8 +74,8 @@ describe('lambda', async () => {
 
         it('shows the current temperature', async () => {
             const target = createTarget();
-        
-            const request = JSON.parse(await fs.readFile('./test/fixtures/DefaultsIntent.json'));
+
+            const request = JSON.parse(await fs.readFile('./test/fixtures/legacy/DefaultsIntent.json'));
             const context = {};
 
             const handler = util.promisify(target.object().handler);
@@ -87,8 +87,8 @@ describe('lambda', async () => {
         it('says the error', async () => {
             const target = createTarget();
             process.env.THERMOSTAT_TYPE = 'unknown';
-        
-            const request = JSON.parse(await fs.readFile('./test/fixtures/DefaultsIntent.json'));
+
+            const request = JSON.parse(await fs.readFile('./test/fixtures/legacy/DefaultsIntent.json'));
             const context = {};
 
             const handler = util.promisify(target.object().handler);
@@ -102,8 +102,8 @@ describe('lambda', async () => {
         it('says the current temperature', async () => {
             const target = createTarget();
             process.env.MOCK_TARGET_TEMPERATURE = 18;
-        
-            const request = JSON.parse(await fs.readFile('./test/fixtures/TurnUpIntent.json'));
+
+            const request = JSON.parse(await fs.readFile('./test/fixtures/legacy/TurnUpIntent.json'));
             const context = {};
 
             const handler = util.promisify(target.object().handler);
@@ -117,8 +117,8 @@ describe('lambda', async () => {
         it('shows the current temperature', async () => {
             const target = createTarget();
             process.env.MOCK_TARGET_TEMPERATURE = 18;
-        
-            const request = JSON.parse(await fs.readFile('./test/fixtures/TurnUpIntent.json'));
+
+            const request = JSON.parse(await fs.readFile('./test/fixtures/legacy/TurnUpIntent.json'));
             const context = {};
 
             const handler = util.promisify(target.object().handler);
@@ -131,8 +131,8 @@ describe('lambda', async () => {
         it('says the error', async () => {
             const target = createTarget();
             process.env.THERMOSTAT_TYPE = 'unknown';
-        
-            const request = JSON.parse(await fs.readFile('./test/fixtures/TurnUpIntent.json'));
+
+            const request = JSON.parse(await fs.readFile('./test/fixtures/legacy/TurnUpIntent.json'));
             const context = {};
 
             const handler = util.promisify(target.object().handler);
@@ -146,8 +146,8 @@ describe('lambda', async () => {
         it('says the current temperature', async () => {
             const target = createTarget();
             process.env.MOCK_TARGET_TEMPERATURE = 18;
-        
-            const request = JSON.parse(await fs.readFile('./test/fixtures/TurnDownIntent.json'));
+
+            const request = JSON.parse(await fs.readFile('./test/fixtures/legacy/TurnDownIntent.json'));
             const context = {};
 
             const handler = util.promisify(target.object().handler);
@@ -161,8 +161,8 @@ describe('lambda', async () => {
         it('shows the current temperature', async () => {
             const target = createTarget();
             process.env.MOCK_TARGET_TEMPERATURE = 18;
-        
-            const request = JSON.parse(await fs.readFile('./test/fixtures/TurnDownIntent.json'));
+
+            const request = JSON.parse(await fs.readFile('./test/fixtures/legacy/TurnDownIntent.json'));
             const context = {};
 
             const handler = util.promisify(target.object().handler);
@@ -175,8 +175,8 @@ describe('lambda', async () => {
         it('says the error', async () => {
             const target = createTarget();
             process.env.THERMOSTAT_TYPE = 'unknown';
-        
-            const request = JSON.parse(await fs.readFile('./test/fixtures/TurnDownIntent.json'));
+
+            const request = JSON.parse(await fs.readFile('./test/fixtures/legacy/TurnDownIntent.json'));
             const context = {};
 
             const handler = util.promisify(target.object().handler);
@@ -189,8 +189,8 @@ describe('lambda', async () => {
     describe('TurnIntent', async () => {
         it('says the current temperature', async () => {
             const target = createTarget();
-        
-            const request = JSON.parse(await fs.readFile('./test/fixtures/TurnIntent.json'));
+
+            const request = JSON.parse(await fs.readFile('./test/fixtures/legacy/TurnIntent.json'));
             const context = {};
 
             const handler = util.promisify(target.object().handler);
@@ -202,8 +202,8 @@ describe('lambda', async () => {
 
         it('shows the current temperature', async () => {
             const target = createTarget();
-        
-            const request = JSON.parse(await fs.readFile('./test/fixtures/TurnIntent.json'));
+
+            const request = JSON.parse(await fs.readFile('./test/fixtures/legacy/TurnIntent.json'));
             const context = {};
 
             const handler = util.promisify(target.object().handler);
@@ -215,8 +215,8 @@ describe('lambda', async () => {
         it('says the error', async () => {
             const target = createTarget();
             process.env.THERMOSTAT_TYPE = 'unknown';
-        
-            const request = JSON.parse(await fs.readFile('./test/fixtures/TurnIntent.json'));
+
+            const request = JSON.parse(await fs.readFile('./test/fixtures/legacy/TurnIntent.json'));
             const context = {};
 
             const handler = util.promisify(target.object().handler);
@@ -229,8 +229,8 @@ describe('lambda', async () => {
     describe('SetTempIntent', async () => {
         it('says the current temperature', async () => {
             const target = createTarget();
-        
-            const request = JSON.parse(await fs.readFile('./test/fixtures/SetTempIntent.json'));
+
+            const request = JSON.parse(await fs.readFile('./test/fixtures/legacy/SetTempIntent.json'));
             const context = {};
 
             const handler = util.promisify(target.object().handler);
@@ -242,8 +242,8 @@ describe('lambda', async () => {
 
         it('shows the current temperature', async () => {
             const target = createTarget();
-        
-            const request = JSON.parse(await fs.readFile('./test/fixtures/SetTempIntent.json'));
+
+            const request = JSON.parse(await fs.readFile('./test/fixtures/legacy/SetTempIntent.json'));
             const context = {};
 
             const handler = util.promisify(target.object().handler);
@@ -255,8 +255,8 @@ describe('lambda', async () => {
         it('says the error', async () => {
             const target = createTarget();
             process.env.THERMOSTAT_TYPE = 'unknown';
-        
-            const request = JSON.parse(await fs.readFile('./test/fixtures/SetTempIntent.json'));
+
+            const request = JSON.parse(await fs.readFile('./test/fixtures/legacy/SetTempIntent.json'));
             const context = {};
 
             const handler = util.promisify(target.object().handler);
@@ -269,8 +269,8 @@ describe('lambda', async () => {
     describe('SetDefaultTempIntent', async () => {
         it('says the current default temperature', async () => {
             const target = createTarget();
-        
-            const request = JSON.parse(await fs.readFile('./test/fixtures/SetDefaultTempIntent.json'));
+
+            const request = JSON.parse(await fs.readFile('./test/fixtures/legacy/SetDefaultTempIntent.json'));
             const context = {};
 
             const handler = util.promisify(target.object().handler);
@@ -282,8 +282,8 @@ describe('lambda', async () => {
 
         it('shows the current default temperature', async () => {
             const target = createTarget();
-        
-            const request = JSON.parse(await fs.readFile('./test/fixtures/SetDefaultTempIntent.json'));
+
+            const request = JSON.parse(await fs.readFile('./test/fixtures/legacy/SetDefaultTempIntent.json'));
             const context = {};
 
             const handler = util.promisify(target.object().handler);
@@ -295,8 +295,8 @@ describe('lambda', async () => {
         it('says the error', async () => {
             const target = createTarget();
             process.env.THERMOSTAT_TYPE = 'unknown';
-        
-            const request = JSON.parse(await fs.readFile('./test/fixtures/SetDefaultTempIntent.json'));
+
+            const request = JSON.parse(await fs.readFile('./test/fixtures/legacy/SetDefaultTempIntent.json'));
             const context = {};
 
             const handler = util.promisify(target.object().handler);
@@ -309,8 +309,8 @@ describe('lambda', async () => {
     describe('SetDefaultDurationIntent', async () => {
         it('says the current default duration', async () => {
             const target = createTarget();
-        
-            const request = JSON.parse(await fs.readFile('./test/fixtures/SetDefaultDurationIntent.json'));
+
+            const request = JSON.parse(await fs.readFile('./test/fixtures/legacy/SetDefaultDurationIntent.json'));
             const context = {};
 
             const handler = util.promisify(target.object().handler);
@@ -322,8 +322,8 @@ describe('lambda', async () => {
 
         it('shows the current default duration', async () => {
             const target = createTarget();
-        
-            const request = JSON.parse(await fs.readFile('./test/fixtures/SetDefaultDurationIntent.json'));
+
+            const request = JSON.parse(await fs.readFile('./test/fixtures/legacy/SetDefaultDurationIntent.json'));
             const context = {};
 
             const handler = util.promisify(target.object().handler);
@@ -335,8 +335,8 @@ describe('lambda', async () => {
         it('says the error', async () => {
             const target = createTarget();
             process.env.THERMOSTAT_TYPE = 'unknown';
-        
-            const request = JSON.parse(await fs.readFile('./test/fixtures/SetDefaultDurationIntent.json'));
+
+            const request = JSON.parse(await fs.readFile('./test/fixtures/legacy/SetDefaultDurationIntent.json'));
             const context = {};
 
             const handler = util.promisify(target.object().handler);
@@ -349,8 +349,8 @@ describe('lambda', async () => {
     describe('StopIntent', async () => {
         it('says the current default duration', async () => {
             const target = createTarget();
-        
-            const request = JSON.parse(await fs.readFile('./test/fixtures/StopIntent.json'));
+
+            const request = JSON.parse(await fs.readFile('./test/fixtures/legacy/StopIntent.json'));
             const context = {};
 
             const handler = util.promisify(target.object().handler);
@@ -362,8 +362,8 @@ describe('lambda', async () => {
 
         it('shows the current default duration', async () => {
             const target = createTarget();
-        
-            const request = JSON.parse(await fs.readFile('./test/fixtures/StopIntent.json'));
+
+            const request = JSON.parse(await fs.readFile('./test/fixtures/legacy/StopIntent.json'));
             const context = {};
 
             const handler = util.promisify(target.object().handler);
@@ -375,8 +375,8 @@ describe('lambda', async () => {
         it('says the error', async () => {
             const target = createTarget();
             process.env.THERMOSTAT_TYPE = 'unknown';
-        
-            const request = JSON.parse(await fs.readFile('./test/fixtures/StopIntent.json'));
+
+            const request = JSON.parse(await fs.readFile('./test/fixtures/legacy/StopIntent.json'));
             const context = {};
 
             const handler = util.promisify(target.object().handler);
@@ -389,8 +389,8 @@ describe('lambda', async () => {
     describe('HelpIntent', async () => {
         it('says the help text', async () => {
             const target = createTarget();
-        
-            const request = JSON.parse(await fs.readFile('./test/fixtures/HelpIntent.json'));
+
+            const request = JSON.parse(await fs.readFile('./test/fixtures/legacy/HelpIntent.json'));
             const context = {};
 
             const handler = util.promisify(target.object().handler);
@@ -402,11 +402,11 @@ describe('lambda', async () => {
     });
 
     describe('TurnWaterIntent', async () => {
-        context('when turning on', async() => {
+        context('when turning on', async () => {
             it('says the duration', async () => {
                 const target = createTarget();
-            
-                const request = JSON.parse(await fs.readFile('./test/fixtures/TurnWaterOnIntent.json'));
+
+                const request = JSON.parse(await fs.readFile('./test/fixtures/legacy/TurnWaterOnIntent.json'));
                 const context = {};
 
                 const handler = util.promisify(target.object().handler);
@@ -418,8 +418,8 @@ describe('lambda', async () => {
 
             it('shows the duration', async () => {
                 const target = createTarget();
-            
-                const request = JSON.parse(await fs.readFile('./test/fixtures/TurnWaterOnIntent.json'));
+
+                const request = JSON.parse(await fs.readFile('./test/fixtures/legacy/TurnWaterOnIntent.json'));
                 const context = {};
 
                 const handler = util.promisify(target.object().handler);
@@ -430,8 +430,8 @@ describe('lambda', async () => {
 
             it('defaults to on', async () => {
                 const target = createTarget();
-            
-                const request = JSON.parse(await fs.readFile('./test/fixtures/TurnWaterOnNotSpecifiedIntent.json'));
+
+                const request = JSON.parse(await fs.readFile('./test/fixtures/legacy/TurnWaterOnNotSpecifiedIntent.json'));
                 const context = {};
 
                 const handler = util.promisify(target.object().handler);
@@ -443,8 +443,8 @@ describe('lambda', async () => {
             it('says the error', async () => {
                 const target = createTarget();
                 process.env.THERMOSTAT_TYPE = 'unknown';
-            
-                const request = JSON.parse(await fs.readFile('./test/fixtures/TurnWaterOnIntent.json'));
+
+                const request = JSON.parse(await fs.readFile('./test/fixtures/legacy/TurnWaterOnIntent.json'));
                 const context = {};
 
                 const handler = util.promisify(target.object().handler);
@@ -454,11 +454,11 @@ describe('lambda', async () => {
             });
         });
 
-        context('when turning off', async() => {
+        context('when turning off', async () => {
             it('says the duration', async () => {
                 const target = createTarget();
-            
-                const request = JSON.parse(await fs.readFile('./test/fixtures/TurnWaterOffIntent.json'));
+
+                const request = JSON.parse(await fs.readFile('./test/fixtures/legacy/TurnWaterOffIntent.json'));
                 const context = {};
 
                 const handler = util.promisify(target.object().handler);
@@ -470,8 +470,8 @@ describe('lambda', async () => {
 
             it('shows the duration', async () => {
                 const target = createTarget();
-            
-                const request = JSON.parse(await fs.readFile('./test/fixtures/TurnWaterOffIntent.json'));
+
+                const request = JSON.parse(await fs.readFile('./test/fixtures/legacy/TurnWaterOffIntent.json'));
                 const context = {};
 
                 const handler = util.promisify(target.object().handler);
@@ -483,8 +483,8 @@ describe('lambda', async () => {
             it('says the error', async () => {
                 const target = createTarget();
                 process.env.THERMOSTAT_TYPE = 'unknown';
-            
-                const request = JSON.parse(await fs.readFile('./test/fixtures/TurnWaterOffIntent.json'));
+
+                const request = JSON.parse(await fs.readFile('./test/fixtures/legacy/TurnWaterOffIntent.json'));
                 const context = {};
 
                 const handler = util.promisify(target.object().handler);

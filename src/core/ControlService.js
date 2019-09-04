@@ -1,5 +1,6 @@
 const moment = require('moment');
 const Duration = require('durationjs');
+const _ = require('lodash');
 
 class ControlService {
     constructor(logger, context, holdStrategy, thermostatFactory, thermostatRepository) {
@@ -29,7 +30,10 @@ class ControlService {
         if (thermostat) {
             thermostat.userId = this._context.userId;
         } else {
-            thermostat = { userId: this._context.userId, executionId: null };
+            thermostat = {
+                userId: this._context.userId,
+                executionId: null
+            };
         }
         await this._thermostatRepository.add(thermostat);
         return thermostat;
@@ -75,17 +79,24 @@ class ControlService {
             await this.determineIfHolding(device, messages);
 
             this.logStatus(device);
-            return this.createResponse(messages, client);
+            return this.createResponse(messages, client, {
+                currentTemperature: device.currentTemperature,
+                targetTemperature: device.targetTemperature
+            });
         } finally {
             await client.logout();
         }
     }
 
     async determineIfHolding(device, messages, qualifier = '') {
-        if (device.status !== 'on') { return; }
+        if (device.status !== 'on') {
+            return;
+        }
 
-        if (qualifier !== '') { qualifier = ` ${qualifier}`; }
-        
+        if (qualifier !== '') {
+            qualifier = ` ${qualifier}`;
+        }
+
         const status = await this._holdStrategy.status();
         this._logger.debug(status);
         if (status.status === 'running') {
@@ -93,8 +104,7 @@ class ControlService {
             const durationSinceStart = new Duration(`PT${timeSinceStart}S`);
             const timeToGo = status.duration.subtract(durationSinceStart);
             messages.push(`The heating is${qualifier} on and will turn off in ${this.speakDuration(timeToGo)}.`);
-        }
-        else {
+        } else {
             messages.push(`The heating is${qualifier} on.`);
         }
     }
@@ -121,7 +131,10 @@ class ControlService {
             await this.determineIfHolding(updatedDevice, messages, 'now');
 
             this.logStatus(device);
-            return this.createResponse(messages, client);
+            return this.createResponse(messages, client, {
+                targetTemperature: updatedDevice.targetTemperature,
+                currentTemperature: updatedDevice.currentTemperature
+            });
         } finally {
             await client.logout();
         }
@@ -144,7 +157,10 @@ class ControlService {
             await this.determineIfHolding(updatedDevice, messages, 'still');
 
             this.logStatus(updatedDevice);
-            return this.createResponse(messages, client);
+            return this.createResponse(messages, client, {
+                targetTemperature: updatedDevice.targetTemperature,
+                currentTemperature: updatedDevice.currentTemperature
+            });
         } finally {
             await client.logout();
         }
@@ -185,7 +201,7 @@ class ControlService {
             const actualDuration = parseInt(new Duration(d).inHours());
 
             client.turnWaterOnFor(actualDuration);
-            
+
             return this.createResponse(
                 [`The water is now on for ${this.speakDuration(new Duration(d))}.`],
                 client);
@@ -204,7 +220,7 @@ class ControlService {
             this.verifyContactable(device);
 
             client.turnWaterOnFor('PT0M');
-            
+
             return this.createResponse(['The water is now off.'], client);
         } finally {
             await client.logout();
@@ -232,12 +248,18 @@ class ControlService {
                     const duration = forDuration || thermostat.defaultDuration;
                     const intent = await this._holdStrategy.holdIfRequiredFor(duration);
                     messages = messages.concat(this.summarize(duration, intent, updatedDevice));
-                    return this.createResponse(messages, client);
+                    return this.createResponse(messages, client, {
+                        targetTemperature: updatedDevice.targetTemperature,
+                        currentTemperature: updatedDevice.currentTemperature
+                    });
                 } else {
                     await this._holdStrategy.stopHoldIfRequired(thermostat.executionId);
                 }
             }
-            return this.createResponse(messages, client);
+            return this.createResponse(messages, client, {
+                targetTemperature: updatedDevice.targetTemperature,
+                currentTemperature: updatedDevice.currentTemperature
+            });
         } finally {
             await client.logout();
         }
@@ -260,7 +282,7 @@ class ControlService {
         if (updatedDevice.status === 'on') {
             return [`The heating is now on and will turn off in ${durationText}.`];
         }
-        
+
         return [`The heating will turn off in ${durationText}.`];
     }
 
@@ -270,26 +292,26 @@ class ControlService {
         const thermostat = await this.obtainThermostat();
         let nameText = '';
         let valueText = '';
-        switch(name) {
-        case 'on':
-            thermostat.defaultOnTemp = value;
-            nameText = 'on temperature';
-            valueText = `${value} degrees`;
-            break;
-        case 'off':
-            thermostat.defaultOffTemp = value;
-            nameText = 'off temperature';
-            valueText = `${value} degrees`;
-            break;
-        case 'duration':
-            thermostat.defaultDuration = value;
-            nameText = 'duration';
-            valueText = this.speakDuration(new Duration(value));
-            break;
+        switch (name) {
+            case 'on':
+                thermostat.defaultOnTemp = value;
+                nameText = 'on temperature';
+                valueText = `${value} degrees`;
+                break;
+            case 'off':
+                thermostat.defaultOffTemp = value;
+                nameText = 'off temperature';
+                valueText = `${value} degrees`;
+                break;
+            case 'duration':
+                thermostat.defaultDuration = value;
+                nameText = 'duration';
+                valueText = this.speakDuration(new Duration(value));
+                break;
         }
 
         await this._thermostatRepository.save(thermostat);
-        
+
         const client = this._thermostatFactory.create(thermostat.type, thermostat.options);
 
         return this.createResponse([
@@ -310,10 +332,25 @@ class ControlService {
         ], client);
     }
 
+    async thermostatDetails() {
+        this._logger.debug('Retrieving client details...');
+
+        const thermostat = await this.obtainThermostat();
+        const client = this._thermostatFactory.create(thermostat.type, thermostat.options);
+
+        return {
+            friendlyName: client.friendlyName,
+            manufacturerName: client.manufacturerName,
+            description: client.description,
+            displayCategories: ['THERMOSTAT'],
+            endpointId: thermostat.guid
+        };
+    }
+
     logStatus(device) {
         this._logger.debug(`${new Date().toISOString()} ${device.currentTemperature} => ${device.targetTemperature} (${device.status})`);
     }
-    
+
     speakDuration(duration) {
         if (duration.inHours() > 1 && duration.inHours() < 2) {
             return `1 hour and ${duration.subtract(new Duration('PT1H')).ago().replace(' ago', '')}`;
@@ -327,9 +364,12 @@ class ControlService {
         else return temp.toFixed(0);
     }
 
-    createResponse(messages, client) {
+    createResponse(messages, client, options = {}) {
         const card = client.card();
-        return { messages, card };
+        return _.merge({
+            messages,
+            card
+        }, options);
     }
 }
 
