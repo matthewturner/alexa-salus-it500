@@ -55,7 +55,7 @@ class Salus {
             this._devId = $('input[name="devId"]').val();
             this._token = $('#token').val();
             this._logger.debug(`Logged on (${this._devId}, ${this._token})`);
-        } catch(error) {
+        } catch (error) {
             this._logger.debug('Error occurred:');
             this._logger.debug(error);
         }
@@ -127,11 +127,11 @@ class Salus {
     }
 
     get friendlyName() {
-        return 'thermostat'
+        return 'thermostat';
     }
 
     get manufacturerName() {
-        return 'Salus'
+        return 'Salus';
     }
 
     get description() {

@@ -47,11 +47,11 @@ class Mock {
     }
 
     get friendlyName() {
-        return 'Mock Thermostat'
+        return 'Mock Thermostat';
     }
 
     get manufacturerName() {
-        return 'Acme Ltd'
+        return 'Acme Ltd';
     }
 
     get description() {

@@ -30,7 +30,10 @@ class ControlService {
         if (thermostat) {
             thermostat.userId = this._context.userId;
         } else {
-            thermostat = { userId: this._context.userId, executionId: null };
+            thermostat = {
+                userId: this._context.userId,
+                executionId: null
+            };
         }
         await this._thermostatRepository.add(thermostat);
         return thermostat;
@@ -86,9 +89,13 @@ class ControlService {
     }
 
     async determineIfHolding(device, messages, qualifier = '') {
-        if (device.status !== 'on') { return; }
+        if (device.status !== 'on') {
+            return;
+        }
 
-        if (qualifier !== '') { qualifier = ` ${qualifier}`; }
+        if (qualifier !== '') {
+            qualifier = ` ${qualifier}`;
+        }
 
         const status = await this._holdStrategy.status();
         this._logger.debug(status);
@@ -97,8 +104,7 @@ class ControlService {
             const durationSinceStart = new Duration(`PT${timeSinceStart}S`);
             const timeToGo = status.duration.subtract(durationSinceStart);
             messages.push(`The heating is${qualifier} on and will turn off in ${this.speakDuration(timeToGo)}.`);
-        }
-        else {
+        } else {
             messages.push(`The heating is${qualifier} on.`);
         }
     }
@@ -360,7 +366,10 @@ class ControlService {
 
     createResponse(messages, client, options = {}) {
         const card = client.card();
-        return _.merge({ messages, card }, options);
+        return _.merge({
+            messages,
+            card
+        }, options);
     }
 }
 

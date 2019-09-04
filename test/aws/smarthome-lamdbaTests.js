@@ -3,7 +3,6 @@ chai.use(require('chai-as-promised'));
 const expect = chai.expect;
 const lambda = require('../../src/aws/smarthome-lambda');
 const fs = require('promise-fs');
-const util = require('util');
 
 const createTarget = () => {
     process.env.HOLD_STRATEGY = 'default';
