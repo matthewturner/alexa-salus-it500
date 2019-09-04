@@ -100,7 +100,7 @@ class AlexaResponseBuilder {
                 proactivelyReported: false,
                 retrievable: true,
                 configuration: {
-                    supportsScheduling: false,
+                    supportsScheduling: true,
                     supportedModes: ['HEAT']
                 }
             });

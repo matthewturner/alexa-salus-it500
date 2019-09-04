@@ -14,6 +14,7 @@ const AlexaResponseBuilder = require('./AlexaResponseBuilder');
 const logger = new Logger(process.env.LOG_LEVEL || Logger.DEBUG);
 
 exports.handler = async (event, context) => {
+    logger.level = process.env.LOG_LEVEL || Logger.DEBUG;
     logEntry(event, context);
 
     let namespace = ((event.directive || {}).header || {}).namespace;
