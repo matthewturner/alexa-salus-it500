@@ -4,7 +4,7 @@ const DynamodbThermostatRepository = require('./ThermostatRepository');
 const DefaultThermostatRepository = require('../core/ThermostatRepository');
 const AwsHoldStrategy = require('./HoldStrategy');
 const DefaultHoldStrategy = require('../core/HoldStrategy');
-const ControlService = require('../core/ControlService');
+const ThermostatService = require('../core/ThermostatService');
 const {
     ProfileGateway,
     MockProfileGateway
@@ -140,7 +140,7 @@ const createControlService = (profile) => {
     const repository = createRepository(logger);
     const holdStrategy = createHoldStrategy(logger, context);
     const factory = new Factory(logger);
-    const service = new ControlService(logger, context, holdStrategy, factory, repository);
+    const service = new ThermostatService(logger, context, factory, repository, holdStrategy);
     return service;
 };
 

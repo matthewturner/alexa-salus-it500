@@ -1,55 +1,13 @@
 const moment = require('moment');
 const Duration = require('durationjs');
-const _ = require('lodash');
 
-class ControlService {
-    constructor(logger, context, holdStrategy, thermostatFactory, thermostatRepository) {
-        this._logger = logger;
-        this._context = context;
+const Service = require('./Service');
+
+class ThermostatService extends Service {
+    constructor(logger, context, thermostatFactory, thermostatRepository, holdStrategy) {
+        super(logger, context, thermostatFactory, thermostatRepository);
+
         this._holdStrategy = holdStrategy;
-        this._thermostatRepository = thermostatRepository;
-        this._thermostatFactory = thermostatFactory;
-    }
-
-    async login() {
-        this._logger.debug('Finding thermostat...');
-        const thermostat = await this.obtainThermostat();
-        const options = thermostat.options;
-        const client = this._thermostatFactory.create(thermostat.type, options);
-        await client.login();
-        return client;
-    }
-
-    async obtainThermostat() {
-        let thermostat = await this._thermostatRepository.find(this._context.userId);
-        if (thermostat) {
-            return thermostat;
-        }
-
-        thermostat = await this._thermostatRepository.find('template');
-        if (thermostat) {
-            thermostat.userId = this._context.userId;
-        } else {
-            thermostat = {
-                userId: this._context.userId,
-                executionId: null
-            };
-        }
-        await this._thermostatRepository.add(thermostat);
-        return thermostat;
-    }
-
-    async verifyOnline(client) {
-        const online = await client.online();
-        if (!online) {
-            throw 'Sorry, the thermostat is offline at the moment.';
-        }
-    }
-
-    verifyContactable(device) {
-        if (!device.contactable) {
-            throw 'Sorry, I couldn\'t contact the thermostat.';
-        }
     }
 
     async launch() {
@@ -184,49 +142,6 @@ class ControlService {
         return this.setTemperature(t, null, 'off');
     }
 
-    async turnWaterOn(duration) {
-        this._logger.debug(`Boosting water for ${duration}...`);
-
-        const client = await this.login();
-        try {
-            await this.verifyOnline(client);
-            const device = await client.device();
-            this.verifyContactable(device);
-
-            let d = duration;
-            if (!d) {
-                const thermostat = await this.obtainThermostat();
-                d = thermostat.defaultWaterDuration;
-            }
-            const actualDuration = parseInt(new Duration(d).inHours());
-
-            client.turnWaterOnFor(actualDuration);
-
-            return this.createResponse(
-                [`The water is now on for ${this.speakDuration(new Duration(d))}.`],
-                client);
-        } finally {
-            await client.logout();
-        }
-    }
-
-    async turnWaterOff() {
-        this._logger.debug('Turning water off...');
-
-        const client = await this.login();
-        try {
-            await this.verifyOnline(client);
-            const device = await client.device();
-            this.verifyContactable(device);
-
-            client.turnWaterOnFor('PT0M');
-
-            return this.createResponse(['The water is now off.'], client);
-        } finally {
-            await client.logout();
-        }
-    }
-
     async setTemperature(targetTemperature, forDuration, onOff = 'on') {
         this._logger.debug(`Setting temperature to ${targetTemperature}...`);
         const client = await this.login();
@@ -286,52 +201,6 @@ class ControlService {
         return [`The heating will turn off in ${durationText}.`];
     }
 
-    async setDefault(name, value) {
-        this._logger.debug(`Setting default ${name} to ${value}...`);
-
-        const thermostat = await this.obtainThermostat();
-        let nameText = '';
-        let valueText = '';
-        switch (name) {
-            case 'on':
-                thermostat.defaultOnTemp = value;
-                nameText = 'on temperature';
-                valueText = `${value} degrees`;
-                break;
-            case 'off':
-                thermostat.defaultOffTemp = value;
-                nameText = 'off temperature';
-                valueText = `${value} degrees`;
-                break;
-            case 'duration':
-                thermostat.defaultDuration = value;
-                nameText = 'duration';
-                valueText = this.speakDuration(new Duration(value));
-                break;
-        }
-
-        await this._thermostatRepository.save(thermostat);
-
-        const client = this._thermostatFactory.create(thermostat.type, thermostat.options);
-
-        return this.createResponse([
-            `The default ${nameText} has been set to ${valueText}.`
-        ], client);
-    }
-
-    async defaults() {
-        this._logger.debug('Retrieving default values...');
-
-        const thermostat = await this.obtainThermostat();
-        const client = this._thermostatFactory.create(thermostat.type, thermostat.options);
-
-        return this.createResponse([
-            `The default on temperature is ${thermostat.defaultOnTemp} degrees.`,
-            `The default off temperature is ${thermostat.defaultOffTemp} degrees.`,
-            `The default duration is ${this.speakDuration(new Duration(thermostat.defaultDuration))}.`
-        ], client);
-    }
-
     async thermostatDetails() {
         this._logger.debug('Retrieving client details...');
 
@@ -351,26 +220,10 @@ class ControlService {
         this._logger.debug(`${new Date().toISOString()} ${device.currentTemperature} => ${device.targetTemperature} (${device.status})`);
     }
 
-    speakDuration(duration) {
-        if (duration.inHours() > 1 && duration.inHours() < 2) {
-            return `1 hour and ${duration.subtract(new Duration('PT1H')).ago().replace(' ago', '')}`;
-        } else {
-            return duration.ago().replace(' ago', '');
-        }
-    }
-
     speakTemperature(temp) {
         if (parseFloat(temp.toFixed(0)) != temp) return temp.toFixed(1);
         else return temp.toFixed(0);
     }
-
-    createResponse(messages, client, options = {}) {
-        const card = client.card();
-        return _.merge({
-            messages,
-            card
-        }, options);
-    }
 }
 
-module.exports = ControlService;
+module.exports = ThermostatService;
