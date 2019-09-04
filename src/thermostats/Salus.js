@@ -50,7 +50,9 @@ class Salus {
             this._logger.debug(host);
             await request.post(this.urlTo('login', false), options);
             this._logger.debug('Loading devices page...');
-            let body = await request.get(this.urlTo('devices', false), { jar: this._jar });
+            let body = await request.get(this.urlTo('devices', false), {
+                jar: this._jar
+            });
             let $ = cheerio.load(body);
             this._devId = $('input[name="devId"]').val();
             this._token = $('#token').val();
@@ -63,13 +65,17 @@ class Salus {
 
     async online() {
         this._logger.debug('Checking device status...');
-        let body = await request.get(this.urlTo('ajax_device_online_status'), { jar: this._jar });
+        let body = await request.get(this.urlTo('ajax_device_online_status'), {
+            jar: this._jar
+        });
         this._logger.debug(`Status: ${body}`);
         return ((body == '"online"') || (body == '"online lowBat"'));
     }
 
     async device() {
-        let body = await request.get(this.urlTo('ajax_device_values'), { jar: this._jar });
+        let body = await request.get(this.urlTo('ajax_device_values'), {
+            jar: this._jar
+        });
         let deviceInfo = JSON.parse(body);
         return {
             contactable: !(deviceInfo.CH1currentSetPoint == 32.0),
@@ -113,7 +119,9 @@ class Salus {
 
     async logout() {
         this._logger.debug('Logging out...');
-        await request.get(this.urlTo('logout', false), { jar: this._jar });
+        await request.get(this.urlTo('logout', false), {
+            jar: this._jar
+        });
     }
 
     card() {

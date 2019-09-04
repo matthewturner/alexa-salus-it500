@@ -44,6 +44,9 @@ exports.handler = async (event, context) => {
         if (event.directive.header.name === 'AdjustTargetTemperature') {
             return await handleAdjustTargetTemperature(event);
         }
+        if (event.directive.header.name === 'SetThermostatMode') {
+            return await handleSetThermostatMode(event);
+        }
     }
 };
 
@@ -98,6 +101,32 @@ const handleAdjustTargetTemperature = async (event) => {
         return responseFor(event)
             .with.targetSetpoint(output.targetTemperature)
             .and.currentTemperature(output.currentTemperature)
+            .response();
+    } catch (e) {
+        return responseFor(event).as.error(e).response();
+    }
+};
+
+const handleSetThermostatMode = async (event) => {
+    try {
+        const profile = await retrieveProfile(event);
+        const service = createControlService(profile);
+        const mode = event.directive.payload.thermostatMode.value;
+        let output = null;
+        switch (mode) {
+            case 'HEAT':
+                output = await service.turnOn();
+                break;
+            case 'OFF':
+                output = await service.turnOff();
+                break;
+            default:
+                throw `Invalid mode ${mode}`;
+        }
+        return responseFor(event)
+            .with.targetSetpoint(output.targetTemperature)
+            .and.currentTemperature(output.currentTemperature)
+            .and.mode(mode)
             .response();
     } catch (e) {
         return responseFor(event).as.error(e).response();

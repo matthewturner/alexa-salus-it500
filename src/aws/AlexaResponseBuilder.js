@@ -25,7 +25,9 @@ class AlexaResponseBuilder {
 
         let correlationToken = event.directive.header.correlationToken;
 
-        this._options = { correlationToken: correlationToken };
+        this._options = {
+            correlationToken: correlationToken
+        };
 
         if (event.directive.endpoint) {
             this._options.endpointId = event.directive.endpoint.endpointId;
@@ -62,8 +64,15 @@ class AlexaResponseBuilder {
         return this;
     }
 
+    mode(mode) {
+        this._mode = mode;
+        return this;
+    }
+
     stateReport() {
-        _.merge(this._options, { name: 'StateReport' });
+        _.merge(this._options, {
+            name: 'StateReport'
+        });
         return this;
     }
 
@@ -93,9 +102,12 @@ class AlexaResponseBuilder {
             let capability = response.createPayloadEndpointCapability();
             let thermostat = response.createPayloadEndpointCapability({
                 interface: 'Alexa.ThermostatController',
-                supported: [
-                    { name: 'targetSetpoint' },
-                    { name: 'thermostatMode' }
+                supported: [{
+                        name: 'targetSetpoint'
+                    },
+                    {
+                        name: 'thermostatMode'
+                    }
                 ],
                 proactivelyReported: false,
                 retrievable: true,
@@ -106,9 +118,9 @@ class AlexaResponseBuilder {
             });
             let sensor = response.createPayloadEndpointCapability({
                 interface: 'Alexa.TemperatureSensor',
-                supported: [
-                    { name: 'temperature' }
-                ],
+                supported: [{
+                    name: 'temperature'
+                }],
                 proactivelyReported: false,
                 retrievable: true
             });
@@ -136,6 +148,16 @@ class AlexaResponseBuilder {
                 value: {
                     value: this._currentTemperature,
                     scale: 'CELSIUS'
+                }
+            });
+        }
+
+        if (this._mode) {
+            response.addContextProperty({
+                namespace: 'Alexa.ThermostatController',
+                name: 'thermostatMode',
+                value: {
+                    value: this._mode,
                 }
             });
         }

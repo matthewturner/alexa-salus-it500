@@ -124,7 +124,7 @@ class ThermostatService extends Service {
         }
     }
 
-    async turnHeatingOn(duration) {
+    async turnOn(duration) {
         this._logger.debug('Turning heating on...');
 
         const thermostat = await this.obtainThermostat();
@@ -133,7 +133,7 @@ class ThermostatService extends Service {
         return this.setTemperature(t, duration, 'on');
     }
 
-    async turnHeatingOff() {
+    async turnOff() {
         this._logger.debug('Turning heating off...');
 
         const thermostat = await this.obtainThermostat();

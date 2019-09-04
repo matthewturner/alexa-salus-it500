@@ -44,13 +44,13 @@ const createTarget = () => {
 };
 
 describe('WaterService', async () => {
-    describe('TurnWaterOn', async () => {
+    describe('TurnOn', async () => {
         it('returns the new boost time', async () => {
             const target = createTarget();
 
             const {
                 messages,
-            } = await target.object().turnWaterOn('PT1H');
+            } = await target.object().turnOn('PT1H');
 
             expect(messages[0]).to.equal('The water is now on for 1 hour.');
         });
@@ -59,7 +59,7 @@ describe('WaterService', async () => {
             const target = createTarget();
             target.client.turnWaterOnFor = sinon.mock().withExactArgs(1);
 
-            await target.object().turnWaterOn('PT1H');
+            await target.object().turnOn('PT1H');
 
             target.client.turnWaterOnFor.verify();
         });
@@ -69,19 +69,19 @@ describe('WaterService', async () => {
 
             const {
                 messages,
-            } = await target.object().turnWaterOn('PT2H30M');
+            } = await target.object().turnOn('PT2H30M');
 
             expect(messages[0]).to.equal('The water is now on for 2 hours.');
         });
     });
 
-    describe('TurnWaterOff', async () => {
+    describe('TurnOff', async () => {
         it('returns the off message', async () => {
             const target = createTarget();
 
             const {
                 messages,
-            } = await target.object().turnWaterOff();
+            } = await target.object().turnOff();
 
             expect(messages[0]).to.equal('The water is now off.');
         });

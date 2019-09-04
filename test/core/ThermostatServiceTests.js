@@ -114,13 +114,13 @@ describe('ThermostatService', async () => {
         });
     });
 
-    describe('TurnHeatingOn', async () => {
+    describe('TurnOn', async () => {
         it('returns the new target temperature', async () => {
             const target = createTarget();
 
             const {
                 messages,
-            } = await target.object().turnHeatingOn();
+            } = await target.object().turnOn();
 
             expect(messages[0]).to.equal('The target temperature is now 22 degrees.');
         });
@@ -130,20 +130,20 @@ describe('ThermostatService', async () => {
 
             const {
                 messages,
-            } = await target.object().turnHeatingOn('PT1H');
+            } = await target.object().turnOn('PT1H');
 
             expect(messages[0]).to.equal('The target temperature is now 22 degrees.');
             expect(messages[1]).to.equal('Hold time is not supported on this device.');
         });
     });
 
-    describe('TurnHeatingOff', async () => {
+    describe('TurnOff', async () => {
         it('returns the new target temperature', async () => {
             const target = createTarget();
 
             const {
                 messages,
-            } = await target.object().turnHeatingOff();
+            } = await target.object().turnOff();
 
             expect(messages[0]).to.equal('The target temperature is now 14 degrees.');
         });

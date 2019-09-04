@@ -181,10 +181,10 @@ app.intent('TurnIntent', {
     } = controlService(request);
     try {
         if (onOff === 'on') {
-            const output = await service.turnHeatingOn(duration);
+            const output = await service.turnOn(duration);
             say(response, output, logger);
         } else {
-            const output = await service.turnHeatingOff();
+            const output = await service.turnOff();
             say(response, output, logger);
         }
     } catch (e) {
@@ -211,10 +211,10 @@ app.intent('TurnWaterIntent', {
     } = controlService(request, WaterService);
     try {
         if (onOff === 'on') {
-            const output = await service.turnWaterOn(duration);
+            const output = await service.turnOn(duration);
             say(response, output, logger);
         } else {
-            const output = await service.turnWaterOff();
+            const output = await service.turnOff();
             say(response, output, logger);
         }
     } catch (e) {
@@ -301,7 +301,7 @@ app.intent('AMAZON.StopIntent', {
         service
     } = controlService(request);
     try {
-        const output = await service.turnHeatingOff();
+        const output = await service.turnOff();
         say(response, output, logger);
     } catch (e) {
         report(response, e, logger);

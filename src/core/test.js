@@ -18,7 +18,10 @@ const say = (messages, logger) => {
 const main = async () => {
     const logger = new Logger(Logger.DEBUG);
     const duration = process.env.DURATION;
-    const context = { userId: process.env.ALEXA_USER_ID, source: 'user' };
+    const context = {
+        userId: process.env.ALEXA_USER_ID,
+        source: 'user'
+    };
     let holdStrategy;
     if (process.env.HOLD_STRATEGY === 'aws') {
         holdStrategy = new AwsHoldStrategy(logger, context);
@@ -30,42 +33,54 @@ const main = async () => {
     const service = new ControlService(logger, context, holdStrategy, factory, repository);
 
     try {
-        const { messages, } = await service.defaults();
+        const {
+            messages,
+        } = await service.defaults();
         say(messages, logger);
     } catch (e) {
         say(e, logger);
     }
 
     try {
-        const { messages, } = await service.setDefault('defaultOnTemp', 22);
+        const {
+            messages,
+        } = await service.setDefault('defaultOnTemp', 22);
         say(messages, logger);
     } catch (e) {
         say(e, logger);
     }
 
     try {
-        const { messages, } = await service.defaults();
+        const {
+            messages,
+        } = await service.defaults();
         say(messages, logger);
     } catch (e) {
         say(e, logger);
     }
 
     try {
-        const { messages, } = await service.turnHeatingOn(duration);
+        const {
+            messages,
+        } = await service.turnOn(duration);
         say(messages, logger);
     } catch (e) {
         say(e, logger);
     }
 
     try {
-        const { messages, } = await service.status();
+        const {
+            messages,
+        } = await service.status();
         say(messages, logger);
     } catch (e) {
         say(e, logger);
     }
 
     try {
-        const { messages, } = await service.turnHeatingOff();
+        const {
+            messages,
+        } = await service.turnOff();
         say(messages, logger);
     } catch (e) {
         say(e, logger);

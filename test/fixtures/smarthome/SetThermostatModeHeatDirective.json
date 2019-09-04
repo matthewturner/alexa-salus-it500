@@ -1,0 +1,24 @@
+{
+    "directive": {
+        "header": {
+            "namespace": "Alexa.ThermostatController",
+            "name": "SetThermostatMode",
+            "payloadVersion": "3",
+            "messageId": "501154ef-297c-4924-920e-225d750706fb",
+            "correlationToken": "correlation123"
+        },
+        "endpoint": {
+            "scope": {
+                "type": "BearerToken",
+                "token": "bearer123"
+            },
+            "endpointId": "12d8b441-234d-4d1e-80ce-d90c83332f90",
+            "cookie": {}
+        },
+        "payload": {
+            "thermostatMode": {
+                "value": "HEAT"
+            }
+        }
+    }
+}

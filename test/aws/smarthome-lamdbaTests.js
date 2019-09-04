@@ -108,9 +108,48 @@ describe('SmartHome Lambda', async () => {
             const actual = await handler(request, context);
 
             actual.event.header.messageId = 'messageId123';
-            // actual.context.properties[0].timeOfSample = '2019-09-03T10:45:31.258Z';
 
             const expected = JSON.parse(await fs.readFile('./test/fixtures/smarthome/ReportStateResponse.json'));
+
+            expect(actual).to.deep.include(expected);
+        });
+    });
+
+    describe('SetThermostatMode Directive', async () => {
+        it('turns the heating on', async () => {
+            const target = createTarget();
+
+            const request = JSON.parse(await fs.readFile('./test/fixtures/smarthome/SetThermostatModeHeatDirective.json'));
+            const context = {};
+
+            const handler = target.object().handler;
+            const actual = await handler(request, context);
+
+            actual.event.header.messageId = 'messageId123';
+            actual.context.properties[0].timeOfSample = '2019-09-03T10:45:31.258Z';
+            actual.context.properties[1].timeOfSample = '2019-09-03T10:45:31.258Z';
+            actual.context.properties[2].timeOfSample = '2019-09-03T10:45:31.258Z';
+
+            const expected = JSON.parse(await fs.readFile('./test/fixtures/smarthome/SetThermostatModeHeatResponse.json'));
+
+            expect(actual).to.deep.include(expected);
+        });
+
+        it('turns the heating off', async () => {
+            const target = createTarget();
+
+            const request = JSON.parse(await fs.readFile('./test/fixtures/smarthome/SetThermostatModeOffDirective.json'));
+            const context = {};
+
+            const handler = target.object().handler;
+            const actual = await handler(request, context);
+
+            actual.event.header.messageId = 'messageId123';
+            actual.context.properties[0].timeOfSample = '2019-09-03T10:45:31.258Z';
+            actual.context.properties[1].timeOfSample = '2019-09-03T10:45:31.258Z';
+            actual.context.properties[2].timeOfSample = '2019-09-03T10:45:31.258Z';
+
+            const expected = JSON.parse(await fs.readFile('./test/fixtures/smarthome/SetThermostatModeOffResponse.json'));
 
             expect(actual).to.deep.include(expected);
         });

@@ -7,7 +7,7 @@ class WaterService extends Service {
         super(logger, context, thermostatFactory, thermostatRepository);
     }
 
-    async turnWaterOn(duration) {
+    async turnOn(duration) {
         this._logger.debug(`Boosting water for ${duration}...`);
 
         const client = await this.login();
@@ -33,7 +33,7 @@ class WaterService extends Service {
         }
     }
 
-    async turnWaterOff() {
+    async turnOff() {
         this._logger.debug('Turning water off...');
 
         const client = await this.login();
