@@ -9,14 +9,16 @@ class ProfileGateway {
             Authorization: 'Bearer ' + accessToken,
             'content-type': 'application/json'
         };
-        const res = await axios.get('https://api.amazon.com/user/profile', { headers: headers });
+        const res = await axios.get('https://api.amazon.com/user/profile', {
+            headers: headers
+        });
         logger.debug(JSON.stringify(res.data));
         return res.data;
     }
 }
 
 class MockProfileGateway {
-    async get(accessToken) {
+    async get(accessToken) { // eslint-disable-line no-unused-vars
         return {
             email: 'matt@alexa.com',
             name: 'Matt',
@@ -25,4 +27,7 @@ class MockProfileGateway {
     }
 }
 
-module.exports = { ProfileGateway, MockProfileGateway };
+module.exports = {
+    ProfileGateway,
+    MockProfileGateway
+};

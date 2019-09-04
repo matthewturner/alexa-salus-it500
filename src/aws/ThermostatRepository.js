@@ -12,7 +12,9 @@ class ThermostatRepository {
 
     get client() {
         if (!this._client) {
-            const options = { region: 'eu-west-1' };
+            const options = {
+                region: 'eu-west-1'
+            };
             this._client = new AWS.DynamoDB.DocumentClient(options);
         }
         return this._client;
@@ -39,26 +41,26 @@ class ThermostatRepository {
             this._logger.debug(`Searching by userId ${userId}...`);
             params.Key = {
                 userId
-            }
+            };
             let response = await this.client.get(params).promise();
             if (response.Item) {
-            
+
                 this._logger.debug(`Found thermostat for user ${helpers.truncateUserId(userId)} with username ${response.Item.options.username}`);
                 return response.Item;
             }
             return null;
-        } 
-        
+        }
+
         this._logger.debug(`Searching by linkedUserId ${userId}...`);
         params.IndexName = 'linkedUserId-index',
-        params.KeyConditionExpression = "linkedUserId = :linkedUserId",
-        params.ExpressionAttributeValues = {
-            ":linkedUserId": userId
-        };
+            params.KeyConditionExpression = 'linkedUserId = :linkedUserId',
+            params.ExpressionAttributeValues = {
+                ':linkedUserId': userId
+            };
         this._logger.debug(JSON.stringify(params));
         let response = await this.client.query(params).promise();
         if (response.Count == 1) {
-        
+
             this._logger.debug(`Found thermostat for user ${helpers.truncateUserId(userId)} with username ${response.Items[0].options.username}`);
             return response.Items[0];
         }

@@ -5,7 +5,10 @@ const DefaultThermostatRepository = require('../core/ThermostatRepository');
 const AwsHoldStrategy = require('./HoldStrategy');
 const DefaultHoldStrategy = require('../core/HoldStrategy');
 const ControlService = require('../core/ControlService');
-const { ProfileGateway, MockProfileGateway } = require('./ProfileGateway');
+const {
+    ProfileGateway,
+    MockProfileGateway
+} = require('./ProfileGateway');
 const Logger = require('../core/Logger');
 const helpers = require('./helpers');
 const Factory = require('../thermostats/Factory');
@@ -46,7 +49,7 @@ exports.handler = async (event, context) => {
 
 const responseFor = (event) => {
     return new AlexaResponseBuilder(logger).from(event);
-}
+};
 
 const handleReportState = async (event) => {
     try {
@@ -121,14 +124,18 @@ const logEntry = (event, context) => {
         logger.debug('Context details:');
         logger.debug(JSON.stringify(context));
     }
-}
+};
 
 const createControlService = (profile) => {
     const userId = profile.user_id;
     const shortUserId = helpers.truncateUserId(userId);
     logger.prefix = shortUserId;
     let source = 'user';
-    const context = { userId: userId, shortUserId: shortUserId, source: source };
+    const context = {
+        userId: userId,
+        shortUserId: shortUserId,
+        source: source
+    };
     logger.debug(`Creating context for source: ${context.source}...`);
     const repository = createRepository(logger);
     const holdStrategy = createHoldStrategy(logger, context);
