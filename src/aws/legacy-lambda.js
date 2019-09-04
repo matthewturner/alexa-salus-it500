@@ -3,7 +3,9 @@ const DynamodbThermostatRepository = require('./ThermostatRepository');
 const DefaultThermostatRepository = require('../core/ThermostatRepository');
 const AwsHoldStrategy = require('./HoldStrategy');
 const DefaultHoldStrategy = require('../core/HoldStrategy');
-const ControlService = require('../core/ControlService');
+const ThermostatService = require('../core/ThermostatService');
+const WaterService = require('../core/WaterService');
+const DefaultsService = require('../core/DefaultsService');
 const Logger = require('../core/Logger');
 const helpers = require('./helpers');
 const Factory = require('../thermostats/Factory');
@@ -13,7 +15,7 @@ module.change_code = 0;
 
 let app = new alexa.app('boiler');
 
-const controlService = (request, logger = new Logger(process.env.LOG_LEVEL || Logger.DEBUG)) => {
+const controlService = (request, serviceType = ThermostatService, logger = new Logger(process.env.LOG_LEVEL || Logger.DEBUG)) => {
     const userId = request.userId || request.data.session.user.userId;
     const shortUserId = helpers.truncateUserId(userId);
     logger.prefix = shortUserId;
@@ -21,13 +23,20 @@ const controlService = (request, logger = new Logger(process.env.LOG_LEVEL || Lo
     if (!request.data.context) {
         source = 'callback';
     }
-    const context = { userId: userId, shortUserId: shortUserId, source: source };
+    const context = {
+        userId: userId,
+        shortUserId: shortUserId,
+        source: source
+    };
     logger.debug(`Creating context for source: ${context.source}...`);
     const repository = createRepository(logger);
     const holdStrategy = createHoldStrategy(logger, context);
     const factory = new Factory(logger);
-    const service = new ControlService(logger, context, holdStrategy, factory, repository);
-    return { logger, service };
+    const service = new serviceType(logger, context, factory, repository, holdStrategy);
+    return {
+        logger,
+        service
+    };
 };
 
 const createHoldStrategy = (logger, context) => {
@@ -45,7 +54,10 @@ const createRepository = (logger) => {
 };
 
 const say = (response, output, logger) => {
-    const { messages, card } = output;
+    const {
+        messages,
+        card
+    } = output;
     let text = '';
     if (messages instanceof Array) {
         for (const message of messages) {
@@ -71,7 +83,10 @@ const report = (response, message, logger) => {
 };
 
 app.launch(async (request, response) => {
-    const { logger, service } = controlService(request);
+    const {
+        logger,
+        service
+    } = controlService(request);
     try {
         const output = await service.launch();
         say(response, output, logger);
@@ -84,7 +99,10 @@ app.launch(async (request, response) => {
 app.intent('TempIntent', {
     'utterances': ['what the temperature is', 'the temperature', 'how hot it is']
 }, async (request, response) => {
-    const { logger, service } = controlService(request);
+    const {
+        logger,
+        service
+    } = controlService(request);
     try {
         const output = await service.status();
         say(response, output, logger);
@@ -97,7 +115,10 @@ app.intent('TempIntent', {
 app.intent('TurnUpIntent', {
     'utterances': ['to increase', 'to turn up', 'set warmer', 'set higher']
 }, async (request, response) => {
-    const { logger, service } = controlService(request);
+    const {
+        logger,
+        service
+    } = controlService(request);
     try {
         const output = await service.turnUp();
         say(response, output, logger);
@@ -110,7 +131,10 @@ app.intent('TurnUpIntent', {
 app.intent('TurnDownIntent', {
     'utterances': ['to decrease', 'to turn down', 'set cooler', 'set lower']
 }, async (request, response) => {
-    const { logger, service } = controlService(request);
+    const {
+        logger,
+        service
+    } = controlService(request);
     try {
         const output = await service.turnDown();
         say(response, output, logger);
@@ -126,7 +150,10 @@ app.intent('SetTempIntent', {
     },
     'utterances': ['to set to {temp} degrees', 'to set the temperature to {temp} degrees', 'to set the temp to {temp} degrees']
 }, async (request, response) => {
-    const { logger, service } = controlService(request);
+    const {
+        logger,
+        service
+    } = controlService(request);
     try {
         let targetTemp = parseFloat(request.slot('temp'));
         let optionalDuration = request.slot('duration', null);
@@ -144,13 +171,16 @@ app.intent('TurnIntent', {
         'duration': 'AMAZON.DURATION'
     },
     'utterances': ['to turn {onoff}', 'to turn heating {onoff}', 'to turn the heating {onoff}']
-}, async (request, response) => {    
+}, async (request, response) => {
     let onOff = request.slot('onoff');
     let duration = request.slot('duration');
     // this could be a callback from a step function
-    const { logger, service } = controlService(request);
+    const {
+        logger,
+        service
+    } = controlService(request);
     try {
-        if(onOff === 'on') {
+        if (onOff === 'on') {
             const output = await service.turnHeatingOn(duration);
             say(response, output, logger);
         } else {
@@ -170,18 +200,22 @@ app.intent('TurnWaterIntent', {
     },
     'utterances': ['to boost the water', 'to boost the water for {duration}',
         'to turn water {onoff}', 'to turn the water {onoff}',
-        'to turn the water on for {duration}' ]
+        'to turn the water on for {duration}'
+    ]
 }, async (request, response) => {
     let onOff = request.slot('onoff') || 'on';
     let duration = request.slot('duration');
-    const { logger, service } = controlService(request);
+    const {
+        logger,
+        service
+    } = controlService(request, WaterService);
     try {
-        if(onOff === 'on') {
+        if (onOff === 'on') {
             const output = await service.turnWaterOn(duration);
             say(response, output, logger);
         } else {
             const output = await service.turnWaterOff();
-            say(response, output, logger); 
+            say(response, output, logger);
         }
     } catch (e) {
         report(response, e, logger);
@@ -195,10 +229,13 @@ app.intent('SetDefaultTempIntent', {
         'temp': 'AMAZON.NUMBER'
     },
     'utterances': ['to set the default {onoff} temperature to {temp} degrees']
-}, async (request, response) => {    
+}, async (request, response) => {
     let onOff = request.slot('onoff');
     let temp = parseFloat(request.slot('temp'));
-    const { logger, service } = controlService(request);
+    const {
+        logger,
+        service
+    } = controlService(request, DefaultsService);
     try {
         const output = await service.setDefault(onOff, temp);
         say(response, output, logger);
@@ -213,9 +250,12 @@ app.intent('SetDefaultDurationIntent', {
         'duration': 'AMAZON.DURATION'
     },
     'utterances': ['to set the default duration to {duration}']
-}, async (request, response) => {    
+}, async (request, response) => {
     let duration = request.slot('duration');
-    const { logger, service } = controlService(request);
+    const {
+        logger,
+        service
+    } = controlService(request, DefaultsService);
     try {
         const output = await service.setDefault('duration', duration);
         say(response, output, logger);
@@ -229,7 +269,10 @@ app.intent('DefaultsIntent', {
     'slots': {},
     'utterances': ['the current default values', 'the default values', 'the current defaults', 'the defaults']
 }, async (request, response) => {
-    const { logger, service } = controlService(request);
+    const {
+        logger,
+        service
+    } = controlService(request, DefaultsService);
     try {
         const output = await service.defaults();
         say(response, output, logger);
@@ -253,7 +296,10 @@ app.intent('AMAZON.StopIntent', {
     'slots': {},
     'utterances': []
 }, async (request, response) => {
-    const { logger, service } = controlService(request);
+    const {
+        logger,
+        service
+    } = controlService(request);
     try {
         const output = await service.turnHeatingOff();
         say(response, output, logger);
