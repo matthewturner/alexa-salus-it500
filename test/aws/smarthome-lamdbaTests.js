@@ -154,4 +154,23 @@ describe('SmartHome Lambda', async () => {
             expect(actual).to.deep.include(expected);
         });
     });
+
+    describe('Unknown Directive', async () => {
+        it('reports the error', async () => {
+            const target = createTarget();
+
+            const request = JSON.parse(await fs.readFile('./test/fixtures/smarthome/UnknownDirective.json'));
+            const context = {};
+
+            const handler = target.object().handler;
+            const actual = await handler(request, context);
+
+            actual.event.header.messageId = 'messageId123';
+            delete actual.event.header.correlationToken;
+
+            const expected = JSON.parse(await fs.readFile('./test/fixtures/smarthome/UnknownResponse.json'));
+
+            expect(actual).to.deep.include(expected);
+        });
+    });
 });
