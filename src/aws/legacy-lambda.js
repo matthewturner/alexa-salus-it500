@@ -3,6 +3,7 @@ const DynamodbThermostatRepository = require('./ThermostatRepository');
 const DefaultThermostatRepository = require('../core/ThermostatRepository');
 const AwsHoldStrategy = require('./HoldStrategy');
 const DefaultHoldStrategy = require('../core/HoldStrategy');
+const SetTemperatureStrategy = require('../core/SetTemperatureStrategy');
 const ThermostatService = require('../core/ThermostatService');
 const WaterService = require('../core/WaterService');
 const DefaultsService = require('../core/DefaultsService');
@@ -31,8 +32,10 @@ const controlService = (request, serviceType = ThermostatService, logger = new L
     logger.debug(`Creating context for source: ${context.source}...`);
     const repository = createRepository(logger);
     const holdStrategy = createHoldStrategy(logger, context);
+    const setTemperatureStrategy = new SetTemperatureStrategy(logger);
     const factory = new Factory(logger);
-    const service = new serviceType(logger, context, factory, repository, holdStrategy);
+    const service = new serviceType(logger, context, factory, repository,
+        holdStrategy, setTemperatureStrategy);
     return {
         logger,
         service

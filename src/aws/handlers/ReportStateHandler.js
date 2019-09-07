@@ -8,8 +8,7 @@ class ReportStateHandler extends Handler {
 
     async handle(event) {
         try {
-            let profile = await this.retrieveProfile(event);
-            const service = this.createControlService(profile);
+            const service = await this.createControlService(event);
             const status = await service.status();
             return this.responseFor(event)
                 .with.targetSetpoint(status.targetTemperature)

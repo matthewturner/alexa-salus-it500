@@ -7,8 +7,7 @@ class DiscoveryHandler extends Handler {
 
     async handle(event) {
         try {
-            let profile = await this.retrieveProfile(event);
-            const service = this.createControlService(profile);
+            const service = await this.createControlService(event);
             let thermostatDetails = await service.thermostatDetails();
             this._logger.debug(JSON.stringify(thermostatDetails));
             return this.responseFor(event).with.capabilities(thermostatDetails).response();

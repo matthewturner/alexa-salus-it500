@@ -4,10 +4,11 @@ const Duration = require('durationjs');
 const Service = require('./Service');
 
 class ThermostatService extends Service {
-    constructor(logger, context, thermostatFactory, thermostatRepository, holdStrategy) {
+    constructor(logger, context, thermostatFactory, thermostatRepository, holdStrategy, setTemperatureStrategy) {
         super(logger, context, thermostatFactory, thermostatRepository);
 
         this._holdStrategy = holdStrategy;
+        this._setTemperatureStrategy = setTemperatureStrategy;
     }
 
     async launch() {
@@ -68,60 +69,11 @@ class ThermostatService extends Service {
     }
 
     async turnUp() {
-        this._logger.debug('Turning up...');
-        const client = await this.login();
-
-        try {
-            await this.verifyOnline(client);
-            const device = await client.device();
-            this.verifyContactable(device);
-
-            if (device.status === 'on') {
-                throw 'The heating is already on.';
-            }
-
-            const t = device.targetTemperature + 1.0;
-            await client.setTemperature(t);
-            const updatedDevice = await client.device();
-
-            const messages = [];
-            messages.push(`The target temperature is now ${this.speakTemperature(updatedDevice.targetTemperature)} degrees.`);
-            await this.determineIfHolding(updatedDevice, messages, 'now');
-
-            this.logStatus(device);
-            return this.createResponse(messages, client, {
-                targetTemperature: updatedDevice.targetTemperature,
-                currentTemperature: updatedDevice.currentTemperature
-            });
-        } finally {
-            await client.logout();
-        }
+        return this.adjustTemperature(1.0);
     }
 
     async turnDown() {
-        this._logger.debug('Turning down...');
-        const client = await this.login();
-        try {
-            await this.verifyOnline(client);
-            const device = await client.device();
-            this.verifyContactable(device);
-
-            const t = device.targetTemperature - 1.0;
-            await client.setTemperature(t);
-            const updatedDevice = await client.device();
-
-            const messages = [];
-            messages.push(`The target temperature is now ${this.speakTemperature(updatedDevice.targetTemperature)} degrees.`);
-            await this.determineIfHolding(updatedDevice, messages, 'still');
-
-            this.logStatus(updatedDevice);
-            return this.createResponse(messages, client, {
-                targetTemperature: updatedDevice.targetTemperature,
-                currentTemperature: updatedDevice.currentTemperature
-            });
-        } finally {
-            await client.logout();
-        }
+        return this.adjustTemperature(-1.0);
     }
 
     async turnOn(duration) {
@@ -150,8 +102,7 @@ class ThermostatService extends Service {
             const device = await client.device();
             this.verifyContactable(device);
 
-            await client.setTemperature(targetTemperature);
-            const updatedDevice = await client.device();
+            let updatedDevice = await this._setTemperatureStrategy.setTemperature(client, targetTemperature);
 
             let messages = [];
             messages.push(`The target temperature is now ${this.speakTemperature(updatedDevice.targetTemperature)} degrees.`);
@@ -171,6 +122,36 @@ class ThermostatService extends Service {
                     await this._holdStrategy.stopHoldIfRequired(thermostat.executionId);
                 }
             }
+            return this.createResponse(messages, client, {
+                targetTemperature: updatedDevice.targetTemperature,
+                currentTemperature: updatedDevice.currentTemperature
+            });
+        } finally {
+            await client.logout();
+        }
+    }
+
+    async adjustTemperature(tempDelta) {
+        this._logger.debug(`Adjusting temperature by ${tempDelta}...`);
+        const client = await this.login();
+
+        try {
+            await this.verifyOnline(client);
+            const device = await client.device();
+            this.verifyContactable(device);
+
+            const t = device.targetTemperature + tempDelta;
+            let updatedDevice = await this._setTemperatureStrategy.setTemperature(client, t);
+
+            const messages = [];
+            messages.push(`The target temperature is now ${this.speakTemperature(updatedDevice.targetTemperature)} degrees.`);
+            let qualifier = 'now';
+            if (tempDelta < 0) {
+                qualifier = 'still';
+            }
+            await this.determineIfHolding(updatedDevice, messages, qualifier);
+
+            this.logStatus(device);
             return this.createResponse(messages, client, {
                 targetTemperature: updatedDevice.targetTemperature,
                 currentTemperature: updatedDevice.currentTemperature

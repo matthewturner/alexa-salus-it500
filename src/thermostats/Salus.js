@@ -145,6 +145,10 @@ class Salus {
     get description() {
         return 'Controls the Salus IT-500';
     }
+
+    get shouldDefer() {
+        return true;
+    }
 }
 
 module.exports = Salus;

@@ -1,7 +1,8 @@
 class Mock {
-    constructor(logger, options) { // eslint-disable-line no-unused-vars
+    constructor(logger, options = {}) {
         this._logger = logger;
         this._targetTemperature = parseInt(process.env.MOCK_TARGET_TEMPERATURE) || 20;
+        this._shouldDefer = options.shouldDefer || false;
     }
 
     async login() {
@@ -56,6 +57,10 @@ class Mock {
 
     get description() {
         return 'Mock thermostat used for testing';
+    }
+
+    get shouldDefer() {
+        return this._shouldDefer;
     }
 }
 

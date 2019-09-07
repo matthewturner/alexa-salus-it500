@@ -8,8 +8,7 @@ class SetTargetTemperatureHandler extends Handler {
 
     async handle(event) {
         try {
-            let profile = await this.retrieveProfile(event);
-            const service = this.createControlService(profile);
+            const service = await this.createControlService(event);
             let targetTemp = event.directive.payload.targetSetpoint.value;
             let optionalDuration = null;
             if (event.directive.payload.schedule) {
