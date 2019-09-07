@@ -2,6 +2,7 @@ const DynamodbThermostatRepository = require('../ThermostatRepository');
 const DefaultThermostatRepository = require('../../core/ThermostatRepository');
 const AwsHoldStrategy = require('..//HoldStrategy');
 const DefaultHoldStrategy = require('../../core/HoldStrategy');
+const SetTemperatureStrategy = require('../DeferredSetTemperatureStrategy');
 const ThermostatService = require('../../core/ThermostatService');
 const {
     ProfileGateway,
@@ -16,7 +17,8 @@ class Handler {
         this._logger = logger;
     }
 
-    createControlService(profile) {
+    async createControlService(event) {
+        const profile = await this.retrieveProfile(event);
         const userId = profile.user_id;
         const shortUserId = helpers.truncateUserId(userId);
         this._logger.prefix = shortUserId;
@@ -27,10 +29,12 @@ class Handler {
             source: source
         };
         this._logger.debug(`Creating context for source: ${context.source}...`);
-        const repository = this.createRepository(this._logger);
-        const holdStrategy = this.createHoldStrategy(this._logger, context);
+        const repository = this.createRepository();
+        const holdStrategy = this.createHoldStrategy(context);
+        const setTemperatureStrategy = new SetTemperatureStrategy(this._logger, event);
         const factory = new Factory(this._logger);
-        const service = new ThermostatService(this._logger, context, factory, repository, holdStrategy);
+        const service = new ThermostatService(this._logger, context, factory,
+            repository, holdStrategy, setTemperatureStrategy);
         return service;
     }
 
@@ -59,7 +63,7 @@ class Handler {
         this._logger.debug('Retrieving profile data...');
         const tokenContainer = event.directive.endpoint || event.directive.payload;
         const accessToken = tokenContainer.scope.token;
-        let profileGateway = this.createProfileGateway();
+        const profileGateway = this.createProfileGateway();
         return await profileGateway.get(accessToken);
     }
 

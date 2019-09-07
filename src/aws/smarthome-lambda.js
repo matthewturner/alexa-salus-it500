@@ -5,9 +5,10 @@ const HandlerRegistry = require('./HandlerRegistry');
 
 const logger = new Logger(process.env.LOG_LEVEL || Logger.DEBUG);
 
-exports.handler = async (event, context) => {
+exports.handler = async (ev, context) => {
     logger.level = process.env.LOG_LEVEL || Logger.DEBUG;
-    logEntry(event, context);
+    logEntry(ev, context);
+    const event = extractEvent(ev);
 
     const handlers = HandlerRegistry.all();
 
@@ -15,9 +16,25 @@ exports.handler = async (event, context) => {
         let handlerType = handlers[index];
         if (handlerType.handles(event)) {
             const handler = new handlerType(logger);
-            return await handler.handle(event);
+            const response = await handler.handle(event);
+            logResponse(response);
+            return response;
         }
     }
+};
+
+const extractEvent = (ev) => {
+    if (ev.Records) {
+        const event = JSON.parse(ev.Records[0].Sns.Message);
+        logEntry(event, undefined);
+        return event;
+    }
+    return ev;
+}
+
+const logResponse = (response) => {
+    logger.debug('Response details:');
+    logger.debug(JSON.stringify(response));
 };
 
 const logEntry = (event, context) => {

@@ -8,8 +8,7 @@ class SetThermostatModeHandler extends Handler {
 
     async handle(event) {
         try {
-            const profile = await this.retrieveProfile(event);
-            const service = this.createControlService(profile);
+            const service = await this.createControlService(event);
             const mode = event.directive.payload.thermostatMode.value;
             let output = null;
             switch (mode) {
@@ -28,6 +27,8 @@ class SetThermostatModeHandler extends Handler {
                 .and.mode(mode)
                 .response();
         } catch (e) {
+            this._logger.error(e);
+            this._logger.error(e.stack);
             return this.responseFor(event).as.error(e).response();
         }
     }

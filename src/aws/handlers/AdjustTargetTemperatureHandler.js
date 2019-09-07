@@ -8,20 +8,16 @@ class AdjustTargetTemperatureHandler extends Handler {
 
     async handle(event) {
         try {
-            let profile = await this.retrieveProfile(event);
-            const service = this.createControlService(profile);
-            let targetTempDelta = event.directive.payload.targetSetpointDelta.value;
-            let output = null;
-            if (targetTempDelta >= 0) {
-                output = await service.turnUp();
-            } else {
-                output = await service.turnDown();
-            }
+            const service = await this.createControlService(event);
+            const targetTempDelta = event.directive.payload.targetSetpointDelta.value;
+            const output = await service.adjustTemperature(targetTempDelta);
             return this.responseFor(event)
                 .with.targetSetpoint(output.targetTemperature)
                 .and.currentTemperature(output.currentTemperature)
                 .response();
         } catch (e) {
+            this._logger.error(e);
+            this._logger.error(e.stack);
             return this.responseFor(event).as.error(e).response();
         }
     }

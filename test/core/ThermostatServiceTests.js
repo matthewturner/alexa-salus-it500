@@ -6,6 +6,7 @@ const Duration = require('durationjs');
 const ThermostatService = require('../../src/core/ThermostatService');
 const Mock = require('../../src/thermostats/Mock');
 const HoldStrategy = require('../../src/core/HoldStrategy');
+const SetTemperatureStrategy = require('../../src/core/SetTemperatureStrategy');
 const Logger = require('../../src/core/Logger');
 
 const createTarget = () => {
@@ -15,6 +16,7 @@ const createTarget = () => {
         source: 'user'
     };
     const holdStrategy = new HoldStrategy(logger);
+    const setTemperatureStrategy = new SetTemperatureStrategy(logger);
     const thermostatRepository = sinon.fake();
     thermostatRepository.find = sinon.stub();
     const thermostat = {
@@ -40,9 +42,11 @@ const createTarget = () => {
         client: client,
         thermostatFactory: thermostatFactory,
         thermostatRepository: thermostatRepository,
+        setTemperatureStrategy: setTemperatureStrategy,
         object: () => {
             return new ThermostatService(logger, context,
-                thermostatFactory, thermostatRepository, holdStrategy);
+                thermostatFactory, thermostatRepository, holdStrategy,
+                setTemperatureStrategy);
         }
     };
 };
@@ -149,6 +153,30 @@ describe('ThermostatService', async () => {
         });
     });
 
+    describe('AdjustTemperature', async () => {
+        it('increases the target temperature by 2.0 degrees', async () => {
+            const target = createTarget();
+            target.client.setTemperature(15);
+
+            const {
+                messages,
+            } = await target.object().adjustTemperature(2.0);
+
+            expect(messages[0]).to.equal('The target temperature is now 17 degrees.');
+        });
+
+        it('decreases the target temperature by 2.0 degrees', async () => {
+            const target = createTarget();
+            target.client.setTemperature(15);
+
+            const {
+                messages,
+            } = await target.object().adjustTemperature(-2.0);
+
+            expect(messages[0]).to.equal('The target temperature is now 13 degrees.');
+        });
+    });
+
     describe('TurnUp', async () => {
         it('increases the target temperature by 1.0 degrees', async () => {
             const target = createTarget();
@@ -159,14 +187,6 @@ describe('ThermostatService', async () => {
             } = await target.object().turnUp();
 
             expect(messages[0]).to.equal('The target temperature is now 16 degrees.');
-        });
-
-        it('reports the heating is already on', async () => {
-            const target = createTarget();
-            target.client.setTemperature(20);
-
-            await expect(target.object().turnUp())
-                .to.be.rejectedWith('The heating is already on.');
         });
     });
 
