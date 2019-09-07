@@ -27,6 +27,8 @@ class SetThermostatModeHandler extends Handler {
                 .and.mode(mode)
                 .response();
         } catch (e) {
+            this._logger.error(e);
+            this._logger.error(e.stack);
             return this.responseFor(event).as.error(e).response();
         }
     }

@@ -29,8 +29,8 @@ class Handler {
             source: source
         };
         this._logger.debug(`Creating context for source: ${context.source}...`);
-        const repository = this.createRepository(this._logger);
-        const holdStrategy = this.createHoldStrategy(this._logger, context);
+        const repository = this.createRepository();
+        const holdStrategy = this.createHoldStrategy(context);
         const setTemperatureStrategy = new SetTemperatureStrategy(this._logger, event);
         const factory = new Factory(this._logger);
         const service = new ThermostatService(this._logger, context, factory,
@@ -63,7 +63,7 @@ class Handler {
         this._logger.debug('Retrieving profile data...');
         const tokenContainer = event.directive.endpoint || event.directive.payload;
         const accessToken = tokenContainer.scope.token;
-        let profileGateway = this.createProfileGateway();
+        const profileGateway = this.createProfileGateway();
         return await profileGateway.get(accessToken);
     }
 

@@ -15,6 +15,8 @@ class ReportStateHandler extends Handler {
                 .and.currentTemperature(status.currentTemperature)
                 .as.stateReport().response();
         } catch (e) {
+            this._logger.error(e);
+            this._logger.error(e.stack);
             return this.responseFor(event).as.error(e).response();
         }
     }

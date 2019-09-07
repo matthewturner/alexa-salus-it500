@@ -18,7 +18,10 @@ class HoldStrategy {
 
         if (!durationValue) {
             this._logger.debug('No callback required...');
-            return { holding: false, duration: null };
+            return {
+                holding: false,
+                duration: null
+            };
         }
 
         this._logger.debug('Configuring callback...');
