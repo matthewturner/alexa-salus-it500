@@ -1,5 +1,12 @@
 const AWS = require('aws-sdk');
 
+/**
+ * Publishes a message to an SNS topic rather than set
+ * the temperature directly. The lambda will be recalled
+ * later and has the opportunity to actually set the 
+ * temperature.
+ * @class
+ */
 class DeferredSetTemperatureStrategy {
     constructor(logger, event) {
         this._logger = logger;

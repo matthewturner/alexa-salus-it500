@@ -27,7 +27,7 @@ class HoldStrategy {
         this._logger.debug('Configuring callback...');
         let duration = new Duration(durationValue);
         await this.stopHoldIfRequired(thermostat.executionId);
-        let data = await this.startHold(duration);
+        let data = await this.startHold(duration, thermostat.userId);
 
         thermostat.executionId = data.executionArn;
         await this._thermostatRepository.save(thermostat);
@@ -63,11 +63,11 @@ class HoldStrategy {
         }
     }
 
-    async startHold(duration) {
+    async startHold(duration, userId) {
         this._logger.debug(`Holding for ${duration.inSeconds()} seconds...`);
         let params = {
             stateMachineArn: process.env.STEP_FUNCTION_ARN,
-            input: JSON.stringify(helpers.turnOffCallbackPayload(this._context.userId, duration.inSeconds()))
+            input: JSON.stringify(helpers.turnOffCallbackPayload(userId, duration.inSeconds()))
         };
 
         return await this._stepFunctions.startExecution(params).promise();

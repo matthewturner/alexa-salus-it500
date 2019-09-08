@@ -31,7 +31,17 @@ The last intent can take an optional duration which can be any valid time statem
 * You will need to prevent Salus from overriding this by setting the off times to a late time (eg 10pm)
 * It is optional and requires a hosted lambda, step function and dynamodb table
 
-## Setting Up
+## Setting up the SmartHome API Skill
+
+1. Create a lambda and deploy the code using the package/publish scripts
+
+1. Create a topic to publish to and subscribe the lambda to it
+
+1. Declare your username/password and the default temperatures for on/off using environment variables
+
+1. Optionally create the step function and dynamodb table for hold times/auto-switch off
+
+## Setting Up the Legacy Skill
 
 1. Setup an [alexa-app-server](https://github.com/matt-kruse/alexa-app-server)
 
@@ -44,6 +54,8 @@ The last intent can take an optional duration which can be any valid time statem
 1. Test on <http://localhost:8080/alexa/boiler>
 
 1. Create a new skill in <https://developer.amazon.com>
+
+1. Create a lambda and deploy the code using the package/publish scripts
 
 1. Declare your username/password and the default temperatures for on/off using environment variables
 
