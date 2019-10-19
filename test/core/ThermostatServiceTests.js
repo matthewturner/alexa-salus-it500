@@ -115,6 +115,25 @@ describe('ThermostatService', async () => {
                 expect(messages[1]).to.equal('The target is 20 degrees.');
                 expect(messages[2]).to.equal('The heating is on and will turn off in 1 hour.');
             });
+
+            it('includes a fractional hold time', async () => {
+                const target = createTarget();
+                target.holdStrategy.status = async () => {
+                    return {
+                        status: 'running',
+                        duration: new Duration('PT1.5H'),
+                        startDate: new Date()
+                    };
+                };
+
+                const {
+                    messages,
+                } = await target.object().status();
+
+                expect(messages[0]).to.equal('The current temperature is 19 degrees.');
+                expect(messages[1]).to.equal('The target is 20 degrees.');
+                expect(messages[2]).to.equal('The heating is on and will turn off in 1 hour and 30 minutes.');
+            });
         });
     });
 

@@ -52,9 +52,9 @@ class Service {
 
     speakDuration(duration) {
         if (duration.inHours() > 1 && duration.inHours() < 2) {
-            return `1 hour and ${duration.subtract(new Duration('PT1H')).ago().replace(' ago', '')}`;
+            return `1 hour and ${duration.subtract(new Duration('PT1H')).approx()}`;
         } else {
-            return duration.ago().replace(' ago', '');
+            return duration.approx();
         }
     }
 
