@@ -7,6 +7,25 @@ class DefaultsService extends Service {
         this._logger.debug(`Setting default ${name} to ${value}...`);
 
         const thermostat = await this.obtainThermostat();
+        let { nameText, valueText } = this.setDefaultValue(thermostat, name, value);
+
+        await this._thermostatRepository.save(thermostat);
+
+        const client = this._thermostatFactory.create(thermostat.type, thermostat.options);
+
+        return this.createResponse([
+            `The default ${nameText} has been set to ${valueText}.`
+        ], client);
+    }
+
+    /**
+     * Determines the property to set
+     * and updates it to the specified value
+     * @param {ThermostatClient} thermostat 
+     * @param {string} name
+     * @param {float_or_duration} value 
+     */
+    setDefaultValue(thermostat, name, value) {
         let nameText = '';
         let valueText = '';
         switch (name) {
@@ -26,14 +45,7 @@ class DefaultsService extends Service {
                 valueText = this.speakDuration(new Duration(value));
                 break;
         }
-
-        await this._thermostatRepository.save(thermostat);
-
-        const client = this._thermostatFactory.create(thermostat.type, thermostat.options);
-
-        return this.createResponse([
-            `The default ${nameText} has been set to ${valueText}.`
-        ], client);
+        return { nameText, valueText };
     }
 
     async defaults() {
