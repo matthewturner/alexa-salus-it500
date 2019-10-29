@@ -1,11 +1,16 @@
-const ControlService = require('../core/ControlService');
+const ThermostatService = require('../core/ThermostatService');
+const DefaultsService = require('../core/DefaultsService');
 const AwsHoldStrategy = require('../aws/HoldStrategy');
 const DefaultHoldStrategy = require('../core/HoldStrategy');
 const Logger = require('../core/Logger');
-const ThermostatRepository = require('../aws/ThermostatRepository');
+const AwsThermostatRepository = require('../aws/ThermostatRepository');
+const DefaultThermostatRepository = require('../core/ThermostatRepository');
 const Factory = require('../thermostats/Factory');
+const SetTemperatureStrategy = require('../core/SetTemperatureStrategy');
 
-const say = (messages, logger) => {
+const logger = new Logger(Logger.DEBUG);
+
+const report = (messages, logger) => {
     if (messages instanceof Array) {
         for (const message of messages) {
             logger.debug(message);
@@ -15,8 +20,18 @@ const say = (messages, logger) => {
     }
 };
 
+const reportOn = async (action) => {
+    try {
+        const {
+            messages,
+        } = await action();
+        report(messages, logger);
+    } catch (e) {
+        report(e, logger);
+    }
+};
+
 const main = async () => {
-    const logger = new Logger(Logger.DEBUG);
     const duration = process.env.DURATION;
     const context = {
         userId: process.env.ALEXA_USER_ID,
@@ -28,63 +43,29 @@ const main = async () => {
     } else {
         holdStrategy = new DefaultHoldStrategy(logger, context);
     }
+    let repository;
+    if (process.env.THERMOSTAT_REPOSITORY === 'aws') {
+        repository = new AwsThermostatRepository(logger);
+    } else {
+        repository = new DefaultThermostatRepository(logger);
+    }
+    let setTemperatureStrategy = new SetTemperatureStrategy();
+
     const factory = new Factory(logger);
-    const repository = new ThermostatRepository(logger);
-    const service = new ControlService(logger, context, holdStrategy, factory, repository);
+    const thermostatService = new ThermostatService(logger, context, factory, repository, holdStrategy, setTemperatureStrategy);
+    const defaultsService = new DefaultsService(logger, context, factory, repository);
 
-    try {
-        const {
-            messages,
-        } = await service.defaults();
-        say(messages, logger);
-    } catch (e) {
-        say(e, logger);
-    }
+    await reportOn(async () => await defaultsService.defaults());
 
-    try {
-        const {
-            messages,
-        } = await service.setDefault('defaultOnTemp', 22);
-        say(messages, logger);
-    } catch (e) {
-        say(e, logger);
-    }
+    await reportOn(async () => await defaultsService.setDefault('defaultOnTemp', 22));
 
-    try {
-        const {
-            messages,
-        } = await service.defaults();
-        say(messages, logger);
-    } catch (e) {
-        say(e, logger);
-    }
+    await reportOn(async () => await defaultsService.defaults());
 
-    try {
-        const {
-            messages,
-        } = await service.turnOn(duration);
-        say(messages, logger);
-    } catch (e) {
-        say(e, logger);
-    }
+    await reportOn(async () => await thermostatService.turnOn(duration));
 
-    try {
-        const {
-            messages,
-        } = await service.status();
-        say(messages, logger);
-    } catch (e) {
-        say(e, logger);
-    }
+    await reportOn(async () => await thermostatService.status());
 
-    try {
-        const {
-            messages,
-        } = await service.turnOff();
-        say(messages, logger);
-    } catch (e) {
-        say(e, logger);
-    }
+    await reportOn(async () => await thermostatService.turnOff());
 };
 
 main();
