@@ -1,6 +1,6 @@
 'use strict';
 
-const AWS = require('aws-sdk');
+const DynamoDB = require('aws-sdk/clients/dynamodb');
 const helpers = require('./helpers');
 
 const TableName = 'thermostats';
@@ -15,7 +15,7 @@ class ThermostatRepository {
             const options = {
                 region: 'eu-west-1'
             };
-            this._client = new AWS.DynamoDB.DocumentClient(options);
+            this._client = new DynamoDB.DocumentClient(options);
         }
         return this._client;
     }
@@ -67,26 +67,7 @@ class ThermostatRepository {
     }
 
     async save(thermostat) {
-        let existingThermostat = await this.find(thermostat.userId);
-
-        let updateField = 'executionId';
-        let updateValue = thermostat.executionId;
-        if (existingThermostat.executionId !== thermostat.executionId) {
-            updateField = 'executionId';
-            updateValue = thermostat.executionId;
-        } else if (existingThermostat.defaultDuration !== thermostat.defaultDuration) {
-            updateField = 'defaultDuration';
-            updateValue = thermostat.defaultDuration;
-        } else if (existingThermostat.defaultOnTemp !== thermostat.defaultOnTemp) {
-            updateField = 'defaultOnTemp';
-            updateValue = thermostat.defaultOnTemp;
-        } else if (existingThermostat.defaultOffTemp !== thermostat.defaultOffTemp) {
-            updateField = 'defaultOffTemp';
-            updateValue = thermostat.defaultOffTemp;
-        } else if (existingThermostat.defaultWaterDuration !== thermostat.defaultWaterDuration) {
-            updateField = 'defaultWaterDuration';
-            updateValue = thermostat.defaultWaterDuration;
-        }
+        const { updateField, updateValue } = await this.determineUpdatedField(thermostat);
 
         const params = {
             TableName,
@@ -101,6 +82,41 @@ class ThermostatRepository {
         };
 
         await this.client.update(params).promise();
+    }
+
+    async determineUpdatedField(thermostat) {
+        let existingThermostat = await this.find(thermostat.userId);
+
+        if (existingThermostat.executionId !== thermostat.executionId) {
+            return {
+                updateField: 'executionId',
+                updateValue: thermostat.executionId
+            };
+        }
+        if (existingThermostat.defaultDuration !== thermostat.defaultDuration) {
+            return {
+                updateField: 'defaultDuration',
+                updateValue: thermostat.defaultDuration
+            };
+        }
+        if (existingThermostat.defaultOnTemp !== thermostat.defaultOnTemp) {
+            return {
+                updateField: 'defaultOnTemp',
+                updateValue: thermostat.defaultOnTemp
+            };
+        }
+        if (existingThermostat.defaultOffTemp !== thermostat.defaultOffTemp) {
+            return {
+                updateField: 'defaultOffTemp',
+                updateValue: thermostat.defaultOffTemp
+            };
+        }
+        if (existingThermostat.defaultWaterDuration !== thermostat.defaultWaterDuration) {
+            return {
+                updateField: 'defaultWaterDuration',
+                updateValue: thermostat.defaultWaterDuration
+            };
+        }
     }
 }
 
