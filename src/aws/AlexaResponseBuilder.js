@@ -78,89 +78,23 @@ class AlexaResponseBuilder {
 
     response() {
         if (this._error) {
-            if (this._error instanceof SmartHomeError) {
-                return new AlexaResponse({
-                    'name': 'ErrorResponse',
-                    'payload': {
-                        'type': this._error.data.type,
-                        'message': this._error.message
-                    }
-                });
-            }
-            return new AlexaResponse({
-                'name': 'ErrorResponse',
-                'payload': {
-                    'type': 'INTERNAL_ERROR',
-                    'message': this._error.message
-                }
-            });
+            return this.errorResponseFrom(this._error);
         }
 
         let response = new AlexaResponse(this._options);
 
-        if (this._thermostatDetails) {
-            let capability = response.createPayloadEndpointCapability();
-            let thermostat = response.createPayloadEndpointCapability({
-                interface: 'Alexa.ThermostatController',
-                supported: [{
-                        name: 'targetSetpoint'
-                    },
-                    {
-                        name: 'thermostatMode'
-                    }
-                ],
-                proactivelyReported: false,
-                retrievable: true,
-                configuration: {
-                    supportsScheduling: true,
-                    supportedModes: ['HEAT']
-                }
-            });
-            let sensor = response.createPayloadEndpointCapability({
-                interface: 'Alexa.TemperatureSensor',
-                supported: [{
-                    name: 'temperature'
-                }],
-                proactivelyReported: false,
-                retrievable: true
-            });
-            this._thermostatDetails.capabilities = [
-                capability, thermostat, sensor
-            ];
-            response.addPayloadEndpoint(this._thermostatDetails);
-        }
+        this.addThermostatDetailsIfRequired(response,
+            this._thermostatDetails);
 
-        if (this._targetTemperature) {
-            response.addContextProperty({
-                namespace: 'Alexa.ThermostatController',
-                name: 'targetSetpoint',
-                value: {
-                    value: this._targetTemperature,
-                    scale: 'CELSIUS'
-                }
-            });
-        }
+        this.addTemperaturePropertyIfRequired(response,
+            'Alexa.ThermostatController', 'targetSetpoint',
+            this._targetTemperature);
 
-        if (this._currentTemperature) {
-            response.addContextProperty({
-                namespace: 'Alexa.TemperatureSensor',
-                name: 'temperature',
-                value: {
-                    value: this._currentTemperature,
-                    scale: 'CELSIUS'
-                }
-            });
-        }
+        this.addTemperaturePropertyIfRequired(response,
+            'Alexa.TemperatureSensor', 'temperature',
+            this._currentTemperature);
 
-        if (this._mode) {
-            response.addContextProperty({
-                namespace: 'Alexa.ThermostatController',
-                name: 'thermostatMode',
-                value: {
-                    value: this._mode,
-                }
-            });
-        }
+        this.addModePropertyIfRequired(response, this._mode);
 
         this._logger.debug('Response details:');
         this._logger.debug(JSON.stringify(response));
@@ -193,6 +127,102 @@ class AlexaResponseBuilder {
 
     get as() {
         return this;
+    }
+
+    get sensorCapability() {
+        return {
+            interface: 'Alexa.TemperatureSensor',
+            supported: [{
+                name: 'temperature'
+            }],
+            proactivelyReported: false,
+            retrievable: true
+        };
+    }
+
+    get thermostatCapability() {
+        return {
+            interface: 'Alexa.ThermostatController',
+            supported: [{
+                name: 'targetSetpoint'
+            },
+            {
+                name: 'thermostatMode'
+            }
+            ],
+            proactivelyReported: false,
+            retrievable: true,
+            configuration: {
+                supportsScheduling: true,
+                supportedModes: ['HEAT']
+            }
+        };
+    }
+
+    addModePropertyIfRequired(response, mode) {
+        if (!mode) {
+            return;
+        }
+
+        response.addContextProperty({
+            namespace: 'Alexa.ThermostatController',
+            name: 'thermostatMode',
+            value: {
+                value: this._mode,
+            }
+        });
+    }
+
+    addTemperaturePropertyIfRequired(response, namespace, name, value) {
+        if (!value) {
+            return;
+        }
+
+        response.addContextProperty({
+            namespace: namespace,
+            name: name,
+            value: {
+                value: value,
+                scale: 'CELSIUS'
+            }
+        });
+    }
+
+    addThermostatDetailsIfRequired(response, thermostatDetails) {
+        if (!thermostatDetails) {
+            return;
+        }
+
+        let capability = response.createPayloadEndpointCapability();
+        let thermostat = response.createPayloadEndpointCapability(
+            this.thermostatCapability
+        );
+        let sensor = response.createPayloadEndpointCapability(
+            this.sensorCapability
+        );
+        thermostatDetails.capabilities = [
+            capability, thermostat, sensor
+        ];
+        response.addPayloadEndpoint(thermostatDetails);
+    }
+
+    errorResponseFrom(error) {
+        if (error instanceof SmartHomeError) {
+            return new AlexaResponse({
+                'name': 'ErrorResponse',
+                'payload': {
+                    'type': error.data.type,
+                    'message': error.message
+                }
+            });
+        }
+        return new AlexaResponse({
+            'name': 'ErrorResponse',
+            'payload': {
+                'type': 'INTERNAL_ERROR',
+                'message': error.message
+            }
+        });
     }
 }
 
