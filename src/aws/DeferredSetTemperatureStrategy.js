@@ -23,32 +23,46 @@ class DeferredSetTemperatureStrategy {
         }
         this._logger.debug(`Defer: ${defer}; Should Defer: ${client.shouldDefer}`);
         if (defer && client.shouldDefer) {
-            this._logger.debug('Setting temperature will be deferred...');
-            this._event.directive.payload.defer = false;
-
-            const params = {
-                Message: JSON.stringify(this._event),
-                TopicArn: process.env.DEFERRED_SET_TEMPERATURE_TOPIC
-            };
-
-            this._logger.debug(`Publishing event to topic ${params.TopicArn}:`);
-            this._logger.debug(params.Message);
-
-            const response = await this._publisher.publish(params).promise();
-            this._logger.debug(JSON.stringify(response));
-
-            const updatedDevice = await client.device();
-            updatedDevice.targetTemperature = temperature;
-            this._logger.debug('Reporting device state as:');
-            this._logger.debug(JSON.stringify(updatedDevice));
-
-            return updatedDevice;
+            return await this.deferredSetTemperature(client, temperature);
         } else {
-            this._logger.debug('Setting temperature...');
-            await client.setTemperature(temperature);
-            const updatedDevice = await client.device();
-            return updatedDevice;
+            return await this.immediateSetTemperature(client, temperature);
         }
+    }
+
+    /**
+     * Sets the temperature immediately
+     * @param {ThermostatClient} client 
+     * @param {float} temperature 
+     */
+    async immediateSetTemperature(client, temperature) {
+        this._logger.debug('Setting temperature...');
+        await client.setTemperature(temperature);
+        const updatedDevice = await client.device();
+        return updatedDevice;
+    }
+
+    /**
+     * Publishes a message to the SNS topic
+     * to set the temperature asynchronously
+     * @param {ThermostatClient} client 
+     * @param {float} temperature 
+     */
+    async deferredSetTemperature(client, temperature) {
+        this._logger.debug('Setting temperature will be deferred...');
+        this._event.directive.payload.defer = false;
+        const params = {
+            Message: JSON.stringify(this._event),
+            TopicArn: process.env.DEFERRED_SET_TEMPERATURE_TOPIC
+        };
+        this._logger.debug(`Publishing event to topic ${params.TopicArn}:`);
+        this._logger.debug(params.Message);
+        const response = await this._publisher.publish(params).promise();
+        this._logger.debug(JSON.stringify(response));
+        const updatedDevice = await client.device();
+        updatedDevice.targetTemperature = temperature;
+        this._logger.debug('Reporting device state as:');
+        this._logger.debug(JSON.stringify(updatedDevice));
+        return updatedDevice;
     }
 }
 

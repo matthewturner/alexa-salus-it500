@@ -41,7 +41,6 @@ class AlexaResponse {
      * @param opts Contains initialization options for the response
      */
     constructor(opts) {
-
         if (opts === undefined)
             opts = {};
 
@@ -51,28 +50,35 @@ class AlexaResponse {
         if (opts.event !== undefined)
             this.event = this.checkValue(opts.event, undefined);
         else
-            this.event = {
-                'header': {
-                    'namespace': this.checkValue(opts.namespace, 'Alexa'),
-                    'name': this.checkValue(opts.name, 'Response'),
-                    'messageId': this.checkValue(opts.messageId, uuid()),
-                    'correlationToken': this.checkValue(opts.correlationToken, undefined),
-                    'payloadVersion': this.checkValue(opts.payloadVersion, '3')
-                },
-                'endpoint': {
-                    'scope': {
-                        'type': 'BearerToken',
-                        'token': this.checkValue(opts.token, 'INVALID'),
-                    },
-                    'endpointId': this.checkValue(opts.endpointId, 'INVALID')
-                },
-                'payload': this.checkValue(opts.payload, {})
-            };
+            this.event = this.eventFrom(opts);
 
         // No endpoint in an AcceptGrant or Discover request
         if (this.event.header.name === 'AcceptGrant.Response' || this.event.header.name === 'Discover.Response')
             delete this.event.endpoint;
+    }
 
+    /**
+     * Creates the base event from the data
+     * @param {*} opts Contains options for the property.
+     */
+    eventFrom(opts) {
+        return {
+            'header': {
+                'namespace': this.checkValue(opts.namespace, 'Alexa'),
+                'name': this.checkValue(opts.name, 'Response'),
+                'messageId': this.checkValue(opts.messageId, uuid()),
+                'correlationToken': this.checkValue(opts.correlationToken, undefined),
+                'payloadVersion': this.checkValue(opts.payloadVersion, '3')
+            },
+            'endpoint': {
+                'scope': {
+                    'type': 'BearerToken',
+                    'token': this.checkValue(opts.token, 'INVALID'),
+                },
+                'endpointId': this.checkValue(opts.endpointId, 'INVALID')
+            },
+            'payload': this.checkValue(opts.payload, {})
+        };
     }
 
     /**

@@ -1,3 +1,6 @@
+/**
+ * Sets the temperature immediately
+ */
 class SetTemperatureStrategy {
     constructor(logger) {
         this._logger = logger;

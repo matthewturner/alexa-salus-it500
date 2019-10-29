@@ -98,14 +98,11 @@ class ThermostatService extends Service {
         this._logger.debug(`Setting temperature to ${targetTemperature}...`);
         const client = await this.login();
         try {
-            await this.verifyOnline(client);
-            const device = await client.device();
-            this.verifyContactable(device);
+            await this.verifyDevice(client);
 
             let updatedDevice = await this._setTemperatureStrategy.setTemperature(client, targetTemperature);
 
-            let messages = [];
-            messages.push(`The target temperature is now ${this.speakTemperature(updatedDevice.targetTemperature)} degrees.`);
+            let messages = [`The target temperature is now ${this.speakTemperature(updatedDevice.targetTemperature)} degrees.`];
             this.logStatus(updatedDevice);
 
             if (this._context.source === 'user') {
@@ -114,10 +111,6 @@ class ThermostatService extends Service {
                     const duration = forDuration || thermostat.defaultDuration;
                     const intent = await this._holdStrategy.holdIfRequiredFor(duration);
                     messages = messages.concat(this.summarize(duration, intent, updatedDevice));
-                    return this.createResponse(messages, client, {
-                        targetTemperature: updatedDevice.targetTemperature,
-                        currentTemperature: updatedDevice.currentTemperature
-                    });
                 } else {
                     await this._holdStrategy.stopHoldIfRequired(thermostat.executionId);
                 }
@@ -131,20 +124,34 @@ class ThermostatService extends Service {
         }
     }
 
+    /**
+     * Verifies the client is online and can
+     * connect to the device
+     * @param {ThermostatClient} client 
+     */
+    async verifyDevice(client) {
+        await this.verifyOnline(client);
+        const device = await client.device();
+        this.verifyContactable(device);
+        return device;
+    }
+
+    /**
+     * Adjusts the temperature by the specified
+     * signed float, eg +/-2 degrees
+     * @param {float} tempDelta 
+     */
     async adjustTemperature(tempDelta) {
         this._logger.debug(`Adjusting temperature by ${tempDelta}...`);
         const client = await this.login();
 
         try {
-            await this.verifyOnline(client);
-            const device = await client.device();
-            this.verifyContactable(device);
+            const device = await this.verifyDevice(client);
 
             const t = device.targetTemperature + tempDelta;
             let updatedDevice = await this._setTemperatureStrategy.setTemperature(client, t);
 
-            const messages = [];
-            messages.push(`The target temperature is now ${this.speakTemperature(updatedDevice.targetTemperature)} degrees.`);
+            const messages = [`The target temperature is now ${this.speakTemperature(updatedDevice.targetTemperature)} degrees.`];
             let qualifier = 'now';
             if (tempDelta < 0) {
                 qualifier = 'still';
