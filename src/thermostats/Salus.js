@@ -34,16 +34,7 @@ class Salus {
     }
 
     async login() {
-        let options = {
-            form: {
-                'IDemail': this._options.username,
-                'password': this._options.password,
-                'login': 'Login'
-            },
-            jar: this._jar,
-            followRedirect: true,
-            simple: false
-        };
+        let options = this.options();
 
         try {
             this._logger.debug('Logging in...');
@@ -61,6 +52,24 @@ class Salus {
             this._logger.debug('Error occurred:');
             this._logger.debug(error);
         }
+    }
+
+    /**
+     * Returns the options for the web
+     * request including the form, jar
+     * and redirect behaviour
+     */
+    options() {
+        return {
+            form: {
+                'IDemail': this._options.username,
+                'password': this._options.password,
+                'login': 'Login'
+            },
+            jar: this._jar,
+            followRedirect: true,
+            simple: false
+        };
     }
 
     async online() {
