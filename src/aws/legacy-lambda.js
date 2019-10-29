@@ -133,7 +133,7 @@ app.intent('SetTempIntent', {
 }, async (request, response) => {
     const targetTemp = parseFloat(request.slot('temp'));
     const optionalDuration = request.slot('duration', null);
-    
+
     return await reportOn(request, response, ThermostatService,
         service => service.setTemperature(targetTemp, optionalDuration));
 });
@@ -145,26 +145,18 @@ app.intent('TurnIntent', {
     },
     'utterances': ['to turn {onoff}', 'to turn heating {onoff}', 'to turn the heating {onoff}']
 }, async (request, response) => {
-    let onOff = request.slot('onoff');
-    let duration = request.slot('duration');
-    
+    const onOff = request.slot('onoff');
+    const duration = request.slot('duration');
+
     // this could be a callback from a step function
-    const {
-        logger,
-        service
-    } = controlService(request);
-    try {
-        if (onOff === 'on') {
-            const output = await service.turnOn(duration);
-            say(response, output, logger);
-        } else {
-            const output = await service.turnOff();
-            say(response, output, logger);
-        }
-    } catch (e) {
-        report(response, e, logger);
-    }
-    return false;
+    return await reportOn(request, response, ThermostatService,
+        service => {
+            if (onOff === 'on') {
+                return service.turnOn(duration);
+            } else {
+                return service.turnOff();
+            }
+        });
 });
 
 app.intent('TurnWaterIntent', {
@@ -180,22 +172,14 @@ app.intent('TurnWaterIntent', {
     const onOff = request.slot('onoff') || 'on';
     const duration = request.slot('duration');
 
-    const {
-        logger,
-        service
-    } = controlService(request, WaterService);
-    try {
-        if (onOff === 'on') {
-            const output = await service.turnOn(duration);
-            say(response, output, logger);
-        } else {
-            const output = await service.turnOff();
-            say(response, output, logger);
-        }
-    } catch (e) {
-        report(response, e, logger);
-    }
-    return false;
+    return await reportOn(request, response, WaterService,
+        service => {
+            if (onOff === 'on') {
+                return service.turnOn(duration);
+            } else {
+                return service.turnOff();
+            }
+        });
 });
 
 app.intent('SetDefaultTempIntent', {
@@ -207,7 +191,7 @@ app.intent('SetDefaultTempIntent', {
 }, async (request, response) => {
     const onOff = request.slot('onoff');
     const temp = parseFloat(request.slot('temp'));
-    
+
     return await reportOn(request, response, DefaultsService,
         service => service.setDefault(onOff, temp));
 });
