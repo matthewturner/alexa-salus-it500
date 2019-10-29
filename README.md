@@ -1,10 +1,20 @@
 [![Maintainability](https://api.codeclimate.com/v1/badges/1feb6f56bc1f877024b1/maintainability)](https://codeclimate.com/github/matthewturner/alexa-salus-it500/maintainability) [![Reviewed by Hound](https://img.shields.io/badge/Reviewed_by-Hound-8E64B0.svg)](https://houndci.com) [![Codeship Status for matthewturner/alexa-salus-it500](https://app.codeship.com/projects/1ee5b9e0-3ba0-0137-f593-02e93a421fb3/status?branch=master)](https://app.codeship.com/projects/334358)
 
-# alexa-salus-it500
+# SmartHeat
 
-An Alexa App (skill) to control a Salus IT500 internet thermostat. Please note that this is really ugly because Salus don't provide any kind of API. This skill logs onto their web app using your username and password and sets the temperature as you would in their mobile (web) app. For that reason, you need to embed your login details into web app and host this skill yourself! Do not offer this skill in the Alexa store for other people because it's not secure to collect other people's usernames and passwords.
+An Alexa App (skill) to control older heating systems which are not integrated with Alexa.
+
+## Supported Devices
+
+### Salus IT500
+Please note that this is really ugly because Salus don't provide any kind of API. This skill logs onto their web app using your username and password and sets the temperature as you would in their mobile (web) app. For that reason, you need to embed your login details into web app and host this skill yourself! Do not offer this skill in the Alexa store for other people because it's not secure to collect other people's usernames and passwords.
 
 Until Salus provide their own Alexa skill or a federated authentication method then this is the only option, unfortunately.
+
+### Heatmiser
+Please note that this is also pretty ugly because Heatmiser does not provide an appropriate API. This skill requires an open port to connect to on your router.
+
+Until Heatmiser provide their own Alexa skill or a federated authentication method then this is the only option, unfortunately.
 
 ## Summary
 
