@@ -63,17 +63,17 @@ const main = async () => {
     const thermostatService = new ThermostatService(logger, context, factory, repository, holdStrategy, setTemperatureStrategy);
     const defaultsService = new DefaultsService(logger, context, factory, repository);
 
-    await reportOn(async () => await defaultsService.defaults());
+    await reportOn(() => defaultsService.defaults());
 
-    await reportOn(async () => await defaultsService.setDefault('defaultOnTemp', 22));
+    await reportOn(() => defaultsService.setDefault('defaultOnTemp', 22));
 
-    await reportOn(async () => await defaultsService.defaults());
+    await reportOn(() => defaultsService.defaults());
 
-    await reportOn(async () => await thermostatService.turnOn(duration));
+    await reportOn(() => thermostatService.turnOn(duration));
 
-    await reportOn(async () => await thermostatService.status());
+    await reportOn(() => thermostatService.status());
 
-    await reportOn(async () => await thermostatService.turnOff());
+    await reportOn(() => thermostatService.turnOff());
 };
 
 main();

@@ -85,66 +85,44 @@ const report = (response, message, logger) => {
     response.send();
 };
 
-app.launch(async (request, response) => {
+const reportOn = async (request, response, serviceType, action) => {
     const {
         logger,
         service
-    } = controlService(request);
+    } = controlService(request, serviceType);
     try {
-        const output = await service.launch();
+        const output = await action(service);
         say(response, output, logger);
     } catch (e) {
         report(response, e, logger);
     }
     return false;
+};
+
+app.launch(async (request, response) => {
+    return await reportOn(request, response, ThermostatService,
+        service => service.launch());
 });
 
 app.intent('TempIntent', {
     'utterances': ['what the temperature is', 'the temperature', 'how hot it is']
 }, async (request, response) => {
-    const {
-        logger,
-        service
-    } = controlService(request);
-    try {
-        const output = await service.status();
-        say(response, output, logger);
-    } catch (e) {
-        report(response, e, logger);
-    }
-    return false;
+    return await reportOn(request, response, ThermostatService,
+        service => service.status());
 });
 
 app.intent('TurnUpIntent', {
     'utterances': ['to increase', 'to turn up', 'set warmer', 'set higher']
 }, async (request, response) => {
-    const {
-        logger,
-        service
-    } = controlService(request);
-    try {
-        const output = await service.turnUp();
-        say(response, output, logger);
-    } catch (e) {
-        report(response, e, logger);
-    }
-    return false;
+    return await reportOn(request, response, ThermostatService,
+        service => service.turnUp());
 });
 
 app.intent('TurnDownIntent', {
     'utterances': ['to decrease', 'to turn down', 'set cooler', 'set lower']
 }, async (request, response) => {
-    const {
-        logger,
-        service
-    } = controlService(request);
-    try {
-        const output = await service.turnDown();
-        say(response, output, logger);
-    } catch (e) {
-        report(response, e, logger);
-    }
-    return false;
+    return await reportOn(request, response, ThermostatService,
+        service => service.turnDown());
 });
 
 app.intent('SetTempIntent', {
@@ -153,19 +131,11 @@ app.intent('SetTempIntent', {
     },
     'utterances': ['to set to {temp} degrees', 'to set the temperature to {temp} degrees', 'to set the temp to {temp} degrees']
 }, async (request, response) => {
-    const {
-        logger,
-        service
-    } = controlService(request);
-    try {
-        let targetTemp = parseFloat(request.slot('temp'));
-        let optionalDuration = request.slot('duration', null);
-        const output = await service.setTemperature(targetTemp, optionalDuration);
-        say(response, output, logger);
-    } catch (e) {
-        report(response, e, logger);
-    }
-    return false;
+    const targetTemp = parseFloat(request.slot('temp'));
+    const optionalDuration = request.slot('duration', null);
+    
+    return await reportOn(request, response, ThermostatService,
+        service => service.setTemperature(targetTemp, optionalDuration));
 });
 
 app.intent('TurnIntent', {
@@ -177,6 +147,7 @@ app.intent('TurnIntent', {
 }, async (request, response) => {
     let onOff = request.slot('onoff');
     let duration = request.slot('duration');
+    
     // this could be a callback from a step function
     const {
         logger,
@@ -206,8 +177,9 @@ app.intent('TurnWaterIntent', {
         'to turn the water on for {duration}'
     ]
 }, async (request, response) => {
-    let onOff = request.slot('onoff') || 'on';
-    let duration = request.slot('duration');
+    const onOff = request.slot('onoff') || 'on';
+    const duration = request.slot('duration');
+
     const {
         logger,
         service
@@ -233,19 +205,11 @@ app.intent('SetDefaultTempIntent', {
     },
     'utterances': ['to set the default {onoff} temperature to {temp} degrees']
 }, async (request, response) => {
-    let onOff = request.slot('onoff');
-    let temp = parseFloat(request.slot('temp'));
-    const {
-        logger,
-        service
-    } = controlService(request, DefaultsService);
-    try {
-        const output = await service.setDefault(onOff, temp);
-        say(response, output, logger);
-    } catch (e) {
-        report(response, e, logger);
-    }
-    return false;
+    const onOff = request.slot('onoff');
+    const temp = parseFloat(request.slot('temp'));
+    
+    return await reportOn(request, response, DefaultsService,
+        service => service.setDefault(onOff, temp));
 });
 
 app.intent('SetDefaultDurationIntent', {
@@ -254,35 +218,18 @@ app.intent('SetDefaultDurationIntent', {
     },
     'utterances': ['to set the default duration to {duration}']
 }, async (request, response) => {
-    let duration = request.slot('duration');
-    const {
-        logger,
-        service
-    } = controlService(request, DefaultsService);
-    try {
-        const output = await service.setDefault('duration', duration);
-        say(response, output, logger);
-    } catch (e) {
-        report(response, e, logger);
-    }
-    return false;
+    const duration = request.slot('duration');
+
+    return await reportOn(request, response, DefaultsService,
+        service => service.setDefault('duration', duration));
 });
 
 app.intent('DefaultsIntent', {
     'slots': {},
     'utterances': ['the current default values', 'the default values', 'the current defaults', 'the defaults']
 }, async (request, response) => {
-    const {
-        logger,
-        service
-    } = controlService(request, DefaultsService);
-    try {
-        const output = await service.defaults();
-        say(response, output, logger);
-    } catch (e) {
-        report(response, e, logger);
-    }
-    return false;
+    return await reportOn(request, response, DefaultsService,
+        service => service.defaults());
 });
 
 app.intent('AMAZON.HelpIntent', {
@@ -299,17 +246,8 @@ app.intent('AMAZON.StopIntent', {
     'slots': {},
     'utterances': []
 }, async (request, response) => {
-    const {
-        logger,
-        service
-    } = controlService(request);
-    try {
-        const output = await service.turnOff();
-        say(response, output, logger);
-    } catch (e) {
-        report(response, e, logger);
-    }
-    return false;
+    return await reportOn(request, response, ThermostatService,
+        service => service.turnOff());
 });
 
 module.exports = app;
