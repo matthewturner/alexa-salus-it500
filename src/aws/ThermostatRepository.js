@@ -32,25 +32,27 @@ class ThermostatRepository {
         await this.client.put(params).promise();
     }
 
-    async find(userId) {
+    async findByUserId(userId) {
         const params = {
             TableName
         };
+        this._logger.debug(`Searching by userId ${userId}...`);
+        params.Key = {
+            userId
+        };
+        let response = await this.client.get(params).promise();
+        if (response.Item) {
 
-        if (userId.startsWith('amzn1.ask.') || userId === 'template') {
-            this._logger.debug(`Searching by userId ${userId}...`);
-            params.Key = {
-                userId
-            };
-            let response = await this.client.get(params).promise();
-            if (response.Item) {
-
-                this._logger.debug(`Found thermostat for user ${helpers.truncateUserId(userId)} with username ${response.Item.options.username}`);
-                return response.Item;
-            }
-            return null;
+            this._logger.debug(`Found thermostat for user ${helpers.truncateUserId(userId)} with username ${response.Item.options.username}`);
+            return response.Item;
         }
+        return null;
+    }
 
+    async findByLinkedUserId(userId) {
+        const params = {
+            TableName
+        };
         this._logger.debug(`Searching by linkedUserId ${userId}...`);
         params.IndexName = 'linkedUserId-index';
         params.KeyConditionExpression = 'linkedUserId = :linkedUserId';
@@ -64,6 +66,14 @@ class ThermostatRepository {
             return response.Items[0];
         }
         return null;
+    }
+
+    async find(userId) {
+        if (userId.startsWith('amzn1.ask.') || userId === 'template') {
+            return await this.findByUserId(userId);
+        }
+
+        return await this.findByLinkedUserId(userId);
     }
 
     async save(thermostat) {
