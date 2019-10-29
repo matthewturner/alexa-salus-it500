@@ -1,4 +1,3 @@
-.vscode/
 .vs/
 .nyc_output/
 coverage/
@@ -7,4 +6,5 @@ package.zip
 package-previous.zip
 
 test.sh
+test.salus.sh
 test.heatmiser.sh
