@@ -1,6 +1,6 @@
 const Duration = require('durationjs');
 const JSON = require('JSON');
-const StepFunctions = require('aws/clients/stepfunctions');
+const StepFunctions = require('aws-sdk/clients/stepfunctions');
 const helpers = require('./helpers');
 const ThermostatRepository = require('./ThermostatRepository');
 
