@@ -1,0 +1,400 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Resources": {
+        "tablethermostats": {
+            "Type": "AWS::DynamoDB::Table",
+            "Properties": {
+                "AttributeDefinitions": [
+                    {
+                        "AttributeName": "linkedUserId",
+                        "AttributeType": "S"
+                    },
+                    {
+                        "AttributeName": "userId",
+                        "AttributeType": "S"
+                    }
+                ],
+                "KeySchema": [
+                    {
+                        "AttributeName": "userId",
+                        "KeyType": "HASH"
+                    }
+                ],
+                "ProvisionedThroughput": {
+                    "ReadCapacityUnits": "5",
+                    "WriteCapacityUnits": "5"
+                },
+                "GlobalSecondaryIndexes": [
+                    {
+                        "IndexName": "linkedUserId-index",
+                        "KeySchema": [
+                            {
+                                "AttributeName": "linkedUserId",
+                                "KeyType": "HASH"
+                            }
+                        ],
+                        "Projection": {
+                            "ProjectionType": "ALL"
+                        },
+                        "ProvisionedThroughput": {
+                            "ReadCapacityUnits": "1",
+                            "WriteCapacityUnits": "1"
+                        }
+                    }
+                ]
+            },
+            "Metadata": {
+                "AWS::CloudFormation::Designer": {
+                    "id": "0ecbe475-d7e0-4609-a2ee-ccbec315eebc"
+                }
+            }
+        },
+        "topicDeferSetTemperature": {
+            "Type": "AWS::SNS::Topic",
+            "Properties": {
+                "DisplayName": "Defer Set Temperature",
+                "Subscription": [
+                    {
+                        "Endpoint": {
+                            "Fn::Sub": "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:SmartHeat"
+                        },
+                        "Protocol": "lambda"
+                    }
+                ]
+            },
+            "Metadata": {
+                "AWS::CloudFormation::Designer": {
+                    "id": "6f79a9e1-51c7-4253-903b-f0a619b5651c"
+                }
+            }
+        },
+        "snspolicyDeferSetTemperature": {
+            "Type": "AWS::SNS::TopicPolicy",
+            "Properties": {
+                "Topics": [
+                    {
+                        "Ref": "topicDeferSetTemperature"
+                    }
+                ],
+                "PolicyDocument": {
+                    "Version": "2008-10-17",
+                    "Id": "__default_policy_ID",
+                    "Statement": [
+                        {
+                            "Sid": "__default_statement_ID",
+                            "Effect": "Allow",
+                            "Principal": {
+                                "AWS": "*"
+                            },
+                            "Action": [
+                                "SNS:Publish",
+                                "SNS:RemovePermission",
+                                "SNS:SetTopicAttributes",
+                                "SNS:DeleteTopic",
+                                "SNS:ListSubscriptionsByTopic",
+                                "SNS:GetTopicAttributes",
+                                "SNS:Receive",
+                                "SNS:AddPermission",
+                                "SNS:Subscribe"
+                            ],
+                            "Resource": {
+                                "Ref": "topicDeferSetTemperature"
+                            },
+                            "Condition": {
+                                "StringEquals": {
+                                    "AWS:SourceOwner": {
+                                        "Fn::Sub": "${AWS::AccountId"
+                                    }
+                                }
+                            }
+                        }
+                    ]
+                }
+            },
+            "Metadata": {
+                "AWS::CloudFormation::Designer": {
+                    "id": "4d69c41f-8f64-4447-b213-6cf56383f775"
+                }
+            }
+        },
+        "alarmthermostatsReadCapacityUnitsLimitBasicAlarm": {
+            "Type": "AWS::CloudWatch::Alarm",
+            "Properties": {
+                "ActionsEnabled": "true",
+                "ComparisonOperator": "GreaterThanOrEqualToThreshold",
+                "EvaluationPeriods": "5",
+                "MetricName": "ConsumedReadCapacityUnits",
+                "Namespace": "AWS/DynamoDB",
+                "Period": "60",
+                "Statistic": "Sum",
+                "Threshold": "240.0",
+                "AlarmActions": [
+                    {
+                        "Fn::Sub": "arn:aws:sns:${AWS::Region}:${AWS::AccountId}:dynamodb"
+                    }
+                ],
+                "Dimensions": [
+                    {
+                        "Name": "TableName",
+                        "Value": "thermostats"
+                    }
+                ]
+            },
+            "Metadata": {
+                "AWS::CloudFormation::Designer": {
+                    "id": "84041659-769d-4f60-a97c-e90829718374"
+                }
+            }
+        },
+        "alarmthermostatsWriteCapacityUnitsLimitBasicAlarm": {
+            "Type": "AWS::CloudWatch::Alarm",
+            "Properties": {
+                "ActionsEnabled": "true",
+                "ComparisonOperator": "GreaterThanOrEqualToThreshold",
+                "EvaluationPeriods": "5",
+                "MetricName": "ConsumedWriteCapacityUnits",
+                "Namespace": "AWS/DynamoDB",
+                "Period": "60",
+                "Statistic": "Sum",
+                "Threshold": "240.0",
+                "AlarmActions": [
+                    {
+                        "Fn::Sub": "arn:aws:sns:${AWS::Region}:${AWS::AccountId}:dynamodb"
+                    }
+                ],
+                "Dimensions": [
+                    {
+                        "Name": "TableName",
+                        "Value": "thermostats"
+                    }
+                ]
+            },
+            "Metadata": {
+                "AWS::CloudFormation::Designer": {
+                    "id": "23eb40ce-f32a-4ba5-adae-961a5d096b2d"
+                }
+            }
+        },
+        "alarmthermostatslinkedUserIdindexReadCapacityUnitsLimitBasicAlarm": {
+            "Type": "AWS::CloudWatch::Alarm",
+            "Properties": {
+                "ActionsEnabled": "true",
+                "ComparisonOperator": "GreaterThanOrEqualToThreshold",
+                "EvaluationPeriods": "60",
+                "MetricName": "ConsumedReadCapacityUnits",
+                "Namespace": "AWS/DynamoDB",
+                "Period": "60",
+                "Statistic": "Sum",
+                "Threshold": "48.0",
+                "AlarmActions": [
+                    {
+                        "Fn::Sub": "arn:aws:sns:${AWS::Region}:${AWS::AccountId}:dynamodb"
+                    }
+                ],
+                "Dimensions": [
+                    {
+                        "Name": "TableName",
+                        "Value": "thermostats"
+                    },
+                    {
+                        "Name": "GlobalSecondaryIndexName",
+                        "Value": "linkedUserId-index"
+                    }
+                ]
+            },
+            "Metadata": {
+                "AWS::CloudFormation::Designer": {
+                    "id": "bb62da92-7f7d-4b55-a97e-b879572380d1"
+                }
+            }
+        },
+        "alarmthermostatslinkedUserIdindexWriteCapacityUnitsLimitBasicAlarm": {
+            "Type": "AWS::CloudWatch::Alarm",
+            "Properties": {
+                "ActionsEnabled": "true",
+                "ComparisonOperator": "GreaterThanOrEqualToThreshold",
+                "EvaluationPeriods": "60",
+                "MetricName": "ConsumedWriteCapacityUnits",
+                "Namespace": "AWS/DynamoDB",
+                "Period": "60",
+                "Statistic": "Sum",
+                "Threshold": "48.0",
+                "AlarmActions": [
+                    {
+                        "Fn::Sub": "arn:aws:sns:${AWS::Region}:${AWS::AccountId}:dynamodb"
+                    }
+                ],
+                "Dimensions": [
+                    {
+                        "Name": "TableName",
+                        "Value": "thermostats"
+                    },
+                    {
+                        "Name": "GlobalSecondaryIndexName",
+                        "Value": "linkedUserId-index"
+                    }
+                ]
+            },
+            "Metadata": {
+                "AWS::CloudFormation::Designer": {
+                    "id": "b9c72dc1-7343-411f-ab92-ae601cab2041"
+                }
+            }
+        },
+        "legacy": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {},
+            "Metadata": {
+                "AWS::CloudFormation::Designer": {
+                    "id": "ea9f2fff-7c85-4e96-88c3-79c6b26b7e14"
+                }
+            }
+        },
+        "SmartHome": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+                "Code": "ZipFile",
+                "FunctionName": "SmartHome",
+                "Handler": "aws/smarthome-lambda.handler",
+                "Runtime": "Node.js 10.x",
+                "Timeout": 25,
+                "MemorySize": 512,
+                "Environment": {
+                    "Variables": {
+                        "HOLD_STRATEGY": "aws",
+                        "DEFERRED_SET_TEMPERATURE_TOPIC": {
+                            "Fn::Sub": "arn:aws:sns:${AWS::Region}:${AWS::AccountId}:defer-set-temperature"
+                        },
+                        "PROFILE_GATEWAY_TYPE": "aws",
+                        "STEP_FUNCTION_ARN": {
+                            "Fn::Sub": "arn:aws:states:${AWS::Region}:${AWS::AccountId}:stateMachine:SmartHeat"
+                        },
+                        "THERMOSTAT_REPOSITORY": "dynamodb",
+                        "TURN_OFF_CALLBACK_PAYLOAD": "smarthome"
+                    }
+                },
+                "Metadata": {
+                    "AWS::CloudFormation::Designer": {
+                        "id": "fb5e650c-0cd5-429f-aa01-ab585e5c0a04"
+                    }
+                }
+            }
+        },
+        "Description": "SmartHeat Stack (experimental)",
+        "Metadata": {
+            "AWS::CloudFormation::Designer": {
+                "b9c72dc1-7343-411f-ab92-ae601cab2041": {
+                    "size": {
+                        "width": 60,
+                        "height": 60
+                    },
+                    "position": {
+                        "x": 60,
+                        "y": 90
+                    },
+                    "z": 1,
+                    "embeds": []
+                },
+                "bb62da92-7f7d-4b55-a97e-b879572380d1": {
+                    "size": {
+                        "width": 60,
+                        "height": 60
+                    },
+                    "position": {
+                        "x": 180,
+                        "y": 90
+                    },
+                    "z": 1,
+                    "embeds": []
+                },
+                "23eb40ce-f32a-4ba5-adae-961a5d096b2d": {
+                    "size": {
+                        "width": 60,
+                        "height": 60
+                    },
+                    "position": {
+                        "x": 60,
+                        "y": 210
+                    },
+                    "z": 1,
+                    "embeds": []
+                },
+                "84041659-769d-4f60-a97c-e90829718374": {
+                    "size": {
+                        "width": 60,
+                        "height": 60
+                    },
+                    "position": {
+                        "x": 180,
+                        "y": 210
+                    },
+                    "z": 1,
+                    "embeds": []
+                },
+                "6f79a9e1-51c7-4253-903b-f0a619b5651c": {
+                    "size": {
+                        "width": 60,
+                        "height": 60
+                    },
+                    "position": {
+                        "x": 300,
+                        "y": 90
+                    },
+                    "z": 1,
+                    "embeds": []
+                },
+                "4d69c41f-8f64-4447-b213-6cf56383f775": {
+                    "size": {
+                        "width": 60,
+                        "height": 60
+                    },
+                    "position": {
+                        "x": 300,
+                        "y": 210
+                    },
+                    "z": 1,
+                    "embeds": [],
+                    "isassociatedwith": [
+                        "6f79a9e1-51c7-4253-903b-f0a619b5651c"
+                    ]
+                },
+                "0ecbe475-d7e0-4609-a2ee-ccbec315eebc": {
+                    "size": {
+                        "width": 60,
+                        "height": 60
+                    },
+                    "position": {
+                        "x": 60,
+                        "y": 330
+                    },
+                    "z": 1,
+                    "embeds": []
+                },
+                "ea9f2fff-7c85-4e96-88c3-79c6b26b7e14": {
+                    "size": {
+                        "width": 60,
+                        "height": 60
+                    },
+                    "position": {
+                        "x": -120,
+                        "y": 90
+                    },
+                    "z": 0,
+                    "embeds": []
+                },
+                "fb5e650c-0cd5-429f-aa01-ab585e5c0a04": {
+                    "size": {
+                        "width": 60,
+                        "height": 60
+                    },
+                    "position": {
+                        "x": -120,
+                        "y": 170
+                    },
+                    "z": 0,
+                    "embeds": []
+                }
+            }
+        }
+    }
+}
