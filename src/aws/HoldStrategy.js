@@ -1,6 +1,6 @@
 const Duration = require('durationjs');
 const JSON = require('JSON');
-const AWS = require('aws-sdk');
+const StepFunctions = require('aws/clients/stepfunctions');
 const helpers = require('./helpers');
 const ThermostatRepository = require('./ThermostatRepository');
 
@@ -9,7 +9,7 @@ class HoldStrategy {
         this._logger = logger;
         this._context = context;
         this._thermostatRepository = new ThermostatRepository(logger);
-        this._stepFunctions = new AWS.StepFunctions();
+        this._stepFunctions = new StepFunctions();
     }
 
     async holdIfRequiredFor(durationValue) {
