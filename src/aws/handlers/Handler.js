@@ -60,7 +60,7 @@ class Handler {
     }
 
     async retrieveProfile(event) {
-        if (event.directive.endpoint.userId) {
+        if (event.directive.endpoint && event.directive.endpoint.userId) {
             this._logger.debug('UserId found; skipping profile data...');
             return {
                 userId: event.directive.endpoint.userId
