@@ -17,11 +17,12 @@
         "payload": {}
     },
     "context": {
-        "properties": [{
+        "properties": [
+            {
                 "namespace": "Alexa.ThermostatController",
                 "name": "targetSetpoint",
                 "value": {
-                    "value": 20,
+                    "value": 14,
                     "scale": "CELSIUS"
                 },
                 "timeOfSample": "2019-09-03T10:45:31.258Z",
@@ -41,7 +42,7 @@
                 "namespace": "Alexa.ThermostatController",
                 "name": "thermostatMode",
                 "value": {
-                    "value": "HEAT"
+                    "value": "OFF"
                 },
                 "timeOfSample": "2019-09-03T10:45:31.258Z",
                 "uncertaintyInMilliseconds": 0
