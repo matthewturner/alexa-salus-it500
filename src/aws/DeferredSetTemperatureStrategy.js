@@ -32,7 +32,7 @@ class DeferredSetTemperatureStrategy {
     /**
      * Sets the temperature immediately
      * @param {ThermostatClient} client 
-     * @param {float} temperature 
+     * @param {number} temperature 
      */
     async immediateSetTemperature(client, temperature) {
         this._logger.debug('Setting temperature...');
@@ -45,7 +45,7 @@ class DeferredSetTemperatureStrategy {
      * Publishes a message to the SNS topic
      * to set the temperature asynchronously
      * @param {ThermostatClient} client 
-     * @param {float} temperature 
+     * @param {number} temperature 
      */
     async deferredSetTemperature(client, temperature) {
         this._logger.debug('Setting temperature will be deferred...');

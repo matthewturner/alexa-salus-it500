@@ -21,9 +21,9 @@ class DefaultsService extends Service {
     /**
      * Determines the property to set
      * and updates it to the specified value
-     * @param {ThermostatClient} thermostat 
+     * @param {Mock} thermostat 
      * @param {string} name
-     * @param {float_or_duration} value 
+     * @param {number|Duration} value 
      */
     setDefaultValue(thermostat, name, value) {
         let nameText = '';

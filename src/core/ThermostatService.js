@@ -138,8 +138,8 @@ class ThermostatService extends Service {
 
     /**
      * Adjusts the temperature by the specified
-     * signed float, eg +/-2 degrees
-     * @param {float} tempDelta 
+     * signed number, eg +/-2 degrees
+     * @param {number} tempDelta 
      */
     async adjustTemperature(tempDelta) {
         this._logger.debug(`Adjusting temperature by ${tempDelta}...`);
