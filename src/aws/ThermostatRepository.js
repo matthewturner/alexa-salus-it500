@@ -3,7 +3,7 @@
 const DynamoDB = require('aws-sdk/clients/dynamodb');
 const helpers = require('./helpers');
 
-const TableName = 'thermostats';
+const TableName = process.env.THERMOSTAT_TABLE_NAME || 'thermostats';
 
 class ThermostatRepository {
     constructor(logger) {

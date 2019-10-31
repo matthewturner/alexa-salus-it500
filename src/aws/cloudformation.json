@@ -4,6 +4,9 @@
         "tablethermostats": {
             "Type": "AWS::DynamoDB::Table",
             "Properties": {
+                "TableName": {
+                    "Fn::Sub": "${SH::Environment}-thermostats"
+                },
                 "AttributeDefinitions": [
                     {
                         "AttributeName": "linkedUserId",
@@ -52,11 +55,13 @@
         "topicDeferSetTemperature": {
             "Type": "AWS::SNS::Topic",
             "Properties": {
-                "DisplayName": "Defer Set Temperature",
+                "DisplayName": {
+                    "Fn::Sub": "Defer Set Temperature - ${SH::Environment}"
+                },
                 "Subscription": [
                     {
                         "Endpoint": {
-                            "Fn::Sub": "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:SmartHeat"
+                            "Fn::Sub": "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${SH::Environment}-SmartHeat"
                         },
                         "Protocol": "lambda"
                     }
@@ -136,7 +141,9 @@
                 "Dimensions": [
                     {
                         "Name": "TableName",
-                        "Value": "thermostats"
+                        "Value": {
+                            "Fn::Sub": "${SH::Environment}-thermostats"
+                        }
                     }
                 ]
             },
@@ -165,7 +172,9 @@
                 "Dimensions": [
                     {
                         "Name": "TableName",
-                        "Value": "thermostats"
+                        "Value": {
+                            "Fn::Sub": "${SH::Environment}-thermostats"
+                        }
                     }
                 ]
             },
@@ -194,7 +203,9 @@
                 "Dimensions": [
                     {
                         "Name": "TableName",
-                        "Value": "thermostats"
+                        "Value": {
+                            "Fn::Sub": "${SH::Environment}-thermostats"
+                        }
                     },
                     {
                         "Name": "GlobalSecondaryIndexName",
@@ -227,7 +238,9 @@
                 "Dimensions": [
                     {
                         "Name": "TableName",
-                        "Value": "thermostats"
+                        "Value": {
+                            "Fn::Sub": "${SH::Environment}-thermostats"
+                        }
                     },
                     {
                         "Name": "GlobalSecondaryIndexName",
@@ -241,7 +254,7 @@
                 }
             }
         },
-        "legacy": {
+        "lambdaLegacy": {
             "Type": "AWS::Lambda::Function",
             "Properties": {},
             "Metadata": {
@@ -250,11 +263,13 @@
                 }
             }
         },
-        "SmartHome": {
+        "lambdaSmartHome": {
             "Type": "AWS::Lambda::Function",
             "Properties": {
                 "Code": "ZipFile",
-                "FunctionName": "SmartHome",
+                "FunctionName": {
+                    "Fn::Sub": "${SH::Environment}-SmartHome"
+                },
                 "Handler": "aws/smarthome-lambda.handler",
                 "Runtime": "Node.js 10.x",
                 "Timeout": 25,
@@ -263,20 +278,59 @@
                     "Variables": {
                         "HOLD_STRATEGY": "aws",
                         "DEFERRED_SET_TEMPERATURE_TOPIC": {
-                            "Fn::Sub": "arn:aws:sns:${AWS::Region}:${AWS::AccountId}:defer-set-temperature"
+                            "Fn::Sub": "arn:aws:sns:${AWS::Region}:${AWS::AccountId}:${SH::Environment}-defer-set-temperature"
                         },
                         "PROFILE_GATEWAY_TYPE": "aws",
                         "STEP_FUNCTION_ARN": {
-                            "Fn::Sub": "arn:aws:states:${AWS::Region}:${AWS::AccountId}:stateMachine:SmartHeat"
+                            "Fn::Sub": "arn:aws:states:${AWS::Region}:${AWS::AccountId}:stateMachine:${SH::Environment}-SmartHeat"
                         },
                         "THERMOSTAT_REPOSITORY": "dynamodb",
-                        "TURN_OFF_CALLBACK_PAYLOAD": "smarthome"
+                        "TURN_OFF_CALLBACK_PAYLOAD": "smarthome",
+                        "THERMOSTAT_TABLE_NAME": {
+                            "Fn::Sub": "${SH::Environment}-thermostats"
+                        }
                     }
                 },
                 "Metadata": {
                     "AWS::CloudFormation::Designer": {
                         "id": "fb5e650c-0cd5-429f-aa01-ab585e5c0a04"
                     }
+                }
+            }
+        },
+        "stateMachineSmartHome": {
+            "Type": "AWS::StepFunctions::StateMachine",
+            "Properties": {
+                "StateMachineName": {
+                    "Fn::Sub": "${SH::Environment}-SmartHeat"
+                },
+                "DefinitionString": {
+                    "Fn::Join": [
+                        "\n",
+                        [
+                            "{",
+                            "    \"Comment\": \"Calls thermostat function after a hold time\",",
+                            "    \"StartAt\": \"WaitFor\",",
+                            "    \"States\": {,",
+                            "        \"WaitFor\": {",
+                            "            \"Type\": \"Wait\",",
+                            "            \"SecondsPath\": \"$.duration\",",
+                            "            \"Next\": \"Callback\"",
+                            "        },",
+                            "        \"Callback\": {",
+                            "            \"Type\": \"Task\",",
+                            {
+                                "Fn::Sub": "            \"Resource\": \"arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${SH::Environment}-SmartHome\","
+                            },
+                            "            \"End\": true",
+                            "        }",
+                            "    }",
+                            "}"
+                        ]
+                    ]
+                },
+                "RoleArn": {
+                    "Fn::Sub": "arn:aws:iam::${AWS::AccountId}:role/service-role/StatesExecutionRole-${AWS::Region}"
                 }
             }
         },

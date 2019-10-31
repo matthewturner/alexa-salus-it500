@@ -31,6 +31,12 @@ The last intent can take an optional duration which can be any valid time statem
 * You will need to prevent Salus from overriding this by setting the off times to a late time (eg 10pm)
 * It is optional and requires a hosted lambda, step function and dynamodb table
 
+## Deploying with CloudFormation (in development)
+
+1. Use the deploy-stack.sh to deploy the lambda, dynamodb tables etc
+
+1. Enter your lambda ARN in your SmartHome Skill [here](https://developer.amazon.com/alexa/console)
+
 ## Setting up the SmartHome API Skill
 
 1. Create a lambda and deploy the code using the package/publish scripts
