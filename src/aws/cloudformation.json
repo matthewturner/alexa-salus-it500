@@ -254,18 +254,12 @@
                 }
             }
         },
-        "lambdaLegacy": {
-            "Type": "AWS::Lambda::Function",
-            "Properties": {},
-            "Metadata": {
-                "AWS::CloudFormation::Designer": {
-                    "id": "ea9f2fff-7c85-4e96-88c3-79c6b26b7e14"
-                }
-            }
-        },
         "lambdaSmartHome": {
             "Type": "AWS::Lambda::Function",
             "Properties": {
+                "RoleArn": {
+                    "Fn::Sub": "arn:aws:iam::${AWS::AccountId}:role/${SH::Environment}-SmartHeat"
+                },
                 "Code": "ZipFile",
                 "FunctionName": {
                     "Fn::Sub": "${SH::Environment}-SmartHome"
