@@ -8,8 +8,13 @@ export DEFAULT_ON_TEMP=
 export DEFAULT_OFF_TEMP=
 export USERNAME=
 export PASSWORD=
+export HOST=
+export PIN=
+export MODEL=
+export PORT=
 export TARGET_TEMPERATURE=
-export THERMOSTAT_TYPE=
+export THERMOSTAT_TYPE=heatmiser
+export THERMOSTAT_REPOSITORY=default
 
 # add these extra ones to test the command:
 #    "Turn on for 1 hour"
@@ -19,6 +24,5 @@ export AWS_PROFILE=
 export AWS_REGION=
 export DURATION=PT1H
 export HOLD_STRATEGY=aws
-export THERMOSTAT_REPOSITORY=aws
 
 node ./src/core/test.js
