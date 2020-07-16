@@ -35,7 +35,7 @@
     "durationjs": "github:matthewturner/durationjs#v1.2.0",
     "extend": ">=3.0.2",
     "fs": "^0.0.2",
-    "lodash": "^4.17.15",
+    "lodash": "^4.17.19",
     "moment": "^2.24.0",
     "request": "^2.88.0",
     "request-promise": "^4.2.4"
