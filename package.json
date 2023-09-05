@@ -37,7 +37,7 @@
     "fs": "^0.0.2",
     "heatmiser": "github:matthewturner/heatmiser-node#v2.1.0",
     "lodash": "^4.17.21",
-    "moment": "^2.24.0",
+    "moment": "^2.29.4",
     "request": "^2.88.0",
     "request-promise": "^4.2.4"
   }
