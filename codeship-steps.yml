@@ -1,3 +1,0 @@
-- name: tests
-  service: smartheat
-  command: ./node_modules/.bin/mocha --recursive
